@@ -1,0 +1,77 @@
+{
+  "name": "eslint-plugin-de-morgan",
+  "version": "0.1.0",
+  "description": "ESLint plugin for transforming negated boolean expressions via De Morgan’s laws",
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "de-morgan"
+  ],
+  "homepage": "https://github.com/azat-io/eslint-plugin-de-morgan",
+  "repository": "azat-io/eslint-plugin-de-morgan",
+  "license": "MIT",
+  "author": "Azat S. <to@azat.io>",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "ci:changelog": "changelogithub",
+    "ci:clear": "clear-package-json package.json --output package.json",
+    "release": "pnpm release:check && pnpm release:version && pnpm release:prepare && pnpm release:git",
+    "release:check": "pnpm test && pnpm run build",
+    "release:git": "pnpm release:git:add && pnpm release:git:commit && pnpm release:git:tag && pnpm release:git:push",
+    "release:git:add": "git add .",
+    "release:git:commit": "git commit -m \"build: publish v$(node -p \"require('./package.json').version\")\"",
+    "release:git:push": "git push --follow-tags && git push origin v$(node -p \"require('./package.json').version\")",
+    "release:git:tag": "git tag v$(node -p \"require('./package.json').version\")",
+    "release:prepare": "pnpm run /^release:prepare:/",
+    "release:prepare:changelog": "prettier --write changelog.md",
+    "release:prepare:package-json": "prettier --write package.json",
+    "release:version": "changelogen --output changelog.md --release --no-commit --no-tag",
+    "test": "pnpm run /^test:/",
+    "test:format": "prettier --check \"**/*.{astro,svelte,js,ts,json,md,yml}\"",
+    "test:js": "eslint .",
+    "test:spelling": "cspell \"**/*\"",
+    "test:types": "tsc --noEmit --pretty",
+    "test:unit": "vitest --run --coverage"
+  },
+  "devDependencies": {
+    "@azat-io/eslint-config": "^2.13.0",
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@types/estree": "^1.0.6",
+    "@types/node": "^22.13.1",
+    "@vitest/coverage-v8": "^3.0.5",
+    "changelogen": "^0.5.7",
+    "changelogithub": "^13.12.1",
+    "clean-publish": "^5.1.0",
+    "cspell": "^8.17.3",
+    "eslint": "9.19.0",
+    "eslint-plugin-eslint-plugin": "^6.4.0",
+    "jiti": "^2.4.2",
+    "prettier": "^3.4.2",
+    "simple-git-hooks": "^2.11.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vite-plugin-dts": "^4.5.0",
+    "vitest": "^3.0.5"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "engines": {
+    "node": "^18.0.0 || >=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

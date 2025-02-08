@@ -1,0 +1,13 @@
+{
+  "dictionaries": ["css", "html", "node", "npm", "typescript"],
+  "useGitignore": true,
+  "language": "en",
+  "ignorePaths": [
+    ".github",
+    "changelog.md",
+    "license",
+    "pnpm-lock.yaml",
+    "tsconfig.json"
+  ],
+  "words": ["azat", "changelogen", "changelogithub"]
+}
