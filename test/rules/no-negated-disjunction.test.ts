@@ -550,15 +550,15 @@ ruleTester.run('noNegatedDisjunction', rule, {
       errors: [
         {
           data: {
-            original: "!(a instanceof A || b instanceof B)",
-            fixed: "!(a instanceof A) && !(b instanceof B)",
+            original: '!(a instanceof A || b instanceof B)',
+            fixed: '!(a instanceof A) && !(b instanceof B)',
           },
           messageId: 'convertNegatedDisjunction',
         },
       ],
-      output: "if (!(a instanceof A) && !(b instanceof B)) {}",
-      code: "if (!(a instanceof A || b instanceof B)) {}",
-    }
+      output: 'if (!(a instanceof A) && !(b instanceof B)) {}',
+      code: 'if (!(a instanceof A || b instanceof B)) {}',
+    },
   ],
   valid: [
     'if (!a) {}',
