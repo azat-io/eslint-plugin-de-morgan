@@ -1,6 +1,7 @@
 import type { Expression, Node } from 'estree'
 import type { Rule } from 'eslint'
 
+import { isLogicalExpression } from './is-logical-expression'
 import { getNodeContent } from './get-node-content'
 import { getSourceCode } from './get-source-code'
 
@@ -45,7 +46,7 @@ let findOutermostParenthesizedNode = (
     return current
   }
 
-  while (current.parent && current.type === 'LogicalExpression') {
+  while (current.parent && isLogicalExpression(current)) {
     current = current.parent
     ;[start, end] = current.range!
 

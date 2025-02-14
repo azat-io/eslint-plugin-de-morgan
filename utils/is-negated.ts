@@ -1,5 +1,7 @@
 import type { UnaryExpression, Node } from 'estree'
 
+import { hasNegationOperator } from './has-negation-operator'
+
 type ParentedNode = { parent?: Node } & Node
 
 /**
@@ -9,10 +11,6 @@ type ParentedNode = { parent?: Node } & Node
  * operator `!`.
  */
 export let isNegated = (node: ParentedNode): node is UnaryExpression =>
-  node.type === 'UnaryExpression' &&
-  node.operator === '!' &&
-  (node.argument.type !== 'UnaryExpression' ||
-    node.argument.operator !== '!') &&
-  (!node.parent ||
-    node.parent.type !== 'UnaryExpression' ||
-    node.parent.operator !== '!')
+  hasNegationOperator(node) &&
+  !hasNegationOperator(node.argument) &&
+  (!node.parent || !hasNegationOperator(node.parent))
