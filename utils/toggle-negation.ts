@@ -57,7 +57,7 @@ let toggleBinaryExpression = (
   ]
 
   if (notTransformableOperators.includes(node.operator)) {
-    return `!(${left} in ${right})`
+    return `!(${left} ${node.operator} ${right})`
   }
 
   let operatorMap: Record<string, BinaryOperator> = {

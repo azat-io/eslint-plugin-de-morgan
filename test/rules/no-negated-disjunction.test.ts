@@ -546,6 +546,19 @@ ruleTester.run('noNegatedDisjunction', rule, {
       output: "if (!('a' in x) && !('b' in x)) {}",
       code: "if (!('a' in x || 'b' in x)) {}",
     },
+    {
+      errors: [
+        {
+          data: {
+            original: "!(a instanceof A || b instanceof B)",
+            fixed: "!(a instanceof A) && !(b instanceof B)",
+          },
+          messageId: 'convertNegatedDisjunction',
+        },
+      ],
+      output: "if (!(a instanceof A) && !(b instanceof B)) {}",
+      code: "if (!(a instanceof A || b instanceof B)) {}",
+    }
   ],
   valid: [
     'if (!a) {}',
