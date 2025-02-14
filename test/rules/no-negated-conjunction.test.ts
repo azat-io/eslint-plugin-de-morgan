@@ -533,6 +533,19 @@ ruleTester.run('noNegatedConjunction', rule, {
       output: 'if (!(a ?? b) || !(c ?? d)) {}',
       code: 'if (!((a ?? b) && (c ?? d))) {}',
     },
+    {
+      errors: [
+        {
+          data: {
+            original: '!(a instanceof A && b instanceof B)',
+            fixed: '!(a instanceof A) || !(b instanceof B)',
+          },
+          messageId: 'convertNegatedConjunction',
+        },
+      ],
+      output: 'if (!(a instanceof A) || !(b instanceof B)) {}',
+      code: 'if (!(a instanceof A && b instanceof B)) {}',
+    },
   ],
   valid: [
     'if (!a) {}',
