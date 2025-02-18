@@ -28,11 +28,11 @@ let fakeContext: Rule.RuleContext = {
   },
 } as unknown as Rule.RuleContext
 
-let isConjunctionFake = (expr: Expression): boolean =>
-  expr.type === 'LogicalExpression' && expr.operator === '&&'
+let isConjunctionFake = (expression: Expression): boolean =>
+  expression.type === 'LogicalExpression' && expression.operator === '&&'
 
-let simpleTransformer = (expr: Expression): string =>
-  fakeContext.sourceCode.getText(expr)
+let simpleTransformer = (expression: Expression): string =>
+  fakeContext.sourceCode.getText(expression)
 
 let createIdentifier = (
   name: string,
@@ -136,10 +136,12 @@ describe('flattenOperands', () => {
   it('should stop processing when maximum recursion depth is exceeded', () => {
     let deepExpression = createNestedConjunction(110)
     let result = flattenOperands({
-      transformer: (expr: Expression, context: Rule.RuleContext): string =>
-        getNodeContent(expr, context).trim(),
-      predicate: (expr: Expression): boolean =>
-        expr.type === 'LogicalExpression' && expr.operator === '&&',
+      transformer: (
+        expression: Expression,
+        context: Rule.RuleContext,
+      ): string => getNodeContent(expression, context).trim(),
+      predicate: (expression: Expression): boolean =>
+        expression.type === 'LogicalExpression' && expression.operator === '&&',
       expression: deepExpression,
       context: fakeContext,
     })

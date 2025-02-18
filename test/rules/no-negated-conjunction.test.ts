@@ -93,19 +93,6 @@ ruleTester.run('noNegatedConjunction', rule, {
       errors: [
         {
           data: {
-            original: '!(a && !b)',
-            fixed: '!a || b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      code: 'foo(!(a && !b))',
-      output: 'foo(!a || b)',
-    },
-    {
-      errors: [
-        {
-          data: {
             original: '!(a && b)',
             fixed: '!a || !b',
           },
@@ -568,5 +555,6 @@ ruleTester.run('noNegatedConjunction', rule, {
     'if (!(a && b || c)) {}',
     'if (!(a || b && c)) {}',
     'if (!((a && b) || c)) {}',
+    'foo(!(a && !b))',
   ],
 })
