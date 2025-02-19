@@ -1,5 +1,7 @@
 import type { Rule } from 'eslint'
 
+import { hasNegationInsideParentheses } from '../utils/has-negation-inside-parentheses'
+import { hasBooleanContext } from '../utils/has-boolean-context'
 import { flattenOperands } from '../utils/flatten-operands'
 import { getNodeContent } from '../utils/get-node-content'
 import { toggleNegation } from '../utils/toggle-negation'
@@ -12,11 +14,11 @@ import { isNegated } from '../utils/is-negated'
 export default {
   create: context => ({
     UnaryExpression: node => {
-      if (
-        isNegated(node) &&
-        isConjunction(node.argument) &&
-        isPureGroup(node, context)
-      ) {
+      let isNegatedConjunction = isNegated(node) && isConjunction(node.argument)
+      let hasPureOuterGroup = isPureGroup(node, context)
+      let isSafeToFix =
+        hasBooleanContext(node) || !hasNegationInsideParentheses(node, context)
+      if (isNegatedConjunction && hasPureOuterGroup && isSafeToFix) {
         let originalExpression = getNodeContent(node, context)
         let toggledOperands = flattenOperands({
           transformer: toggleNegation,
