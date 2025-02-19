@@ -2,9 +2,10 @@ import type { Expression, Node } from 'estree'
 import type { Rule } from 'eslint'
 
 import { findOutermostParenthesizedNode } from './find-outermost-parenthesized-node'
+import { hasNegationOperator } from './has-negation-operator'
 import { isLogicalExpression } from './is-logical-expression'
 import { isUnaryExpression } from './is-unary-expression'
-import { getSourceCode } from './get-source-code'
+import { getNodeContent } from './get-node-content'
 
 /**
  * Recursively checks if the given expression contains a negation (`!`) inside.
@@ -12,7 +13,7 @@ import { getSourceCode } from './get-source-code'
  * @returns {boolean} True if the expression contains `!` inside.
  */
 let hasNegationInside = (node: Node): boolean => {
-  if (isUnaryExpression(node) && node.operator === '!') {
+  if (hasNegationOperator(node)) {
     return true
   }
   if (isLogicalExpression(node)) {
@@ -35,7 +36,7 @@ export let hasNegationInsideParentheses = (
   node: Expression,
   context: Rule.RuleContext,
 ): boolean => {
-  let sourceCode = getSourceCode(context).getText(node)
+  let sourceCode = getNodeContent(node, context)
   let outermostNode = findOutermostParenthesizedNode(node, sourceCode)
 
   if (!isUnaryExpression(outermostNode)) {

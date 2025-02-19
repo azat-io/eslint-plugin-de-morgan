@@ -11,4 +11,4 @@ import { getSourceCode } from './get-source-code'
  * @returns {string} The source code corresponding to the node.
  */
 export let getNodeContent = (node: Node, context: Rule.RuleContext): string =>
-  getSourceCode(context).getText(node).trim()
+  getSourceCode(context).getText(node)

@@ -1,5 +1,7 @@
 import type { BinaryOperator, Node } from 'estree'
 
+import { isBinaryExpression } from './is-binary-expression'
+
 type ParentedNode = { parent?: Node } & Node
 
 /**
@@ -53,7 +55,7 @@ let booleanControlFlowNodes = new Set<Node['type']>([
  * @returns {boolean} True if the node is a part of a binary comparison.
  */
 let isComparison = (parent: Node): boolean =>
-  parent.type === 'BinaryExpression' && comparisonOperators.has(parent.operator)
+  isBinaryExpression(parent) && comparisonOperators.has(parent.operator)
 
 let comparisonOperators = new Set<BinaryOperator>([
   '===',
