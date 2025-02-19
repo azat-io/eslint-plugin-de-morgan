@@ -3,7 +3,7 @@ import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
 
-import { hasNegationInsideParentheses } from '../../utils/has-negation-inside-parentheses'
+import { hasNegationInsideParens } from '../../utils/has-negation-inside-parens'
 
 interface FakeLogicalExpression extends LogicalExpression {
   right: Expression
@@ -66,11 +66,11 @@ let createIdentifier = (name: string): FakeNode => ({
   name,
 })
 
-describe('hasNegationInsideParentheses', () => {
+describe('hasNegationInsideParens', () => {
   it('should return true when a negation exists inside parentheses', () => {
     let node = createNegation(createIdentifier('a'), '!a')
     let wrappedNode = createNegation(node, '(!(a))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeTruthy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when a negation is inside a logical expression in parentheses', () => {
@@ -82,7 +82,7 @@ describe('hasNegationInsideParentheses', () => {
       operator: '&&',
     })
     let wrappedNode = createNegation(logicalNode, '(!( !a && b ))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeTruthy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when negations exist on both sides of a logical expression', () => {
@@ -95,7 +95,7 @@ describe('hasNegationInsideParentheses', () => {
       operator: '||',
     })
     let wrappedNode = createNegation(logicalNode, '(!( !a || !b ))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeTruthy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
 
   it('should return false when there are no negations inside the expression', () => {
@@ -106,12 +106,12 @@ describe('hasNegationInsideParentheses', () => {
       operator: '&&',
     })
     let wrappedNode = createNegation(logicalNode, '(!(a && b))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeFalsy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
   })
 
   it('should return false when the expression is a simple identifier without negation', () => {
     let node = createIdentifier('a')
-    expect(hasNegationInsideParentheses(node, fakeContext)).toBeFalsy()
+    expect(hasNegationInsideParens(node, fakeContext)).toBeFalsy()
   })
 
   it('should return false when there are nested logical expressions but no negations', () => {
@@ -128,7 +128,7 @@ describe('hasNegationInsideParentheses', () => {
       operator: '||',
     })
     let wrappedNode = createNegation(outerNode, '(!( (a && b) || c ))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeFalsy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
   })
 
   it('should return true when there is a negation deep inside a nested logical expression', () => {
@@ -145,6 +145,6 @@ describe('hasNegationInsideParentheses', () => {
       operator: '||',
     })
     let wrappedNode = createNegation(outerNode, '(!( (!a && b) || c ))')
-    expect(hasNegationInsideParentheses(wrappedNode, fakeContext)).toBeTruthy()
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
 })

@@ -1,4 +1,5 @@
 import type { BinaryOperator, Node } from 'estree'
+import type { Rule } from 'eslint'
 
 import { isBinaryExpression } from './is-binary-expression'
 
@@ -11,9 +12,14 @@ type ParentedNode = { parent?: Node } & Node
  * `while`, `for`), logical expressions (`&&`, `||`), explicit boolean coercions
  * (`!!`, `Boolean(expr)`), and comparison operations (`===`, `!==`, `<`, `>`).
  * @param {ParentedNode} node - The AST node to check.
+ * @param {Rule.RuleContext} [_context] - The ESLint rule context (technical
+ * argument).
  * @returns {boolean} True if the expression is used in a boolean context.
  */
-export let hasBooleanContext = (node: ParentedNode): boolean =>
+export let hasBooleanContext = (
+  node: ParentedNode,
+  _context: Rule.RuleContext,
+): boolean =>
   node.parent
     ? isControlFlowBooleanContext(node.parent) ||
       isComparison(node.parent) ||

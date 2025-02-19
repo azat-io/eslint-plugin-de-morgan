@@ -12,12 +12,19 @@ import type {
   Identifier,
   Node,
 } from 'estree'
+import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
 
 import { hasBooleanContext } from '../../utils/has-boolean-context'
 
 type FakeNode<T extends Node> = { parent?: Node } & T
+
+let fakeContext: Rule.RuleContext = {
+  sourceCode: {
+    getText: (node: { raw: string }) => node.raw,
+  },
+} as unknown as Rule.RuleContext
 
 describe('hasBooleanContext', () => {
   it('should return true when inside an IfStatement condition', () => {
@@ -29,7 +36,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when inside a WhileStatement condition', () => {
@@ -41,7 +48,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when inside a ForStatement test condition', () => {
@@ -55,7 +62,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when inside a DoWhileStatement condition', () => {
@@ -67,7 +74,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when inside a ConditionalExpression test', () => {
@@ -80,7 +87,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when part of a LogicalExpression (&& operator)', () => {
@@ -93,7 +100,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when part of a LogicalExpression (|| operator)', () => {
@@ -106,7 +113,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when part of a UnaryExpression with "!" operator', () => {
@@ -119,7 +126,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeTruthy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
   })
 
   it('should return false for a BinaryExpression with a non-boolean operator', () => {
@@ -132,7 +139,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = node
 
-    expect(hasBooleanContext(testNode)).toBeFalsy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
   })
 
   it('should return false for a literal number', () => {
@@ -141,7 +148,7 @@ describe('hasBooleanContext', () => {
       value: 123,
     }
 
-    expect(hasBooleanContext(node)).toBeFalsy()
+    expect(hasBooleanContext(node, fakeContext)).toBeFalsy()
   })
 
   it('should return false when inside a non-Boolean function call', () => {
@@ -154,7 +161,7 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = nonBooleanCall
 
-    expect(hasBooleanContext(testNode)).toBeFalsy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
   })
 
   it('should return false when inside an object property access', () => {
@@ -168,6 +175,6 @@ describe('hasBooleanContext', () => {
     }
     testNode.parent = memberExpression
 
-    expect(hasBooleanContext(testNode)).toBeFalsy()
+    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
   })
 })

@@ -1,6 +1,8 @@
 import type { LogicalExpression, Node } from 'estree'
 
+import { createTestWithParameters } from './create-test-with-parameters'
 import { isLogicalExpression } from './is-logical-expression'
+import { hasOperator } from './has-operator'
 
 /**
  * Checks whether the given AST node represents a disjunction (logical OR).
@@ -8,5 +10,7 @@ import { isLogicalExpression } from './is-logical-expression'
  * @returns {node is LogicalExpression} True if the node is a LogicalExpression
  * with operator `||`.
  */
-export let isDisjunction = (node: Node): node is LogicalExpression =>
-  isLogicalExpression(node) && node.operator === '||'
+export let isDisjunction = (node: Node): node is LogicalExpression => {
+  let test = createTestWithParameters(node as LogicalExpression)
+  return test(isLogicalExpression, hasOperator('||'))
+}

@@ -1,7 +1,10 @@
+import type { UnaryExpression } from 'estree'
 import type { Rule } from 'eslint'
 
-import { hasNegationInsideParentheses } from '../utils/has-negation-inside-parentheses'
+import { createTestWithParameters } from '../utils/create-test-with-parameters'
+import { hasNegationInsideParens } from '../utils/has-negation-inside-parens'
 import { hasBooleanContext } from '../utils/has-boolean-context'
+import { applyToProperty } from '../utils/apply-to-property'
 import { flattenOperands } from '../utils/flatten-operands'
 import { getNodeContent } from '../utils/get-node-content'
 import { toggleNegation } from '../utils/toggle-negation'
@@ -10,15 +13,24 @@ import { toSingleLine } from '../utils/to-single-line'
 import { joinOperands } from '../utils/join-operands'
 import { isPureGroup } from '../utils/is-pure-group'
 import { isNegated } from '../utils/is-negated'
+import { repository } from '../package.json'
+import { not } from '../utils/not'
+import { or } from '../utils/or'
+
+type ParentedExpression = Rule.NodeParentExtension & UnaryExpression
 
 export default {
   create: context => ({
-    UnaryExpression: node => {
-      let isNegatedConjunction = isNegated(node) && isConjunction(node.argument)
-      let hasPureOuterGroup = isPureGroup(node, context)
-      let isSafeToFix =
-        hasBooleanContext(node) || !hasNegationInsideParentheses(node, context)
-      if (isNegatedConjunction && hasPureOuterGroup && isSafeToFix) {
+    UnaryExpression: (node: ParentedExpression) => {
+      let test = createTestWithParameters(node, context)
+      if (
+        test(
+          isNegated,
+          applyToProperty('argument', isConjunction),
+          isPureGroup,
+          or(hasBooleanContext, not(hasNegationInsideParens)),
+        )
+      ) {
         let originalExpression = getNodeContent(node, context)
         let toggledOperands = flattenOperands({
           transformer: toggleNegation,
@@ -50,7 +62,7 @@ export default {
       description:
         'Transforms the negation of a conjunction !(A && B) into the ' +
         'equivalent !A || !B according to De Morgan’s law',
-      url: 'https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md',
+      url: `https://github.com/${repository}/blob/main/docs/no-negated-conjunction.md`,
       category: 'Best Practices',
       recommended: true,
     },
