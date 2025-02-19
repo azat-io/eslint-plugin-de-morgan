@@ -22,7 +22,7 @@ export interface FlattenOperandsOptions<T extends Expression> {
   expression: T
 }
 
-const MAX_DEPTH = 100
+const MAX_DEPTH = 10
 
 /**
  * Recursively flattens an expression tree into its individual operands using a
