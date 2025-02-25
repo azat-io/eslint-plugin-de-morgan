@@ -5,14 +5,12 @@ import { createTestWithParameters } from '../utils/create-test-with-parameters'
 import { hasNegationInsideParens } from '../utils/has-negation-inside-parens'
 import { hasBooleanContext } from '../utils/has-boolean-context'
 import { applyToProperty } from '../utils/apply-to-property'
-import { flattenOperands } from '../utils/flatten-operands'
 import { getNodeContent } from '../utils/get-node-content'
-import { toggleNegation } from '../utils/toggle-negation'
 import { isConjunction } from '../utils/is-conjunction'
 import { toSingleLine } from '../utils/to-single-line'
-import { joinOperands } from '../utils/join-operands'
 import { isPureGroup } from '../utils/is-pure-group'
 import { isNegated } from '../utils/is-negated'
+import { transform } from '../utils/transform'
 import { repository } from '../package.json'
 import { not } from '../utils/not'
 import { or } from '../utils/or'
@@ -31,29 +29,27 @@ export default {
           or(hasBooleanContext, not(hasNegationInsideParens)),
         )
       ) {
-        let originalExpression = getNodeContent(node, context)
-        let toggledOperands = flattenOperands({
-          transformer: toggleNegation,
-          expression: node.argument,
-          predicate: isConjunction,
-          context,
-        })
         let shouldWrapInParens = isConjunction(node.parent)
-        let fixedExpression = joinOperands(
-          toggledOperands,
+        let fixedExpression = transform({
+          expressionType: 'conjunction',
           shouldWrapInParens,
-          '||',
-        )
-
-        context.report({
-          data: {
-            original: toSingleLine(originalExpression),
-            fixed: toSingleLine(fixedExpression),
-          },
-          fix: fixer => fixer.replaceText(node, fixedExpression),
-          messageId: 'convertNegatedConjunction',
+          context,
           node,
         })
+
+        if (fixedExpression) {
+          let originalExpression = getNodeContent(node, context)
+
+          context.report({
+            data: {
+              original: toSingleLine(originalExpression),
+              fixed: toSingleLine(fixedExpression),
+            },
+            fix: fixer => fixer.replaceText(node, fixedExpression),
+            messageId: 'convertNegatedConjunction',
+            node,
+          })
+        }
       }
     },
   }),

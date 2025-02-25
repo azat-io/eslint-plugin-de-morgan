@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import dedent from 'dedent'
 
 import { toSingleLine } from '../../utils/to-single-line'
 
@@ -23,7 +24,9 @@ this   is a    test.`
   })
 
   it('should handle strings with only whitespace and newlines', () => {
-    let input = '   \n  '
+    let input = dedent`
+        
+    `
     let expected = ''
     expect(toSingleLine(input)).toBe(expected)
   })

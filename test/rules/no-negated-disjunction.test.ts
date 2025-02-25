@@ -1,5 +1,6 @@
 import { describe, it } from 'vitest'
 import { RuleTester } from 'eslint'
+import dedent from 'dedent'
 
 import rule from '../../rules/no-negated-disjunction'
 
@@ -545,6 +546,27 @@ ruleTester.run('noNegatedDisjunction', rule, {
       ],
       output: 'if (!(a instanceof A) && !(b instanceof B)) {}',
       code: 'if (!(a instanceof A || b instanceof B)) {}',
+    },
+    {
+      errors: [
+        {
+          data: {
+            original: '!( a || b )',
+            fixed: '!a && !b',
+          },
+          messageId: 'convertNegatedDisjunction',
+        },
+      ],
+      code: dedent`
+        if (!(
+          a ||
+          b
+        )) {}
+      `,
+      output: dedent`
+        if (!a &&
+          !b) {}
+      `,
     },
   ],
   valid: [
