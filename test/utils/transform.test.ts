@@ -331,4 +331,44 @@ describe('transform', () => {
     let operatorCount = (result?.match(/\|\|/gu) ?? []).length
     expect(operatorCount).toBeLessThan(15)
   })
+
+  it('should handle special formatting with missing ranges', () => {
+    let leftId = {
+      type: 'Identifier',
+      range: [0, 1],
+      id: 'id_a',
+      name: 'a',
+      raw: 'a',
+    }
+
+    let rightId = {
+      type: 'Identifier',
+      id: 'id_b',
+      name: 'b',
+      raw: 'b',
+    }
+
+    let conjunction = {
+      type: 'LogicalExpression',
+      id: 'conjunction',
+      raw: 'a  &&  b',
+      operator: '&&',
+      right: rightId,
+      range: [0, 8],
+      left: leftId,
+    }
+
+    let unaryExpr = createUnaryExpression(conjunction as FakeLogicalExpression)
+
+    let context = createFakeContext('a  &&  b')
+
+    let result = transform({
+      node: unaryExpr as unknown as UnaryExpression,
+      expressionType: 'conjunction',
+      shouldWrapInParens: false,
+      context,
+    })
+
+    expect(result).toBe('!a || !b')
+  })
 })
