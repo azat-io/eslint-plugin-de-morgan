@@ -7,7 +7,7 @@ import { hasBooleanContext } from '../utils/has-boolean-context'
 import { applyToProperty } from '../utils/apply-to-property'
 import { getNodeContent } from '../utils/get-node-content'
 import { isConjunction } from '../utils/is-conjunction'
-import { toSingleLine } from '../utils/to-single-line'
+import { sanitizeCode } from '../utils/sanitize-code'
 import { isPureGroup } from '../utils/is-pure-group'
 import { isNegated } from '../utils/is-negated'
 import { transform } from '../utils/transform'
@@ -42,8 +42,8 @@ export default {
 
           context.report({
             data: {
-              original: toSingleLine(originalExpression),
-              fixed: toSingleLine(fixedExpression),
+              original: sanitizeCode(originalExpression),
+              fixed: sanitizeCode(fixedExpression),
             },
             fix: fixer => fixer.replaceText(node, fixedExpression),
             messageId: 'convertNegatedConjunction',

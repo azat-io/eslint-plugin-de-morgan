@@ -1,6 +1,5 @@
 import { describe, it } from 'vitest'
 import { RuleTester } from 'eslint'
-import dedent from 'dedent'
 
 import rule from '../../rules/no-negated-conjunction'
 
@@ -538,22 +537,53 @@ ruleTester.run('noNegatedConjunction', rule, {
       errors: [
         {
           data: {
-            original: '!( a && b )',
+            original: '!(a && b)',
             fixed: '!a || !b',
           },
           messageId: 'convertNegatedConjunction',
         },
       ],
-      code: dedent`
-        if (!(
-          a &&
-          b
-        )) {}
-      `,
-      output: dedent`
-        if (!a ||
-          !b) {}
-      `,
+      output: 'if (!a  ||  !b) {}',
+      code: 'if (!(a  &&  b)) {}',
+    },
+    {
+      errors: [
+        {
+          data: {
+            original: '!(a && b)',
+            fixed: '!a || !b',
+          },
+          messageId: 'convertNegatedConjunction',
+        },
+      ],
+      output: 'if (!a ||\n    !b) {}',
+      code: 'if (!(a &&\n    b)) {}',
+    },
+    {
+      errors: [
+        {
+          data: {
+            original: '!(a && b)',
+            fixed: '!a || !b',
+          },
+          messageId: 'convertNegatedConjunction',
+        },
+      ],
+      output: 'if (!a || // important condition\n    !b) {}',
+      code: 'if (!(a && // important condition\n    b)) {}',
+    },
+    {
+      errors: [
+        {
+          data: {
+            original: '!(a && b)',
+            fixed: '!a || !b',
+          },
+          messageId: 'convertNegatedConjunction',
+        },
+      ],
+      output: 'if (!a || /* this is why we need b */ !b) {}',
+      code: 'if (!(a && /* this is why we need b */ b)) {}',
     },
   ],
   valid: [
