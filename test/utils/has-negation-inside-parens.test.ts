@@ -147,4 +147,49 @@ describe('hasNegationInsideParens', () => {
     let wrappedNode = createNegation(outerNode, '(!( (!a && b) || c ))')
     expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
+
+  it('should return false when there is only double negation for type coercion', () => {
+    let doubleNegation = createNegation(
+      createNegation(createIdentifier('b'), '!b'),
+      '!!b',
+    )
+
+    let logicalNode = createLogicalExpression({
+      left: createIdentifier('a'),
+      right: doubleNegation,
+      code: '(a && !!b)',
+      operator: '&&',
+    })
+
+    let wrappedNode = createNegation(logicalNode, '!(a && !!b)')
+
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
+  })
+
+  it('should return true when there is double negation and a real negation', () => {
+    let doubleNegation = createNegation(
+      createNegation(createIdentifier('b'), '!b'),
+      '!!b',
+    )
+
+    let realNegation = createNegation(createIdentifier('c'), '!c')
+
+    let innerLogical = createLogicalExpression({
+      left: doubleNegation,
+      right: realNegation,
+      code: '(!!b && !c)',
+      operator: '&&',
+    })
+
+    let logicalNode = createLogicalExpression({
+      left: createIdentifier('a'),
+      code: '(a && !!b && !c)',
+      right: innerLogical,
+      operator: '&&',
+    })
+
+    let wrappedNode = createNegation(logicalNode, '!(a && !!b && !c)')
+
+    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
+  })
 })
