@@ -11,6 +11,20 @@ import { toggleNegation } from './toggle-negation'
 import { getSourceCode } from './get-source-code'
 import { isConjunction } from './is-conjunction'
 import { isDisjunction } from './is-disjunction'
+import { parenthesize } from './parenthesize'
+
+interface TransformUtilityOptions {
+  /** The source logical operator. */
+  sourceOperator: LogicalOperator
+  /** The target logical operator. */
+  targetOperator: LogicalOperator
+  /** The type of logical expression. */
+  expressionType: ExpressionType
+  /** The logical expression to transform. */
+  expression: LogicalExpression
+  /** The ESLint rule context. */
+  context: Rule.RuleContext
+}
 
 interface TransformOptions {
   /** The type of logical expression to transform. */
@@ -21,28 +35,6 @@ interface TransformOptions {
   context: Rule.RuleContext
   /** The UnaryExpression node to transform. */
   node: UnaryExpression
-}
-
-interface TransformWithFormattingOptions {
-  /** The source logical operator. */
-  sourceOperator: LogicalOperator
-  /** The target logical operator. */
-  targetOperator: LogicalOperator
-  /** The logical expression to transform. */
-  expression: LogicalExpression
-  /** The ESLint rule context. */
-  context: Rule.RuleContext
-}
-
-interface TransformSimpleOptions {
-  /** The target logical operator. */
-  targetOperator: LogicalOperator
-  /** The type of logical expression. */
-  expressionType: ExpressionType
-  /** The logical expression to transform. */
-  expression: LogicalExpression
-  /** The ESLint rule context. */
-  context: Rule.RuleContext
 }
 
 interface FlattenOperandsOptions {
@@ -91,7 +83,7 @@ let hasSpecialFormatting = (text: string): boolean =>
 
 /**
  * Transforms an expression with special formatting (comments, multiple spaces).
- * @param {TransformWithFormattingOptions} options - The transformation options.
+ * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression with preserved formatting.
  */
 let transformWithFormatting = ({
@@ -99,7 +91,7 @@ let transformWithFormatting = ({
   targetOperator,
   expression,
   context,
-}: TransformWithFormattingOptions): string => {
+}: TransformUtilityOptions): string => {
   let sourceCode = getSourceCode(context)
 
   let leftText = toggleNegation(expression.left, context)
@@ -160,7 +152,7 @@ let flattenOperands = ({
 
 /**
  * Transforms a simple logical expression without special formatting.
- * @param {TransformOptions} options - The transformation options.
+ * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression.
  */
 let transformSimple = ({
@@ -168,7 +160,7 @@ let transformSimple = ({
   targetOperator,
   expression,
   context,
-}: TransformSimpleOptions): string => {
+}: TransformUtilityOptions): string => {
   let operands = flattenOperands({
     expressionType,
     expression,
@@ -196,27 +188,25 @@ export let transform = ({
 
   let sourceOperator: LogicalOperator =
     expressionType === 'conjunction' ? '&&' : '||'
-  let targetOperator = OPERATOR_MAPPING[sourceOperator]!
 
   if (argument.operator !== sourceOperator) {
     return null
   }
 
   let originalText = getNodeContent(argument, context)
+  let targetOperator = OPERATOR_MAPPING[sourceOperator]!
+
+  let transformUtilityOptions: TransformUtilityOptions = {
+    expression: argument,
+    expressionType,
+    sourceOperator,
+    targetOperator,
+    context,
+  }
 
   let result = hasSpecialFormatting(originalText)
-    ? transformWithFormatting({
-        expression: argument,
-        sourceOperator,
-        targetOperator,
-        context,
-      })
-    : transformSimple({
-        expression: argument,
-        expressionType,
-        targetOperator,
-        context,
-      })
+    ? transformWithFormatting(transformUtilityOptions)
+    : transformSimple(transformUtilityOptions)
 
-  return shouldWrapInParens ? `(${result})` : result
+  return parenthesize(result, shouldWrapInParens)
 }

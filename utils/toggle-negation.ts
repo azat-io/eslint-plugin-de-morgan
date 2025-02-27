@@ -10,6 +10,7 @@ import type { Rule } from 'eslint'
 import { isLogicalExpression } from './is-logical-expression'
 import { isBinaryExpression } from './is-binary-expression'
 import { getNodeContent } from './get-node-content'
+import { parenthesize } from './parenthesize'
 import { isBoolean } from './is-boolean'
 
 /**
@@ -78,7 +79,7 @@ let toggleLogicalExpression = (
   node: LogicalExpression,
   context: Rule.RuleContext,
 ): string => {
-  let content = `(${getNodeContent(node, context).trim()})`
+  let content = parenthesize(getNodeContent(node, context).trim())
   return toggleCode(content)
 }
 
