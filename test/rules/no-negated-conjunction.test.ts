@@ -197,7 +197,7 @@ ruleTester.run('noNegatedConjunction', rule, {
       errors: [
         {
           data: {
-            original: '!( a && b )',
+            original: '!(a && b)',
             fixed: '!a || !b',
           },
           messageId: 'convertNegatedConjunction',

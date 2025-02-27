@@ -21,7 +21,11 @@ export let sanitizeCode = (code: string): string => {
     '',
   )
 
-  let normalized = withoutComments.replaceAll(/\s+/gu, ' ').trim()
+  let normalized = withoutComments
+    .replaceAll(/\s+/gu, ' ')
+    .replaceAll(/\(\s+/gu, '(')
+    .replaceAll(/\s+\)/gu, ')')
+    .trim()
 
   for (let [index, string_] of stringLiterals.entries()) {
     normalized = normalized.replace(`__STRING_LITERAL_${index}__`, string_)
