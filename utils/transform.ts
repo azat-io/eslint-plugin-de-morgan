@@ -105,6 +105,12 @@ let transformWithFormatting = ({
   let [rightStart] = expression.right.range
   let textBetween = sourceCode.text.slice(leftEnd, rightStart)
 
+  let endsWithOpeningParen = /\(\s*$/u.test(textBetween)
+
+  if (endsWithOpeningParen) {
+    textBetween = textBetween.replace(/\(\s*$/u, '')
+  }
+
   let formattedOperator = textBetween.replaceAll(
     new RegExp(sourceOperator.replaceAll(/[$()*+.?[\\\]^{|}]/gu, '\\$&'), 'gu'),
     targetOperator,
@@ -166,6 +172,7 @@ let transformSimple = ({
     expression,
     context,
   })
+
   return operands.join(` ${targetOperator} `)
 }
 

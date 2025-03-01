@@ -79,8 +79,8 @@ let toggleLogicalExpression = (
   node: LogicalExpression,
   context: Rule.RuleContext,
 ): string => {
-  let content = parenthesize(getNodeContent(node, context).trim())
-  return toggleCode(content)
+  let content = getNodeContent(node, context).trim()
+  return toggleCode(parenthesize(content))
 }
 
 /**

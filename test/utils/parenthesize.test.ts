@@ -7,6 +7,10 @@ describe('parenthesize', () => {
     expect(parenthesize('foo')).toBe('(foo)')
   })
 
+  it('wraps a string in parentheses if condition is true', () => {
+    expect(parenthesize('foo', true)).toBe('(foo)')
+  })
+
   it('does not wrap a string in parentheses if condition is false', () => {
     expect(parenthesize('foo', false)).toBe('foo')
   })
