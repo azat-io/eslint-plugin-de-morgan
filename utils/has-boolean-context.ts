@@ -22,7 +22,7 @@ export let hasBooleanContext = (
 ): boolean =>
   node.parent
     ? isControlFlowBooleanContext(node.parent) ||
-      isComparison(node.parent) ||
+      isBooleanOperation(node.parent) ||
       isBooleanFunction(node.parent)
     : false
 
@@ -54,22 +54,25 @@ let booleanControlFlowNodes = new Set<Node['type']>([
 ])
 
 /**
- * Checks if the given node is part of a comparison operation.
- *
- * Supported operators: `===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`.
+ * Checks if the given node is part of an operation that always returns a
+ * boolean value. Supported operators:
+ * - Comparison: `===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`
+ * - Type checking: `in`, `instanceof`
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is a part of a binary comparison.
  */
-let isComparison = (parent: Node): boolean =>
-  isBinaryExpression(parent) && comparisonOperators.has(parent.operator)
+let isBooleanOperation = (parent: Node): boolean =>
+  isBinaryExpression(parent) && booleanOperators.has(parent.operator)
 
-let comparisonOperators = new Set<BinaryOperator>([
+let booleanOperators = new Set<BinaryOperator>([
+  'instanceof',
   '===',
   '!==',
   '==',
   '!=',
   '<=',
   '>=',
+  'in',
   '<',
   '>',
 ])
