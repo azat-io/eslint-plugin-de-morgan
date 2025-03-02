@@ -65,6 +65,9 @@ importers:
       vite-plugin-dts:
         specifier: ^4.5.1
         version: 4.5.1(@types/node@22.13.7)(rollup@4.34.8)(typescript@5.8.2)(vite@6.2.0(@types/node@22.13.7)(jiti@2.4.2)(yaml@2.7.0))
+      vite-plugin-prettier-format:
+        specifier: ^1.0.0
+        version: 1.0.0(prettier@3.5.2)
       vitest:
         specifier: ^3.0.7
         version: 3.0.7(@types/node@22.13.7)(jiti@2.4.2)(yaml@2.7.0)
@@ -3356,6 +3359,12 @@ packages:
     peerDependenciesMeta:
       vite:
         optional: true
+
+  vite-plugin-prettier-format@1.0.0:
+    resolution: {integrity: sha512-lJCT7cQ5+GbiavfRF+a5sOoZrAzfbg2+yTzHIfUijJuksV9cD4W6JbL55m3qX9rwJSy+W7zv5MM5EEsloDrlog==}
+    engines: {node: ^18.0.0 || >=20.0.0}
+    peerDependencies:
+      prettier: '>=3.0.0'
 
   vite@6.2.0:
     resolution: {integrity: sha512-7dPxoo+WsT/64rDcwoOjk76XHj+TqNTIvHKcuMQ1k4/SeHDaQt5GFAeLYzrimZrMpn/O6DtdI03WUjdxuPM0oQ==}
@@ -7284,6 +7293,10 @@ snapshots:
       - '@types/node'
       - rollup
       - supports-color
+
+  vite-plugin-prettier-format@1.0.0(prettier@3.5.2):
+    dependencies:
+      prettier: 3.5.2
 
   vite@6.2.0(@types/node@22.13.7)(jiti@2.4.2)(yaml@2.7.0):
     dependencies:
