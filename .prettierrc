@@ -1,4 +1,5 @@
 {
+  "plugins": ["prettier-plugin-jsdoc"],
   "arrowParens": "avoid",
   "bracketSpacing": true,
   "endOfLine": "lf",

@@ -11,6 +11,7 @@ import { getNodeContent } from './get-node-content'
  * Recursively checks if the given expression contains a "relevant" negation
  * (`!`). Double negations (`!!`) are ignored as they are typically used for
  * type coercion.
+ *
  * @param {Node} node - The AST expression node to check.
  * @returns {boolean} True if the expression contains a relevant `!` inside.
  */
@@ -39,9 +40,10 @@ let hasNegationInside = (node: Node): boolean => {
  * Checks if there is a negation (`!`) inside the outermost parentheses of a
  * given negated expression. This is useful for determining if De Morgan's laws
  * can be applied without changing the logic.
+ *
  * @param {Node} node - The starting node, assumed to be of the form `!(...)`.
  * @param {Rule.RuleContext} context - The ESLint rule context, used to access
- * source code.
+ *   source code.
  * @returns {boolean} True if there is a negation (`!`) inside the parentheses.
  */
 export let hasNegationInsideParens = (

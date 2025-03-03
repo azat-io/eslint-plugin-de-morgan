@@ -18,6 +18,7 @@ import { isBoolean } from './is-boolean'
  * provided code string starts with an exclamation mark ('!'), this function
  * removes it and returns the resulting string. Otherwise, it prepends an
  * exclamation mark to the string and returns it.
+ *
  * @param {string} code - The code string to toggle the exclamation mark on.
  * @returns {string} The code string with the toggled exclamation mark.
  */
@@ -27,8 +28,9 @@ export let toggleCode = (code: string): string =>
 /**
  * Toggles the operator in a BinaryExpression. This function expects that the
  * operator is one of the supported ones: `===`, `!==`, `==`, or `!=`. It
- * returns the expression with the operator toggled, e.g. `a === b` becomes
- * `a !== b`.
+ * returns the expression with the operator toggled, e.g. `a === b` becomes `a
+ * !== b`.
+ *
  * @param {BinaryExpression} node - The binary expression ESLint node.
  * @param {Rule.RuleContext} context - The ESLint rule context.
  * @returns {string} The toggled expression.
@@ -84,11 +86,12 @@ let toggleLogicalExpression = (
 }
 
 /**
- * Toggles the negation of the given expression. If the expression starts with
- * a '!', this function removes the leading '!' and returns the rest of the
+ * Toggles the negation of the given expression. If the expression starts with a
+ * '!', this function removes the leading '!' and returns the rest of the
  * expression. Otherwise, it prepends a '!' to the expression. This function
  * does not assume that the given expression is necessarily a UnaryExpression;
  * it simply toggles the presence of a leading '!' in the source text.
+ *
  * @param {Expression} node - The ESLint expression node.
  * @param {Rule.RuleContext} context - The ESLint rule context.
  * @returns {string} The expression with toggled negation.
@@ -105,6 +108,7 @@ export let toggleUnaryExpression = (
  * Toggles a boolean literal. If the literal's value is boolean, returns the
  * toggled boolean literal as a string: `true` becomes `"false"` and `false`
  * becomes `"true"`.
+ *
  * @param {Literal} node - The ESLint literal node.
  * @returns {string} The toggled boolean literal.
  */
@@ -114,14 +118,16 @@ let toggleBooleanLiteral = (node: Literal): string =>
 /**
  * Toggles the negation of the given expression. The function applies the
  * following strategies in order:
- * 1. If the expression is a BinaryExpression with a supported operator (`===`,
- * `!==`, `==`, or `!=`),
- * it returns the expression with the operator toggled.
+ *
+ * 1. If the expression is a `BinaryExpression` with a supported binary operator
+ *    (`===`, `!==`, `==`, or `!=`), it returns the expression with the operator
+ *    toggled.
  * 2. If the expression is a boolean literal, it returns the toggled boolean
- * literal.
- * 3. If the expression is a UnaryExpression (i.e. already negated), it returns
- * the expression without the leading '!'.
+ *    literal.
+ * 3. If the expression is a `UnaryExpression` (i.e. already negated), it will
+ *    return the expression without the leading '!'.
  * 4. Otherwise, it returns the expression with a '!' prepended.
+ *
  * @param {Expression} node - The expression node to toggle negation on.
  * @param {Rule.RuleContext} context - The ESLint rule context.
  * @returns {string} The toggled expression.

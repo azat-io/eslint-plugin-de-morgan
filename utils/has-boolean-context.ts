@@ -11,9 +11,10 @@ type ParentedNode = { parent?: Node } & Node
  * Boolean contexts include conditions in control flow statements (`if`,
  * `while`, `for`), logical expressions (`&&`, `||`), explicit boolean coercions
  * (`!!`, `Boolean(expr)`), and comparison operations (`===`, `!==`, `<`, `>`).
+ *
  * @param {ParentedNode} node - The AST node to check.
  * @param {Rule.RuleContext} [_context] - The ESLint rule context (technical
- * argument).
+ *   argument).
  * @returns {boolean} True if the expression is used in a boolean context.
  */
 export let hasBooleanContext = (
@@ -31,12 +32,14 @@ export let hasBooleanContext = (
  * boolean value.
  *
  * These structures include:
+ *
  * - `if (expr) {...}`
  * - `while (expr) {...}`
  * - `for (; expr; ) {...}`
  * - `expr ? a : b` (ternary)
  * - Logical expressions (`&&`, `||`)
  * - Explicit coercion via `!!expr`
+ *
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is in a boolean context.
  */
@@ -56,8 +59,10 @@ let booleanControlFlowNodes = new Set<Node['type']>([
 /**
  * Checks if the given node is part of an operation that always returns a
  * boolean value. Supported operators:
+ *
  * - Comparison: `===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`
  * - Type checking: `in`, `instanceof`
+ *
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is a part of a binary comparison.
  */
@@ -80,6 +85,7 @@ let booleanOperators = new Set<BinaryOperator>([
 /**
  * Checks if the given node is passed to a function that explicitly converts it
  * to a boolean.
+ *
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is passed to `Boolean()`.
  */

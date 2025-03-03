@@ -1,6 +1,7 @@
 /**
  * Prepares a code snippet for display in error messages by removing comments
  * and normalizing whitespace to a single line.
+ *
  * @param {string} code - The code snippet to clean.
  * @returns {string} The cleaned single-line code without comments.
  */

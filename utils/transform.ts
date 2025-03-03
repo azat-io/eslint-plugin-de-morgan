@@ -59,6 +59,7 @@ const OPERATOR_MAPPING: Partial<Record<LogicalOperator, LogicalOperator>> = {
 
 /**
  * Checks if the expression matches the specified logical type.
+ *
  * @param {Expression} expression - The expression to check.
  * @param {ExpressionType} type - The type to check against.
  * @returns {boolean} True if the expression matches the type, false otherwise.
@@ -72,6 +73,7 @@ let matchesExpressionType = (
 /**
  * Checks if the text contains special formatting like comments or multiple
  * spaces.
+ *
  * @param {string} text - The text to check.
  * @returns {boolean} True if the text contains special formatting.
  */
@@ -83,6 +85,7 @@ let hasSpecialFormatting = (text: string): boolean =>
 
 /**
  * Transforms an expression with special formatting (comments, multiple spaces).
+ *
  * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression with preserved formatting.
  */
@@ -122,6 +125,7 @@ let transformWithFormatting = ({
 /**
  * Recursively flattens a logical expression tree into a list of operands and
  * transforms them.
+ *
  * @param {FlattenOperandsOptions} options - The flattening options.
  * @returns {string[]} Array of transformed operands.
  */
@@ -158,6 +162,7 @@ let flattenOperands = ({
 
 /**
  * Transforms a simple logical expression without special formatting.
+ *
  * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression.
  */
@@ -177,13 +182,14 @@ let transformSimple = ({
 }
 
 /**
- * Transforms a negated logical expression according to De Morgan's law.
- * Can handle both conjunctions `(!(A && B) -> !A || !B)` and disjunctions
- * `(!(A || B) -> !A && !B)`. Preserves formatting, comments, and whitespace in
- * the transformed expression.
+ * Transforms a negated logical expression according to De Morgan's law. Can
+ * handle both conjunctions `(!(A && B) -> !A || !B)` and disjunctions `(!(A ||
+ * B) -> !A && !B)`. Preserves formatting, comments, and whitespace in the
+ * transformed expression.
+ *
  * @param {TransformOptions} options - The transformation options.
  * @returns {string | null} The transformed expression or null if transformation
- * is not applicable.
+ *   is not applicable.
  */
 export let transform = ({
   shouldWrapInParens,
