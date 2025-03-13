@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.1
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v1.2.0...v1.2.1)
+
+### 🐞 Bug Fixes
+
+- Export plugin meta data ([e39d72a](https://github.com/azat-io/eslint-plugin-de-morgan/commit/e39d72a))
+
+### ❤️ Contributors
+
+- Ntnyq ([@ntnyq](https://github.com/ntnyq))
+
 ## v1.2.0
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v1.1.0...v1.2.0)
