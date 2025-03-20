@@ -22,7 +22,7 @@ import { isBoolean } from './is-boolean'
  * @param {string} code - The code string to toggle the exclamation mark on.
  * @returns {string} The code string with the toggled exclamation mark.
  */
-export let toggleCode = (code: string): string =>
+let toggleCode = (code: string): string =>
   code.startsWith('!') ? code.replace(/^!/u, '') : `!${code}`
 
 /**
@@ -96,7 +96,7 @@ let toggleLogicalExpression = (
  * @param {Rule.RuleContext} context - The ESLint rule context.
  * @returns {string} The expression with toggled negation.
  */
-export let toggleUnaryExpression = (
+let toggleUnaryExpression = (
   node: Expression,
   context: Rule.RuleContext,
 ): string => {
