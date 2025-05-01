@@ -115,7 +115,10 @@ let transformWithFormatting = ({
   }
 
   let formattedOperator = textBetween.replaceAll(
-    new RegExp(sourceOperator.replaceAll(/[$()*+.?[\\\]^{|}]/gu, '\\$&'), 'gu'),
+    new RegExp(
+      sourceOperator.replaceAll(/[$()*+.?[\\\]^{|}]/gu, String.raw`\$&`),
+      'gu',
+    ),
     targetOperator,
   )
 
