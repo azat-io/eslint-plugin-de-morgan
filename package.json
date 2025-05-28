@@ -38,6 +38,7 @@
     "release:prepare:package-json": "prettier --write package.json",
     "release:version": "changelogen --output changelog.md --release --no-commit --no-tag",
     "test": "pnpm run /^test:/",
+    "test:benchmark": "eslint-rule-benchmark run",
     "test:format": "prettier --check \"**/*.{astro,svelte,js,ts,json,md,yml}\"",
     "test:js": "eslint .",
     "test:packages": "pnpm dedupe --check",
@@ -47,7 +48,7 @@
     "test:usage": "knip"
   },
   "devDependencies": {
-    "@azat-io/eslint-config": "^2.27.0",
+    "@azat-io/eslint-config": "^2.31.0",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@types/estree": "^1.0.7",
@@ -60,6 +61,7 @@
     "dedent": "^1.6.0",
     "eslint": "9.25.1",
     "eslint-plugin-eslint-plugin": "^6.4.0",
+    "eslint-rule-benchmark": "^0.7.0",
     "jiti": "^2.4.2",
     "knip": "^5.52.0",
     "prettier": "^3.5.3",

@@ -1,5 +1,5 @@
 {
-  "exclude": ["node_modules", "coverage"],
+  "exclude": ["node_modules", "coverage", "benchmark/**/*"],
   "include": ["**/*.ts"],
   "compilerOptions": {
     "noPropertyAccessFromIndexSignature": true,
