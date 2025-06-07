@@ -9,5 +9,11 @@
     "pnpm-lock.yaml",
     "tsconfig.json"
   ],
-  "words": ["azat", "changelogen", "changelogithub"]
+  "words": [
+    "azat",
+    "changelogen",
+    "changelogithub",
+    "crosspost",
+    "humanwhocodes"
+  ]
 }
