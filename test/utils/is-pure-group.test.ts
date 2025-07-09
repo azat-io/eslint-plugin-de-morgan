@@ -27,6 +27,8 @@ let fakeContext: Rule.RuleContext = {
 
 describe('isPureGroup', () => {
   it('should return false for a mixed group: (a && b || c)', () => {
+    expect.assertions(1)
+
     let code = '(a && b || c)'
     currentCode = code
 
@@ -65,6 +67,8 @@ describe('isPureGroup', () => {
   })
 
   it('should return true for a pure group with nested grouping: ((a && b) || c)', () => {
+    expect.assertions(1)
+
     let code = '((a && b) || c)'
     currentCode = code
 
@@ -103,6 +107,8 @@ describe('isPureGroup', () => {
   })
 
   it('should return true for a group with only &&: (a && b)', () => {
+    expect.assertions(1)
+
     let code = '(a && b)'
     currentCode = code
 
@@ -129,6 +135,8 @@ describe('isPureGroup', () => {
   })
 
   it('should handle deeply nested expressions: (((a && b) || c) && d)', () => {
+    expect.assertions(1)
+
     let code = '(((a && b) || c) && d)'
     currentCode = code
 
@@ -187,6 +195,8 @@ describe('isPureGroup', () => {
   })
 
   it('should stop at the first parenthesized parent: a && (b || c)', () => {
+    expect.assertions(1)
+
     let code = 'a && (b || c)'
     currentCode = code
 
@@ -229,6 +239,8 @@ describe('isPureGroup', () => {
   })
 
   it('should stop at outer parentheses when checking parent chain: (a && (b || c))', () => {
+    expect.assertions(1)
+
     let code = '(a && (b || c))'
     currentCode = code
 

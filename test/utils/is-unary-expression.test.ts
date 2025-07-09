@@ -6,6 +6,8 @@ import { isUnaryExpression } from '../../utils/is-unary-expression'
 
 describe('isUnaryExpression', () => {
   it('should return true for a node of type UnaryExpression', () => {
+    expect.assertions(1)
+
     let unaryNode = {
       argument: { type: 'Identifier', name: 'a' },
       type: 'UnaryExpression',
@@ -16,6 +18,8 @@ describe('isUnaryExpression', () => {
   })
 
   it('should return false for a node that is not a UnaryExpression', () => {
+    expect.assertions(1)
+
     let nonUnaryNode = {
       type: 'Identifier',
       name: 'a',

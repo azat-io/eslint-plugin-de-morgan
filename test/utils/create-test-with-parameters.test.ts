@@ -4,6 +4,8 @@ import { createTestWithParameters } from '../../utils/create-test-with-parameter
 
 describe('createTestWithParams', () => {
   it('should return true when all predicates return true', () => {
+    expect.assertions(1)
+
     let test = createTestWithParameters(3)
     let predicates = [
       (x: number) => x > 0,
@@ -15,6 +17,8 @@ describe('createTestWithParams', () => {
   })
 
   it('should return false when at least one predicate returns false', () => {
+    expect.assertions(1)
+
     let test = createTestWithParameters(3)
     let predicates = [
       (x: number) => x > 0,
@@ -26,11 +30,15 @@ describe('createTestWithParams', () => {
   })
 
   it('should return true for an empty array of predicates', () => {
+    expect.assertions(1)
+
     let test = createTestWithParameters(42)
     expect(test()).toBeTruthy()
   })
 
   it('should stop execution on the first false result', () => {
+    expect.assertions(2)
+
     let callCount = 0
     let test = createTestWithParameters(3)
     let predicates = [
@@ -57,6 +65,8 @@ describe('createTestWithParams', () => {
   })
 
   it('should work with multiple parameters', () => {
+    expect.assertions(2)
+
     let test = createTestWithParameters(3, 4)
     let predicates = [
       (x: number, y: number) => x + y > 0,

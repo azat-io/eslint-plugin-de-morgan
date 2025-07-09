@@ -101,6 +101,8 @@ let createIdentifier = (
 
 describe('transform', () => {
   it('should transform a simple negated conjunction', () => {
+    expect.assertions(1)
+
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [5, 6])
     let conjunction = createConjunction(leftId, rightId)
@@ -119,6 +121,8 @@ describe('transform', () => {
   })
 
   it('should transform a negated conjunction and wrap in parentheses when requested', () => {
+    expect.assertions(1)
+
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [5, 6])
     let conjunction = createConjunction(leftId, rightId)
@@ -137,6 +141,8 @@ describe('transform', () => {
   })
 
   it('should preserve formatting in the transformed expression', () => {
+    expect.assertions(1)
+
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [7, 8])
     let conjunction = createConjunction(leftId, rightId, '  &&  ')
@@ -157,6 +163,8 @@ describe('transform', () => {
   })
 
   it('should transform a negated conjunction with multiple operands', () => {
+    expect.assertions(1)
+
     let idA = createIdentifier('a', [0, 1])
     let idB = createIdentifier('b', [5, 6])
     let idC = createIdentifier('c', [10, 11])
@@ -180,6 +188,8 @@ describe('transform', () => {
   })
 
   it('should transform expressions with already negated operands', () => {
+    expect.assertions(1)
+
     let idA = createIdentifier('a', [0, 1])
     let idB = createIdentifier('b', [6, 7])
     let notB: FakeUnaryExpression = {
@@ -211,6 +221,8 @@ describe('transform', () => {
   })
 
   it('should return null for non-conjunction expressions', () => {
+    expect.assertions(1)
+
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [5, 6])
 
@@ -240,6 +252,8 @@ describe('transform', () => {
   })
 
   it('should handle complex formatting and comments', () => {
+    expect.assertions(1)
+
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [20, 21])
 
@@ -261,6 +275,8 @@ describe('transform', () => {
   })
 
   it('should handle deeply nested conjunctions by limiting recursion depth', () => {
+    expect.assertions(4)
+
     let createDeepNestedConjunction = (depth: number): FakeNode => {
       let node: FakeNode = createIdentifier('a', [0, 1])
 
@@ -297,6 +313,8 @@ describe('transform', () => {
   })
 
   it('should handle deeply nested conjunctions with negated operands', () => {
+    expect.assertions(4)
+
     let createDeepNestedConjunction = (depth: number): FakeNode => {
       let node: FakeNode = createIdentifier('a', [0, 1])
 
@@ -333,6 +351,8 @@ describe('transform', () => {
   })
 
   it('should handle special formatting with missing ranges', () => {
+    expect.assertions(1)
+
     let leftId = {
       type: 'Identifier',
       range: [0, 1],

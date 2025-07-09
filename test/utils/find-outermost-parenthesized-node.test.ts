@@ -35,6 +35,8 @@ let createLogicalExpression = (
 
 describe('findOutermostParenthesizedNode', () => {
   it('should return the same node if it is already wrapped in parentheses', () => {
+    expect.assertions(1)
+
     let sourceCode = '(a && b)'
     let node = createLogicalExpression([1, 6])
     let result = findOutermostParenthesizedNode(node, sourceCode)
@@ -42,6 +44,8 @@ describe('findOutermostParenthesizedNode', () => {
   })
 
   it('should return the topmost logical expression if no parentheses exist', () => {
+    expect.assertions(1)
+
     let sourceCode = 'a && b && c'
     let node = createLogicalExpression([0, 9])
     let result = findOutermostParenthesizedNode(node, sourceCode)
@@ -49,6 +53,8 @@ describe('findOutermostParenthesizedNode', () => {
   })
 
   it('should return the node itself if it is already in parentheses', () => {
+    expect.assertions(1)
+
     let sourceCode = '(a || b)'
     let node = createLogicalExpression([1, 7])
     let result = findOutermostParenthesizedNode(node, sourceCode)
@@ -56,6 +62,8 @@ describe('findOutermostParenthesizedNode', () => {
   })
 
   it('should stop at the first encountered parenthesized ancestor', () => {
+    expect.assertions(1)
+
     let sourceCode = '(a || (b && c))'
 
     let innerNode = createLogicalExpression([6, 11])

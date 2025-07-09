@@ -6,6 +6,8 @@ import { isBinaryExpression } from '../../utils/is-binary-expression'
 
 describe('isBinaryExpression', () => {
   it('should return true for a node of type BinaryExpression', () => {
+    expect.assertions(1)
+
     let binaryNode = {
       right: { type: 'Identifier', name: 'b' },
       left: { type: 'Identifier', name: 'a' },
@@ -16,6 +18,8 @@ describe('isBinaryExpression', () => {
   })
 
   it('should return false for a node that is not a BinaryExpression', () => {
+    expect.assertions(1)
+
     let nonBinaryNode = {
       type: 'Identifier',
       name: 'a',

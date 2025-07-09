@@ -6,6 +6,8 @@ import { isConjunction } from '../../utils/is-conjunction'
 
 describe('isConjunction', () => {
   it('should return true for a LogicalExpression with operator "&&"', () => {
+    expect.assertions(1)
+
     let node: Node = {
       right: { type: 'Identifier', name: 'b' },
       left: { type: 'Identifier', name: 'a' },
@@ -17,6 +19,8 @@ describe('isConjunction', () => {
   })
 
   it('should return false for a LogicalExpression with a different operator', () => {
+    expect.assertions(1)
+
     let node: Node = {
       right: { type: 'Identifier', name: 'b' },
       left: { type: 'Identifier', name: 'a' },
@@ -28,6 +32,8 @@ describe('isConjunction', () => {
   })
 
   it('should return false for a node that is not a LogicalExpression', () => {
+    expect.assertions(1)
+
     let node: Node = {
       type: 'Literal',
       value: 42,

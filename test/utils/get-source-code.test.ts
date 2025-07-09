@@ -6,6 +6,8 @@ import { getSourceCode } from '../../utils/get-source-code'
 
 describe('getSourceCode', () => {
   it('returns context.sourceCode if available', () => {
+    expect.assertions(1)
+
     let fakeSourceCode = { content: 'test code' } as unknown as SourceCode
 
     let context = {
@@ -17,6 +19,8 @@ describe('getSourceCode', () => {
   })
 
   it('returns result of context.getSourceCode() if sourceCode is undefined', () => {
+    expect.assertions(1)
+
     let fakeSourceCode = { content: 'test code' } as unknown as SourceCode
 
     let context = {

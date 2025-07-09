@@ -4,16 +4,22 @@ import { not } from '../../utils/not'
 
 describe('not', () => {
   it('should return true when the predicate returns false', () => {
+    expect.assertions(1)
+
     let isFalse = not(() => false)
     expect(isFalse()).toBeTruthy()
   })
 
   it('should return false when the predicate returns true', () => {
+    expect.assertions(1)
+
     let isTrue = not(() => true)
     expect(isTrue()).toBeFalsy()
   })
 
   it('should work with single-argument predicates', () => {
+    expect.assertions(2)
+
     let isEven = (x: number): boolean => x % 2 === 0
     let isNotEven = not(isEven)
 
@@ -22,6 +28,8 @@ describe('not', () => {
   })
 
   it('should work with multi-argument predicates', () => {
+    expect.assertions(2)
+
     let isGreater = (a: number, b: number): boolean => a > b
     let isNotGreater = not(isGreater)
 

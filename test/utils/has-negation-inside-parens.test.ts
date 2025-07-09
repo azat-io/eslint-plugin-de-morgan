@@ -68,12 +68,16 @@ let createIdentifier = (name: string): FakeNode => ({
 
 describe('hasNegationInsideParens', () => {
   it('should return true when a negation exists inside parentheses', () => {
+    expect.assertions(1)
+
     let node = createNegation(createIdentifier('a'), '!a')
     let wrappedNode = createNegation(node, '(!(a))')
     expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
   })
 
   it('should return true when a negation is inside a logical expression in parentheses', () => {
+    expect.assertions(1)
+
     let negatedNode = createNegation(createIdentifier('a'), '!a')
     let logicalNode = createLogicalExpression({
       right: createIdentifier('b'),
@@ -86,6 +90,8 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return true when negations exist on both sides of a logical expression', () => {
+    expect.assertions(1)
+
     let leftNegation = createNegation(createIdentifier('a'), '!a')
     let rightNegation = createNegation(createIdentifier('b'), '!b')
     let logicalNode = createLogicalExpression({
@@ -99,6 +105,8 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return false when there are no negations inside the expression', () => {
+    expect.assertions(1)
+
     let logicalNode = createLogicalExpression({
       right: createIdentifier('b'),
       left: createIdentifier('a'),
@@ -110,11 +118,15 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return false when the expression is a simple identifier without negation', () => {
+    expect.assertions(1)
+
     let node = createIdentifier('a')
     expect(hasNegationInsideParens(node, fakeContext)).toBeFalsy()
   })
 
   it('should return false when there are nested logical expressions but no negations', () => {
+    expect.assertions(1)
+
     let innerNode = createLogicalExpression({
       right: createIdentifier('b'),
       left: createIdentifier('a'),
@@ -132,6 +144,8 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return true when there is a negation deep inside a nested logical expression', () => {
+    expect.assertions(1)
+
     let innerNode = createLogicalExpression({
       left: createNegation(createIdentifier('a'), '!a'),
       right: createIdentifier('b'),
@@ -149,6 +163,8 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return false when there is only double negation for type coercion', () => {
+    expect.assertions(1)
+
     let doubleNegation = createNegation(
       createNegation(createIdentifier('b'), '!b'),
       '!!b',
@@ -167,6 +183,8 @@ describe('hasNegationInsideParens', () => {
   })
 
   it('should return true when there is double negation and a real negation', () => {
+    expect.assertions(1)
+
     let doubleNegation = createNegation(
       createNegation(createIdentifier('b'), '!b'),
       '!!b',

@@ -6,6 +6,8 @@ import { isNegated } from '../../utils/is-negated'
 
 describe('isNegated', () => {
   it('should return true for a UnaryExpression with operator "!"', () => {
+    expect.assertions(1)
+
     let node: Node = {
       argument: { type: 'Identifier', name: 'a' },
       type: 'UnaryExpression',
@@ -17,6 +19,8 @@ describe('isNegated', () => {
   })
 
   it('should return false for a UnaryExpression with a different operator', () => {
+    expect.assertions(1)
+
     let node: Node = {
       argument: { type: 'Literal', value: 42 },
       type: 'UnaryExpression',
@@ -28,6 +32,8 @@ describe('isNegated', () => {
   })
 
   it('should return false for a node that is not a UnaryExpression', () => {
+    expect.assertions(1)
+
     let node: Node = {
       right: { type: 'Literal', value: 2 },
       left: { type: 'Literal', value: 1 },
@@ -39,6 +45,8 @@ describe('isNegated', () => {
   })
 
   it('should return false for a double negation (e.g., !!a)', () => {
+    expect.assertions(1)
+
     let node: Node = {
       argument: {
         argument: { type: 'Identifier', name: 'a' },

@@ -7,6 +7,8 @@ import { getNodeContent } from '../../utils/get-node-content'
 
 describe('getNodeContent', () => {
   it('should return the source code text for the given node', () => {
+    expect.assertions(2)
+
     let fakeNode: Node = {
       type: 'Identifier',
       name: 'a',

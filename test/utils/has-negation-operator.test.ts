@@ -6,6 +6,8 @@ import { hasNegationOperator } from '../../utils/has-negation-operator'
 
 describe('hasNegationOperator', () => {
   it('should return true for a UnaryExpression with operator "!"', () => {
+    expect.assertions(1)
+
     let node: Expression = {
       argument: { type: 'Identifier', name: 'a' },
       type: 'UnaryExpression',
@@ -16,6 +18,8 @@ describe('hasNegationOperator', () => {
   })
 
   it('should return false for a UnaryExpression with a different operator', () => {
+    expect.assertions(1)
+
     let node: Expression = {
       argument: { type: 'Literal', value: 42 },
       type: 'UnaryExpression',
@@ -26,6 +30,8 @@ describe('hasNegationOperator', () => {
   })
 
   it('should return false for a non-UnaryExpression node', () => {
+    expect.assertions(1)
+
     let node: Expression = {
       type: 'Identifier',
       name: 'a',

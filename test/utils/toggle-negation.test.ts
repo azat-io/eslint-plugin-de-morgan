@@ -50,6 +50,8 @@ let fakeContext: Rule.RuleContext = {
 
 describe('toggleNegation', () => {
   it('should toggle binary expression operator from === to !==', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -62,6 +64,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle binary expression operator from !== to ===', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -74,6 +78,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle binary expression operator from == to !=', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -86,6 +92,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle binary expression operator from != to ==', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -98,6 +106,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle binary expression operator from > to <=', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -110,6 +120,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle binary expression operator from in to !in', () => {
+    expect.assertions(1)
+
     let node: FakeBinaryExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -122,6 +134,8 @@ describe('toggleNegation', () => {
   })
 
   it('should remove negation in unary expression if expression is already negated', () => {
+    expect.assertions(1)
+
     let node: FakeUnaryExpression = {
       argument: { type: 'Identifier', name: 'a' },
       type: 'UnaryExpression',
@@ -134,6 +148,8 @@ describe('toggleNegation', () => {
   })
 
   it('should add negation in unary expression if expression is not negated', () => {
+    expect.assertions(1)
+
     let node: FakeUnaryExpression = {
       argument: { type: 'Identifier', name: 'a' },
       type: 'UnaryExpression',
@@ -146,12 +162,16 @@ describe('toggleNegation', () => {
   })
 
   it('should add negation if expression is not negated', () => {
+    expect.assertions(1)
+
     let node = { type: 'Identifier', name: 'a', raw: 'a' } as Expression
     let result = toggleNegation(node, fakeContext)
     expect(result).toBe('!a')
   })
 
   it('should toggle boolean literal true to false', () => {
+    expect.assertions(1)
+
     let node: FakeLiteral = {
       type: 'Literal',
       value: true,
@@ -162,6 +182,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle boolean literal false to true', () => {
+    expect.assertions(1)
+
     let node: FakeLiteral = {
       type: 'Literal',
       value: false,
@@ -172,6 +194,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle logical expression with && by adding a leading "!"', () => {
+    expect.assertions(1)
+
     let node: FakeLogicalExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
@@ -184,6 +208,8 @@ describe('toggleNegation', () => {
   })
 
   it('should toggle logical expression with || by adding a leading "!"', () => {
+    expect.assertions(1)
+
     let node: FakeLogicalExpression = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },

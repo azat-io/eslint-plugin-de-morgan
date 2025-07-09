@@ -4,6 +4,8 @@ import { or } from '../../utils/or'
 
 describe('or', () => {
   it('should return false when all predicates return false', () => {
+    expect.assertions(1)
+
     let isFalse = or(
       () => false,
       () => false,
@@ -12,6 +14,8 @@ describe('or', () => {
   })
 
   it('should return true when at least one predicate returns true', () => {
+    expect.assertions(1)
+
     let hasTrue = or(
       () => false,
       () => true,
@@ -20,6 +24,8 @@ describe('or', () => {
   })
 
   it('should return true when the first predicate is true', () => {
+    expect.assertions(1)
+
     let firstTrue = or(
       () => true,
       () => false,
@@ -28,6 +34,8 @@ describe('or', () => {
   })
 
   it('should return true when the last predicate is true', () => {
+    expect.assertions(1)
+
     let lastTrue = or(
       () => false,
       () => false,
@@ -37,6 +45,8 @@ describe('or', () => {
   })
 
   it('should work with single-argument predicates', () => {
+    expect.assertions(3)
+
     let isEven = (x: number): boolean => x % 2 === 0
     let isNegative = (x: number): boolean => x < 0
     let isEvenOrNegative = or(isEven, isNegative)
@@ -47,6 +57,8 @@ describe('or', () => {
   })
 
   it('should work with multi-argument predicates', () => {
+    expect.assertions(4)
+
     let isGreater = (a: number, b: number): boolean => a > b
     let isEqual = (a: number, b: number): boolean => a === b
     let isGreaterOrEqual = or(isGreater, isEqual)
