@@ -17,15 +17,16 @@ type ParentedNode = { parent?: Node } & Node
  *   argument).
  * @returns {boolean} True if the expression is used in a boolean context.
  */
-export let hasBooleanContext = (
+export function hasBooleanContext(
   node: ParentedNode,
   _context: Rule.RuleContext,
-): boolean =>
-  node.parent
+): boolean {
+  return node.parent
     ? isControlFlowBooleanContext(node.parent) ||
-      isBooleanOperation(node.parent) ||
-      isBooleanFunction(node.parent)
+        isBooleanOperation(node.parent) ||
+        isBooleanFunction(node.parent)
     : false
+}
 
 /**
  * Checks if the given node is part of a control flow structure that expects a
@@ -43,8 +44,9 @@ export let hasBooleanContext = (
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is in a boolean context.
  */
-let isControlFlowBooleanContext = (parent: Node): boolean =>
-  booleanControlFlowNodes.has(parent.type)
+function isControlFlowBooleanContext(parent: Node): boolean {
+  return booleanControlFlowNodes.has(parent.type)
+}
 
 let booleanControlFlowNodes = new Set<Node['type']>([
   'ConditionalExpression',
@@ -66,8 +68,9 @@ let booleanControlFlowNodes = new Set<Node['type']>([
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is a part of a binary comparison.
  */
-let isBooleanOperation = (parent: Node): boolean =>
-  isBinaryExpression(parent) && booleanOperators.has(parent.operator)
+function isBooleanOperation(parent: Node): boolean {
+  return isBinaryExpression(parent) && booleanOperators.has(parent.operator)
+}
 
 let booleanOperators = new Set<BinaryOperator>([
   'instanceof',
@@ -89,7 +92,10 @@ let booleanOperators = new Set<BinaryOperator>([
  * @param {Node} parent - The parent node in the AST.
  * @returns {boolean} True if the node is passed to `Boolean()`.
  */
-let isBooleanFunction = (parent: Node): boolean =>
-  parent.type === 'CallExpression' &&
-  parent.callee.type === 'Identifier' &&
-  parent.callee.name === 'Boolean'
+function isBooleanFunction(parent: Node): boolean {
+  return (
+    parent.type === 'CallExpression' &&
+    parent.callee.type === 'Identifier' &&
+    parent.callee.name === 'Boolean'
+  )
+}

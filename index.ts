@@ -26,24 +26,29 @@ let rules: Record<string, Rule.RuleModule> = {
   'no-negated-disjunction': noNegatedDisjunction,
 }
 
-let getRules = (): Linter.RulesRecord =>
-  Object.fromEntries(
+function getRules(): Linter.RulesRecord {
+  return Object.fromEntries(
     Object.keys(rules).map(ruleName => [`${pluginName}/${ruleName}`, 'error']),
   )
+}
 
-let createConfig = (): Linter.Config => ({
-  plugins: {
-    [pluginName]: {
-      rules,
+function createConfig(): Linter.Config {
+  return {
+    plugins: {
+      [pluginName]: {
+        rules,
+      },
     },
-  },
-  rules: getRules(),
-})
+    rules: getRules(),
+  }
+}
 
-let createLegacyConfig = (): Linter.LegacyConfig => ({
-  plugins: [pluginName],
-  rules: getRules(),
-})
+function createLegacyConfig(): Linter.LegacyConfig {
+  return {
+    plugins: [pluginName],
+    rules: getRules(),
+  }
+}
 
 export default {
   configs: {

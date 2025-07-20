@@ -28,19 +28,7 @@ let fakeContext: Rule.RuleContext = {
   },
 } as unknown as Rule.RuleContext
 
-let createNegation = (
-  argument: Expression,
-  code: string,
-): FakeUnaryExpression => ({
-  type: 'UnaryExpression',
-  range: [0, code.length],
-  operator: '!',
-  prefix: true,
-  argument,
-  code,
-})
-
-let createLogicalExpression = ({
+function createLogicalExpression({
   operator,
   right,
   left,
@@ -50,21 +38,39 @@ let createLogicalExpression = ({
   right: Expression
   left: Expression
   code: string
-}): FakeLogicalExpression => ({
-  type: 'LogicalExpression',
-  range: [0, code.length],
-  operator,
-  right,
-  left,
-  code,
-})
+}): FakeLogicalExpression {
+  return {
+    type: 'LogicalExpression',
+    range: [0, code.length],
+    operator,
+    right,
+    left,
+    code,
+  }
+}
 
-let createIdentifier = (name: string): FakeNode => ({
-  range: [0, name.length],
-  type: 'Identifier',
-  code: name,
-  name,
-})
+function createNegation(
+  argument: Expression,
+  code: string,
+): FakeUnaryExpression {
+  return {
+    type: 'UnaryExpression',
+    range: [0, code.length],
+    operator: '!',
+    prefix: true,
+    argument,
+    code,
+  }
+}
+
+function createIdentifier(name: string): FakeNode {
+  return {
+    range: [0, name.length],
+    type: 'Identifier',
+    code: name,
+    name,
+  }
+}
 
 describe('hasNegationInsideParens', () => {
   it('should return true when a negation exists inside parentheses', () => {

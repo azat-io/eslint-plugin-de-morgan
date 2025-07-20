@@ -8,21 +8,38 @@ import { getSourceCode } from './get-source-code'
 type ParentedNode = { parent?: ParentedNode } & Node
 
 /**
- * Extracts the inner code from a code string that is wrapped in parentheses. If
- * the code starts with `!(`, the function removes the leading `!(` and the
- * final `)`. If it starts with `(` it removes only the outer parentheses.
+ * Determines if a logical expression is "pure" - meaning it doesn't mix
+ * different logical operators (&& and ||) at the same nesting level within its
+ * outermost parentheses.
  *
- * @param {string} code - The code string to process.
- * @returns {string} The inner code, with the outermost parentheses removed.
+ * Examples:
+ *
+ * - `!(a && b)` → true (no mixed operators)
+ * - `((a && b) || c)` → true (operators at different nesting levels)
+ * - `(a && b || c)` → false (mixed operators at same level)
+ *
+ * The function traverses up the AST to find the outermost parenthesized
+ * expression, then analyzes the logical operators within that scope.
+ *
+ * @param {Expression} node - The AST node to analyze
+ * @param {Rule.RuleContext} context - ESLint rule context, used to get source
+ *   code.
+ * @returns {boolean} True if the expression doesn't mix operators at the top
+ *   level.
  */
-let getCodeInsideParentheses = (code: string): string => {
-  if (code.startsWith('!(')) {
-    return code.slice(2, -1)
-  }
-  if (code.startsWith('(')) {
-    return code.slice(1, -1)
-  }
-  return code
+export function isPureGroup(
+  node: Expression,
+  context: Rule.RuleContext,
+): boolean {
+  let sourceCode = getSourceCode(context).getText()
+  let outermostNode = findOutermostParenthesizedNode(
+    node as ParentedNode,
+    sourceCode,
+  )
+  let fullCode = getNodeContent(outermostNode, context)
+  let innerCode = getCodeInsideParentheses(fullCode)
+
+  return !hasMixedOperators(innerCode)
 }
 
 /**
@@ -35,7 +52,7 @@ let getCodeInsideParentheses = (code: string): string => {
  * @returns {boolean} True if a mix of `&&` and `||` is found at the top level,
  *   false otherwise.
  */
-let hasMixedOperators = (code: string): boolean => {
+function hasMixedOperators(code: string): boolean {
   let depth = 0
   let operatorFound: string | null = null
 
@@ -68,36 +85,19 @@ let hasMixedOperators = (code: string): boolean => {
 }
 
 /**
- * Determines if a logical expression is "pure" - meaning it doesn't mix
- * different logical operators (&& and ||) at the same nesting level within its
- * outermost parentheses.
+ * Extracts the inner code from a code string that is wrapped in parentheses. If
+ * the code starts with `!(`, the function removes the leading `!(` and the
+ * final `)`. If it starts with `(` it removes only the outer parentheses.
  *
- * Examples:
- *
- * - `!(a && b)` → true (no mixed operators)
- * - `((a && b) || c)` → true (operators at different nesting levels)
- * - `(a && b || c)` → false (mixed operators at same level)
- *
- * The function traverses up the AST to find the outermost parenthesized
- * expression, then analyzes the logical operators within that scope.
- *
- * @param {Expression} node - The AST node to analyze
- * @param {Rule.RuleContext} context - ESLint rule context, used to get source
- *   code.
- * @returns {boolean} True if the expression doesn't mix operators at the top
- *   level.
+ * @param {string} code - The code string to process.
+ * @returns {string} The inner code, with the outermost parentheses removed.
  */
-export let isPureGroup = (
-  node: Expression,
-  context: Rule.RuleContext,
-): boolean => {
-  let sourceCode = getSourceCode(context).getText()
-  let outermostNode = findOutermostParenthesizedNode(
-    node as ParentedNode,
-    sourceCode,
-  )
-  let fullCode = getNodeContent(outermostNode, context)
-  let innerCode = getCodeInsideParentheses(fullCode)
-
-  return !hasMixedOperators(innerCode)
+function getCodeInsideParentheses(code: string): string {
+  if (code.startsWith('!(')) {
+    return code.slice(2, -1)
+  }
+  if (code.startsWith('(')) {
+    return code.slice(1, -1)
+  }
+  return code
 }

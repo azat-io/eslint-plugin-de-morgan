@@ -14,24 +14,28 @@ type FakeNode = {
   parent?: FakeNode
 } & Expression
 
-let createNode = (range: [number, number], parent?: FakeNode): FakeNode => ({
-  type: 'Identifier',
-  name: 'a',
-  parent,
-  range,
-})
-
-let createLogicalExpression = (
+function createLogicalExpression(
   range: [number, number],
   parent?: FakeLogicalExpression,
-): FakeLogicalExpression => ({
-  type: 'LogicalExpression',
-  right: createNode([2, 3]),
-  left: createNode([0, 1]),
-  operator: '&&',
-  parent,
-  range,
-})
+): FakeLogicalExpression {
+  return {
+    type: 'LogicalExpression',
+    right: createNode([2, 3]),
+    left: createNode([0, 1]),
+    operator: '&&',
+    parent,
+    range,
+  }
+}
+
+function createNode(range: [number, number], parent?: FakeNode): FakeNode {
+  return {
+    type: 'Identifier',
+    name: 'a',
+    parent,
+    range,
+  }
+}
 
 describe('findOutermostParenthesizedNode', () => {
   it('should return the same node if it is already wrapped in parentheses', () => {

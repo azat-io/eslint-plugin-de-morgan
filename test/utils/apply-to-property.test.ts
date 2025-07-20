@@ -6,7 +6,10 @@ describe('applyToProperty', () => {
   it('should apply the predicate to the specified property', () => {
     expect.assertions(1)
 
-    let isPositive = (x: number): boolean => x > 0
+    function isPositive(x: number): boolean {
+      return x > 0
+    }
+
     let object = { value: 10 }
 
     let testValue = applyToProperty('value', isPositive)
@@ -17,7 +20,10 @@ describe('applyToProperty', () => {
   it('should return false if the predicate returns false', () => {
     expect.assertions(1)
 
-    let isNonEmpty = (string_: string): boolean => string_.length > 0
+    function isNonEmpty(string_: string): boolean {
+      return string_.length > 0
+    }
+
     let object = { name: '' }
 
     let testName = applyToProperty('name', isNonEmpty)

@@ -5,22 +5,6 @@ import { isLogicalExpression } from './is-logical-expression'
 type ParentedNode = { parent?: ParentedNode } & Node
 
 /**
- * Checks if the characters immediately before and at the end of the given
- * node's range in the source code form a pair of parentheses.
- *
- * @param {number} start - The start index of the node's range.
- * @param {number} end - The end index of the node's range.
- * @param {string} sourceCode - The full source code text.
- * @returns {boolean} True if the character immediately before start is `(` and
- *   the character at index end is `)`, false otherwise.
- */
-let isInParentheses = (
-  start: number,
-  end: number,
-  sourceCode: string,
-): boolean => sourceCode[start - 1] === '(' && sourceCode[end] === ')'
-
-/**
  * Traverses up the parent chain of the given node (if available) to find the
  * outermost logical expression node that is explicitly wrapped in parentheses.
  * The function checks the node and its parents (while they are
@@ -34,10 +18,10 @@ let isInParentheses = (
  * @returns {ParentedNode} The outermost parenthesized node found in the parent
  *   chain.
  */
-export let findOutermostParenthesizedNode = (
+export function findOutermostParenthesizedNode(
   node: ParentedNode,
   sourceCode: string,
-): ParentedNode => {
+): ParentedNode {
   let current = node
   let [start, end] = current.range!
 
@@ -55,4 +39,22 @@ export let findOutermostParenthesizedNode = (
   }
 
   return current
+}
+
+/**
+ * Checks if the characters immediately before and at the end of the given
+ * node's range in the source code form a pair of parentheses.
+ *
+ * @param {number} start - The start index of the node's range.
+ * @param {number} end - The end index of the node's range.
+ * @param {string} sourceCode - The full source code text.
+ * @returns {boolean} True if the character immediately before start is `(` and
+ *   the character at index end is `)`, false otherwise.
+ */
+function isInParentheses(
+  start: number,
+  end: number,
+  sourceCode: string,
+): boolean {
+  return sourceCode[start - 1] === '(' && sourceCode[end] === ')'
 }

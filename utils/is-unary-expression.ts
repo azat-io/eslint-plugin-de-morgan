@@ -8,5 +8,6 @@ import type { UnaryExpression, Node } from 'estree'
  * @returns {node is UnaryExpression} True if the node is a UnaryExpression,
  *   false otherwise.
  */
-export let isUnaryExpression = (node: Node): node is UnaryExpression =>
-  node.type === 'UnaryExpression'
+export function isUnaryExpression(node: Node): node is UnaryExpression {
+  return node.type === 'UnaryExpression'
+}

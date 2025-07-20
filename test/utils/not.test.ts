@@ -20,7 +20,10 @@ describe('not', () => {
   it('should work with single-argument predicates', () => {
     expect.assertions(2)
 
-    let isEven = (x: number): boolean => x % 2 === 0
+    function isEven(x: number): boolean {
+      return x % 2 === 0
+    }
+
     let isNotEven = not(isEven)
 
     expect(isNotEven(2)).toBeFalsy()
@@ -30,7 +33,10 @@ describe('not', () => {
   it('should work with multi-argument predicates', () => {
     expect.assertions(2)
 
-    let isGreater = (a: number, b: number): boolean => a > b
+    function isGreater(a: number, b: number): boolean {
+      return a > b
+    }
+
     let isNotGreater = not(isGreater)
 
     expect(isNotGreater(5, 3)).toBeFalsy()

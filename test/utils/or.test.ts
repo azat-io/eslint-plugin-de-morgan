@@ -47,8 +47,14 @@ describe('or', () => {
   it('should work with single-argument predicates', () => {
     expect.assertions(3)
 
-    let isEven = (x: number): boolean => x % 2 === 0
-    let isNegative = (x: number): boolean => x < 0
+    function isEven(x: number): boolean {
+      return x % 2 === 0
+    }
+
+    function isNegative(x: number): boolean {
+      return x < 0
+    }
+
     let isEvenOrNegative = or(isEven, isNegative)
 
     expect(isEvenOrNegative(2)).toBeTruthy()
@@ -59,8 +65,14 @@ describe('or', () => {
   it('should work with multi-argument predicates', () => {
     expect.assertions(4)
 
-    let isGreater = (a: number, b: number): boolean => a > b
-    let isEqual = (a: number, b: number): boolean => a === b
+    function isGreater(a: number, b: number): boolean {
+      return a > b
+    }
+
+    function isEqual(a: number, b: number): boolean {
+      return a === b
+    }
+
     let isGreaterOrEqual = or(isGreater, isEqual)
 
     expect(isGreaterOrEqual(5, 3)).toBeTruthy()

@@ -16,12 +16,16 @@ import { parenthesize } from './parenthesize'
 interface TransformUtilityOptions {
   /** The source logical operator. */
   sourceOperator: LogicalOperator
+
   /** The target logical operator. */
   targetOperator: LogicalOperator
+
   /** The type of logical expression. */
   expressionType: ExpressionType
+
   /** The logical expression to transform. */
   expression: LogicalExpression
+
   /** The ESLint rule context. */
   context: Rule.RuleContext
 }
@@ -29,10 +33,13 @@ interface TransformUtilityOptions {
 interface TransformOptions {
   /** The type of logical expression to transform. */
   expressionType: ExpressionType
+
   /** Whether the transformed expression should be wrapped in parentheses. */
   shouldWrapInParens: boolean
+
   /** The ESLint rule context. */
   context: Rule.RuleContext
+
   /** The UnaryExpression node to transform. */
   node: UnaryExpression
 }
@@ -58,30 +65,47 @@ const OPERATOR_MAPPING: Partial<Record<LogicalOperator, LogicalOperator>> = {
 }
 
 /**
- * Checks if the expression matches the specified logical type.
+ * Transforms a negated logical expression according to De Morgan's law. Can
+ * handle both conjunctions `(!(A && B) -> !A || !B)` and disjunctions `(!(A ||
+ * B) -> !A && !B)`. Preserves formatting, comments, and whitespace in the
+ * transformed expression.
  *
- * @param {Expression} expression - The expression to check.
- * @param {ExpressionType} type - The type to check against.
- * @returns {boolean} True if the expression matches the type, false otherwise.
+ * @param {TransformOptions} options - The transformation options.
+ * @returns {string | null} The transformed expression or null if transformation
+ *   is not applicable.
  */
-let matchesExpressionType = (
-  expression: Expression,
-  type: ExpressionType,
-): boolean =>
-  type === 'conjunction' ? isConjunction(expression) : isDisjunction(expression)
+export function transform({
+  shouldWrapInParens,
+  expressionType,
+  context,
+  node,
+}: TransformOptions): string | null {
+  let argument = node.argument as LogicalExpression
 
-/**
- * Checks if the text contains special formatting like comments or multiple
- * spaces.
- *
- * @param {string} text - The text to check.
- * @returns {boolean} True if the text contains special formatting.
- */
-let hasSpecialFormatting = (text: string): boolean =>
-  text.includes('//') ||
-  text.includes('/*') ||
-  text.includes('\n') ||
-  /\s{2,}/u.test(text)
+  let sourceOperator: LogicalOperator =
+    expressionType === 'conjunction' ? '&&' : '||'
+
+  if (argument.operator !== sourceOperator) {
+    return null
+  }
+
+  let originalText = getNodeContent(argument, context)
+  let targetOperator = OPERATOR_MAPPING[sourceOperator]!
+
+  let transformUtilityOptions: TransformUtilityOptions = {
+    expression: argument,
+    expressionType,
+    sourceOperator,
+    targetOperator,
+    context,
+  }
+
+  let result = hasSpecialFormatting(originalText)
+    ? transformWithFormatting(transformUtilityOptions)
+    : transformSimple(transformUtilityOptions)
+
+  return parenthesize(result, shouldWrapInParens)
+}
 
 /**
  * Transforms an expression with special formatting (comments, multiple spaces).
@@ -89,12 +113,12 @@ let hasSpecialFormatting = (text: string): boolean =>
  * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression with preserved formatting.
  */
-let transformWithFormatting = ({
+function transformWithFormatting({
   sourceOperator,
   targetOperator,
   expression,
   context,
-}: TransformUtilityOptions): string => {
+}: TransformUtilityOptions): string {
   let sourceCode = getSourceCode(context)
 
   let leftText = toggleNegation(expression.left, context)
@@ -132,12 +156,12 @@ let transformWithFormatting = ({
  * @param {FlattenOperandsOptions} options - The flattening options.
  * @returns {string[]} Array of transformed operands.
  */
-let flattenOperands = ({
+function flattenOperands({
   expressionType,
   expression,
   depth = 0,
   context,
-}: FlattenOperandsOptions): string[] => {
+}: FlattenOperandsOptions): string[] {
   if (depth > MAX_DEPTH) {
     return [toggleNegation(expression, context)]
   }
@@ -169,12 +193,12 @@ let flattenOperands = ({
  * @param {TransformUtilityOptions} options - The transformation options.
  * @returns {string} The transformed expression.
  */
-let transformSimple = ({
+function transformSimple({
   expressionType,
   targetOperator,
   expression,
   context,
-}: TransformUtilityOptions): string => {
+}: TransformUtilityOptions): string {
   let operands = flattenOperands({
     expressionType,
     expression,
@@ -185,44 +209,33 @@ let transformSimple = ({
 }
 
 /**
- * Transforms a negated logical expression according to De Morgan's law. Can
- * handle both conjunctions `(!(A && B) -> !A || !B)` and disjunctions `(!(A ||
- * B) -> !A && !B)`. Preserves formatting, comments, and whitespace in the
- * transformed expression.
+ * Checks if the expression matches the specified logical type.
  *
- * @param {TransformOptions} options - The transformation options.
- * @returns {string | null} The transformed expression or null if transformation
- *   is not applicable.
+ * @param {Expression} expression - The expression to check.
+ * @param {ExpressionType} type - The type to check against.
+ * @returns {boolean} True if the expression matches the type, false otherwise.
  */
-export let transform = ({
-  shouldWrapInParens,
-  expressionType,
-  context,
-  node,
-}: TransformOptions): string | null => {
-  let argument = node.argument as LogicalExpression
+function matchesExpressionType(
+  expression: Expression,
+  type: ExpressionType,
+): boolean {
+  return type === 'conjunction'
+    ? isConjunction(expression)
+    : isDisjunction(expression)
+}
 
-  let sourceOperator: LogicalOperator =
-    expressionType === 'conjunction' ? '&&' : '||'
-
-  if (argument.operator !== sourceOperator) {
-    return null
-  }
-
-  let originalText = getNodeContent(argument, context)
-  let targetOperator = OPERATOR_MAPPING[sourceOperator]!
-
-  let transformUtilityOptions: TransformUtilityOptions = {
-    expression: argument,
-    expressionType,
-    sourceOperator,
-    targetOperator,
-    context,
-  }
-
-  let result = hasSpecialFormatting(originalText)
-    ? transformWithFormatting(transformUtilityOptions)
-    : transformSimple(transformUtilityOptions)
-
-  return parenthesize(result, shouldWrapInParens)
+/**
+ * Checks if the text contains special formatting like comments or multiple
+ * spaces.
+ *
+ * @param {string} text - The text to check.
+ * @returns {boolean} True if the text contains special formatting.
+ */
+function hasSpecialFormatting(text: string): boolean {
+  return (
+    text.includes('//') ||
+    text.includes('/*') ||
+    text.includes('\n') ||
+    /\s{2,}/u.test(text)
+  )
 }

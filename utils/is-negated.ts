@@ -11,7 +11,10 @@ type ParentedNode = { parent?: Node } & Node
  * @returns {node is UnaryExpression} True if the node is a UnaryExpression with
  *   operator `!`.
  */
-export let isNegated = (node: ParentedNode): node is UnaryExpression =>
-  hasNegationOperator(node) &&
-  !hasNegationOperator(node.argument) &&
-  (!node.parent || !hasNegationOperator(node.parent))
+export function isNegated(node: ParentedNode): node is UnaryExpression {
+  return (
+    hasNegationOperator(node) &&
+    !hasNegationOperator(node.argument) &&
+    (!node.parent || !hasNegationOperator(node.parent))
+  )
+}

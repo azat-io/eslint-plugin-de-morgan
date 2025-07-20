@@ -11,7 +11,7 @@ import { hasOperator } from './has-operator'
  * @returns {node is LogicalExpression} True if the node is a LogicalExpression
  *   with operator `||`.
  */
-export let isDisjunction = (node: Node): node is LogicalExpression => {
+export function isDisjunction(node: Node): node is LogicalExpression {
   let test = createTestWithParameters(node as LogicalExpression)
   return test(isLogicalExpression, hasOperator('||'))
 }

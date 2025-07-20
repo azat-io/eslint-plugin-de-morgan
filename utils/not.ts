@@ -6,7 +6,8 @@
  * @returns {Function} A function that negates the boolean result of the
  *   predicate.
  */
-export let not =
-  <T extends unknown[]>(predicate: (...arguments_: T) => boolean) =>
-  (...arguments_: T): boolean =>
-    !predicate(...arguments_)
+export function not<T extends unknown[]>(
+  predicate: (...arguments_: T) => boolean,
+) {
+  return (...arguments_: T): boolean => !predicate(...arguments_)
+}

@@ -18,10 +18,10 @@
  * @returns {(obj: T) => boolean} A function that takes an object of type T and
  *   applies the predicate to its specified property.
  */
-export let applyToProperty =
-  <T extends Record<K, V>, K extends string, V = T[K]>(
-    property: K,
-    predicate: (value: V) => boolean,
-  ): ((object: T) => boolean) =>
-  (object: T): boolean =>
-    predicate(object[property])
+export function applyToProperty<
+  T extends Record<K, V>,
+  K extends string,
+  V = T[K],
+>(property: K, predicate: (value: V) => boolean): (object: T) => boolean {
+  return (object: T): boolean => predicate(object[property])
+}

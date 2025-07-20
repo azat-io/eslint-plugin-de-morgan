@@ -18,9 +18,9 @@
  * @returns {(...args: T) => boolean} A function that returns `true` if any
  *   predicate returns `true`, otherwise `false`.
  */
-export let or =
-  <Arguments extends unknown[]>(
-    ...predicates: ((...arguments_: Arguments) => boolean)[]
-  ) =>
-  (...arguments_: Arguments): boolean =>
+export function or<Arguments extends unknown[]>(
+  ...predicates: ((...arguments_: Arguments) => boolean)[]
+) {
+  return (...arguments_: Arguments): boolean =>
     predicates.some(predicate => predicate(...arguments_))
+}

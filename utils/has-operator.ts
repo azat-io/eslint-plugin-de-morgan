@@ -29,7 +29,7 @@ import type {
  *   - Returns `true` if the node's operator matches the specified operator
  *   - Returns `false` otherwise
  */
-export let hasOperator =
-  (operator: LogicalOperator | UnaryOperator) =>
-  (node: LogicalExpression | UnaryExpression): boolean =>
+export function hasOperator(operator: LogicalOperator | UnaryOperator) {
+  return (node: LogicalExpression | UnaryExpression): boolean =>
     node.operator === operator
+}

@@ -29,44 +29,11 @@ type FakeIdentifier = {
 } & Identifier &
   FakeNode
 
-let createFakeContext = (sourceText: string): Rule.RuleContext => {
-  let sourceMap = new Map<string, string>()
-
-  let fakeSourceCode = {
-    getText: (node: FakeNode): string => {
-      if (node.id && sourceMap.has(node.id)) {
-        return sourceMap.get(node.id)!
-      }
-      return node.raw ?? ''
-    },
-    text: sourceText,
-  }
-
-  return {
-    getSourceCode: () => fakeSourceCode,
-    sourceCode: fakeSourceCode,
-  } as unknown as Rule.RuleContext
-}
-
-let createUnaryExpression = (
-  argument: FakeNode,
-  parent: FakeNode | null = null,
-): FakeUnaryExpression => ({
-  range: [0, argument.range ? argument.range[1] + 1 : 1],
-  raw: `!(${argument.raw})`,
-  type: 'UnaryExpression',
-  operator: '!',
-  prefix: true,
-  id: 'unary',
-  argument,
-  parent,
-})
-
-let createConjunction = (
+function createConjunction(
   left: FakeNode,
   right: FakeNode,
   formattingBetween: string = ' && ',
-): FakeLogicalExpression => {
+): FakeLogicalExpression {
   let leftText = left.raw ?? ''
   let rightText = right.raw ?? ''
 
@@ -87,17 +54,54 @@ let createConjunction = (
   }
 }
 
-let createIdentifier = (
+function createFakeContext(sourceText: string): Rule.RuleContext {
+  let sourceMap = new Map<string, string>()
+
+  let fakeSourceCode = {
+    getText: (node: FakeNode): string => {
+      if (node.id && sourceMap.has(node.id)) {
+        return sourceMap.get(node.id)!
+      }
+      return node.raw ?? ''
+    },
+    text: sourceText,
+  }
+
+  return {
+    getSourceCode: () => fakeSourceCode,
+    sourceCode: fakeSourceCode,
+  } as unknown as Rule.RuleContext
+}
+
+function createUnaryExpression(
+  argument: FakeNode,
+  parent: FakeNode | null = null,
+): FakeUnaryExpression {
+  return {
+    range: [0, argument.range ? argument.range[1] + 1 : 1],
+    raw: `!(${argument.raw})`,
+    type: 'UnaryExpression',
+    operator: '!',
+    prefix: true,
+    id: 'unary',
+    argument,
+    parent,
+  }
+}
+
+function createIdentifier(
   name: string,
   range: [number, number],
-): FakeIdentifier => ({
-  type: 'Identifier',
-  id: `id_${name}`,
-  parent: null,
-  raw: name,
-  range,
-  name,
-})
+): FakeIdentifier {
+  return {
+    type: 'Identifier',
+    id: `id_${name}`,
+    parent: null,
+    raw: name,
+    range,
+    name,
+  }
+}
 
 describe('transform', () => {
   it('should transform a simple negated conjunction', () => {
@@ -277,7 +281,7 @@ describe('transform', () => {
   it('should handle deeply nested conjunctions by limiting recursion depth', () => {
     expect.assertions(4)
 
-    let createDeepNestedConjunction = (depth: number): FakeNode => {
+    function createDeepNestedConjunction(depth: number): FakeNode {
       let node: FakeNode = createIdentifier('a', [0, 1])
 
       for (let i = 0; i < depth; i++) {
@@ -315,7 +319,7 @@ describe('transform', () => {
   it('should handle deeply nested conjunctions with negated operands', () => {
     expect.assertions(4)
 
-    let createDeepNestedConjunction = (depth: number): FakeNode => {
+    function createDeepNestedConjunction(depth: number): FakeNode {
       let node: FakeNode = createIdentifier('a', [0, 1])
 
       for (let i = 0; i < depth; i++) {

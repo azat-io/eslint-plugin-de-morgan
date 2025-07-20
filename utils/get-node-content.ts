@@ -11,5 +11,6 @@ import { getSourceCode } from './get-source-code'
  * @param {Rule.RuleContext} context - The ESLint rule context.
  * @returns {string} The source code corresponding to the node.
  */
-export let getNodeContent = (node: Node, context: Rule.RuleContext): string =>
-  getSourceCode(context).getText(node)
+export function getNodeContent(node: Node, context: Rule.RuleContext): string {
+  return getSourceCode(context).getText(node)
+}

@@ -9,5 +9,6 @@ import type { Node } from 'estree'
  * @returns {node is Literal & { value: boolean }} True if the node is a literal
  *   with a boolean value.
  */
-export let isBoolean = (node: Node): node is { value: boolean } & Literal =>
-  node.type === 'Literal' && typeof node.value === 'boolean'
+export function isBoolean(node: Node): node is { value: boolean } & Literal {
+  return node.type === 'Literal' && typeof node.value === 'boolean'
+}

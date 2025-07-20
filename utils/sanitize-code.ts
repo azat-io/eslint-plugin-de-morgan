@@ -5,7 +5,7 @@
  * @param {string} code - The code snippet to clean.
  * @returns {string} The cleaned single-line code without comments.
  */
-export let sanitizeCode = (code: string): string => {
+export function sanitizeCode(code: string): string {
   let stringLiterals: string[] = []
 
   let withoutStrings = code.replaceAll(

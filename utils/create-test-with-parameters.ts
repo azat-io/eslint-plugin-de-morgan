@@ -19,9 +19,12 @@
  *   function that takes multiple predicates and returns `true` if all
  *   predicates return `true`, otherwise `false`.
  */
-export let createTestWithParameters =
-  <Arguments extends unknown[]>(...parameters: Arguments) =>
-  (...predicates: ((...arguments_: Arguments) => boolean)[]): boolean => {
+export function createTestWithParameters<Arguments extends unknown[]>(
+  ...parameters: Arguments
+) {
+  return (
+    ...predicates: ((...arguments_: Arguments) => boolean)[]
+  ): boolean => {
     for (let predicate of predicates) {
       if (!predicate(...parameters)) {
         return false
@@ -29,3 +32,4 @@ export let createTestWithParameters =
     }
     return true
   }
+}

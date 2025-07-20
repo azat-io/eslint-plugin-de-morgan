@@ -8,5 +8,6 @@ import type { LogicalExpression, Node } from 'estree'
  * @returns {node is isLogicalExpression} True if the node is a
  *   isLogicalExpression, false otherwise.
  */
-export let isLogicalExpression = (node: Node): node is LogicalExpression =>
-  node.type === 'LogicalExpression'
+export function isLogicalExpression(node: Node): node is LogicalExpression {
+  return node.type === 'LogicalExpression'
+}

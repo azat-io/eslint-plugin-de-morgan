@@ -8,5 +8,6 @@ import type { BinaryExpression, Node } from 'estree'
  * @returns {node is BinaryExpression} True if the node is a BinaryExpression,
  *   false otherwise.
  */
-export let isBinaryExpression = (node: Node): node is BinaryExpression =>
-  node.type === 'BinaryExpression'
+export function isBinaryExpression(node: Node): node is BinaryExpression {
+  return node.type === 'BinaryExpression'
+}
