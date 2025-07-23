@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "@azat-io/eslint-config": "^2.39.0",
+    "@azat-io/typescript-config": "^1.0.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@humanwhocodes/crosspost": "^0.15.0",

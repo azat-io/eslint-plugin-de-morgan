@@ -19,20 +19,20 @@ function createLogicalExpression(
   parent?: FakeLogicalExpression,
 ): FakeLogicalExpression {
   return {
+    ...(parent !== undefined && { parent }),
     type: 'LogicalExpression',
     right: createNode([2, 3]),
     left: createNode([0, 1]),
     operator: '&&',
-    parent,
     range,
   }
 }
 
 function createNode(range: [number, number], parent?: FakeNode): FakeNode {
   return {
+    ...(parent !== undefined && { parent }),
     type: 'Identifier',
     name: 'a',
-    parent,
     range,
   }
 }

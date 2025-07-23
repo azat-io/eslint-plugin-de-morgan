@@ -11,6 +11,9 @@ importers:
       '@azat-io/eslint-config':
         specifier: ^2.39.0
         version: 2.39.0(@types/estree@1.0.8)(@typescript-eslint/parser@8.37.0(eslint@9.31.0(jiti@2.4.2))(typescript@5.8.3))(@typescript-eslint/utils@8.37.0(eslint@9.31.0(jiti@2.4.2))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint@9.31.0(jiti@2.4.2))(ts-api-utils@2.1.0(typescript@5.8.3))(typescript@5.8.3)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.0.15)(jiti@2.4.2)(yaml@2.8.0))
+      '@azat-io/typescript-config':
+        specifier: ^1.0.0
+        version: 1.0.0(typescript@5.8.3)
       '@commitlint/cli':
         specifier: ^19.8.1
         version: 19.8.1(@types/node@24.0.15)(typescript@5.8.3)
@@ -101,6 +104,12 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       eslint: '>=9.28.0'
+
+  '@azat-io/typescript-config@1.0.0':
+    resolution: {integrity: sha512-kreUDQS/49MaN7h4Kuba9hs8ze4yNu2rmA16X26q2eqFR9EF4lAn7oYtUsX0vb2Jy6ATJmWTZDdxVKDhfQjSfA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      typescript: ^5.8.0
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -4318,6 +4327,10 @@ snapshots:
       - ts-node
       - typescript
       - vitest
+
+  '@azat-io/typescript-config@1.0.0(typescript@5.8.3)':
+    dependencies:
+      typescript: 5.8.3
 
   '@babel/code-frame@7.27.1':
     dependencies:
