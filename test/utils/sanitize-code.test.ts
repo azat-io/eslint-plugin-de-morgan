@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import dedent from 'dedent'
 
 import { sanitizeCode } from '../../utils/sanitize-code'
 
@@ -6,8 +7,10 @@ describe('sanitizeCode', () => {
   it('should remove extra spaces and newlines', () => {
     expect.assertions(1)
 
-    let input = `Hello    world
-this   is a    test.`
+    let input = dedent`
+      Hello    world
+      this   is a    test.
+    `
     let expected = 'Hello world this is a test.'
     expect(sanitizeCode(input)).toBe(expected)
   })
@@ -63,11 +66,13 @@ this   is a    test.`
   it('should remove multi-line comments that span multiple lines', () => {
     expect.assertions(1)
 
-    let input = `const x = 5;
-/* This is a comment
-   that spans multiple
-   lines */
-const y = 10;`
+    let input = dedent`
+      const x = 5;
+      /* This is a comment
+         that spans multiple
+         lines */
+      const y = 10;
+    `
     let expected = 'const x = 5; const y = 10;'
     expect(sanitizeCode(input)).toBe(expected)
   })
@@ -75,12 +80,14 @@ const y = 10;`
   it('should handle code with both single and multi-line comments', () => {
     expect.assertions(1)
 
-    let input = `const x = 5; // First variable
-/* Explanation for y:
-   - It's important
-   - It's the second variable
-*/
-const y = /* inline */ 10; // Second variable`
+    let input = dedent`
+      const x = 5; // First variable
+      /* Explanation for y:
+         - It's important
+         - It's the second variable
+      */
+      const y = /* inline */ 10; // Second variable
+    `
     let expected = 'const x = 5; const y = 10;'
     expect(sanitizeCode(input)).toBe(expected)
   })
