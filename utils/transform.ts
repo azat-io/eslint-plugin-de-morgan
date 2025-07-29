@@ -51,8 +51,6 @@ interface FlattenOperandsOptions {
   context: Rule.RuleContext
   /** The logical expression to flatten. */
   expression: Expression
-  /** The current recursion depth. */
-  depth?: number
 }
 
 type ExpressionType = 'conjunction' | 'disjunction'
@@ -150,8 +148,8 @@ function transformWithFormatting({
 }
 
 /**
- * Recursively flattens a logical expression tree into a list of operands and
- * transforms them.
+ * Iteratively flattens a logical expression tree into a list of operands and
+ * transforms them using a stack-based approach for better performance.
  *
  * @param {FlattenOperandsOptions} options - The flattening options.
  * @returns {string[]} Array of transformed operands.
@@ -159,32 +157,29 @@ function transformWithFormatting({
 function flattenOperands({
   expressionType,
   expression,
-  depth = 0,
   context,
 }: FlattenOperandsOptions): string[] {
-  if (depth > MAX_DEPTH) {
-    return [toggleNegation(expression, context)]
+  let result: string[] = []
+  let stack: { expr: Expression; depth: number }[] = [
+    { expr: expression, depth: 0 },
+  ]
+
+  while (stack.length > 0) {
+    let { depth, expr } = stack.pop()!
+
+    if (depth > MAX_DEPTH || !matchesExpressionType(expr, expressionType)) {
+      result.push(toggleNegation(expr, context))
+      continue
+    }
+
+    let logicalExpr = expr as LogicalExpression
+    stack.push(
+      { expr: logicalExpr.right, depth: depth + 1 },
+      { expr: logicalExpr.left, depth: depth + 1 },
+    )
   }
 
-  if (matchesExpressionType(expression, expressionType)) {
-    let logicalExpr = expression as LogicalExpression
-    return [
-      ...flattenOperands({
-        expression: logicalExpr.left,
-        depth: depth + 1,
-        expressionType,
-        context,
-      }),
-      ...flattenOperands({
-        expression: logicalExpr.right,
-        depth: depth + 1,
-        expressionType,
-        context,
-      }),
-    ]
-  }
-
-  return [toggleNegation(expression, context)]
+  return result
 }
 
 /**
