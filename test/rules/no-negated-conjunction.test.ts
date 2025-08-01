@@ -1,614 +1,307 @@
-import { describe, it } from 'vitest'
-import { RuleTester } from 'eslint'
+import { createRuleTester } from 'eslint-vitest-rule-tester'
+import { describe, expect, it } from 'vitest'
 import dedent from 'dedent'
 
 import rule from '../../rules/no-negated-conjunction'
 
-RuleTester.describe = describe
-RuleTester.itOnly = it.only
-RuleTester.it = it
-
-let ruleTester = new RuleTester()
-
-ruleTester.run('noNegatedConjunction', rule, {
-  invalid: [
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
+describe('no-negated-conjunction', () => {
+  let { invalid, valid } = createRuleTester({
+    configs: {
+      languageOptions: {
+        parserOptions: {
+          sourceType: 'module',
+          ecmaVersion: 2020,
         },
-      ],
-      output: 'if (!a || !b) {}',
+      },
+    },
+    name: 'no-negated-conjunction',
+    rule,
+  })
+
+  it('should allow simple negation', async () => {
+    await valid('if (!a) {}')
+  })
+
+  it('should allow conjunction without negation', async () => {
+    await valid('if (a && b) {}')
+  })
+
+  it('should allow disjunction', async () => {
+    await valid('if (a || b) {}')
+  })
+
+  it('should allow bitwise NOT', async () => {
+    await valid('if (~(a && b)) {}')
+  })
+
+  it('should allow negated disjunction', async () => {
+    await valid('if (!(a || b)) {}')
+  })
+
+  it('should allow multiple conjunctions', async () => {
+    await valid('if (a && b && c) {}')
+  })
+
+  it('should allow various declaration forms', async () => {
+    await valid('const x = a && b')
+    await valid('let x = a || b')
+    await valid('var x = !(a || b)')
+  })
+
+  it('should allow function calls', async () => {
+    await valid('foo(!a || !b)')
+  })
+
+  it('should allow arrow functions', async () => {
+    await valid('const f = () => a || b')
+  })
+
+  it('should allow complex expressions with mixed operators', async () => {
+    await valid('if (!(a && b || c)) {}')
+    await valid('if (!(a || b && c)) {}')
+    await valid('if (!((a && b) || c)) {}')
+    await valid('foo(!(a && !b))')
+  })
+
+  it('should transform simple negated conjunction in if statement', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a && b)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && !b)',
-            fixed: '!a || b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
+    })
+
+    expect(result.output).toBe('if (!a || !b) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a && b)` with `!a || !b`',
+    )
+  })
+
+  it('should transform negated conjunction with negated operand', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a && !b)) {}',
-      output: 'if (!a || b) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(!a && b)',
-            fixed: 'a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
+    })
+
+    expect(result.output).toBe('if (!a || b) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a && !b)` with `!a || b`',
+    )
+  })
+
+  it('should transform double negated conjunction', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(!a && b)) {}',
-      output: 'if (a || !b) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const x = !a || !b',
+    })
+
+    expect(result.output).toBe('if (a || !b) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(!a && b)` with `a || !b`',
+    )
+  })
+
+  it('should transform in variable declarations', async () => {
+    let { result: constResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'const x = !(a && b)',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'let x = !a || !b',
+    })
+    expect(constResult.output).toBe('const x = !a || !b')
+
+    let { result: letResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'let x = !(a && b)',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'var x = !a || !b',
+    })
+    expect(letResult.output).toBe('let x = !a || !b')
+
+    let { result: varResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'var x = !(a && b)',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const f = () => !a || !b',
+    })
+    expect(varResult.output).toBe('var x = !a || !b')
+  })
+
+  it('should transform in arrow functions', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'const f = () => !(a && b)',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b !== c)',
-            fixed: '!a || b === c',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || b === c) {}',
+    })
+
+    expect(result.output).toBe('const f = () => !a || !b')
+  })
+
+  it('should handle comparison operators correctly', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a && b !== c)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const y = (!a || !b)',
+    })
+
+    expect(result.output).toBe('if (!a || b === c) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a && b !== c)` with `!a || b === c`',
+    )
+  })
+
+  it('should preserve parentheses when needed', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'const y = (!(a && b))',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'while (!a || !b) { doSomething(); }',
+    })
+
+    expect(result.output).toBe('const y = (!a || !b)')
+  })
+
+  it('should transform in various control structures', async () => {
+    let { result: whileResult } = await invalid({
       code: 'while (!(a && b)) { doSomething(); }',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'for (; !a || !b; ) { doSomething(); }',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(whileResult.output).toBe('while (!a || !b) { doSomething(); }')
+
+    let { result: forResult } = await invalid({
       code: 'for (; !(a && b); ) { doSomething(); }',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const result = !a || !b ? 1 : 0;',
-      code: 'const result = !(a && b) ? 1 : 0;',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b && c))',
-            fixed: '!a || !b || !c',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !c) {}',
-      code: 'if (!(a && (b && c))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'do { doSomething(); } while (!a || !b);',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(forResult.output).toBe('for (; !a || !b; ) { doSomething(); }')
+
+    let { result: doWhileResult } = await invalid({
       code: 'do { doSomething(); } while (!(a && b));',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      code: 'while (!( a && b )) { doSomething(); }',
-      output: 'while (!a || !b) { doSomething(); }',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b && c)',
-            fixed: '!a || !b || !c',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !c) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(doWhileResult.output).toBe('do { doSomething(); } while (!a || !b);')
+
+    let { result: ternaryResult } = await invalid({
+      code: 'const result = !(a && b) ? 1 : 0;',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(ternaryResult.output).toBe('const result = !a || !b ? 1 : 0;')
+  })
+
+  it('should handle nested conjunctions', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (b && c))) {}',
+    })
+
+    expect(result.output).toBe('if (!a || !b || !c) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a && (b && c))` with `!a || !b || !c`',
+    )
+  })
+
+  it('should handle multiple operands', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a && b && c)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && !b && c && !d)',
-            fixed: '!a || b || !c || d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      code: 'if (!(a && !b && c && !d)) {}',
-      output: 'if (!a || b || !c || d) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b || c))',
-            fixed: '!a || !(b || c)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !(b || c)) {}',
+    })
+
+    expect(result.output).toBe('if (!a || !b || !c) {}')
+  })
+
+  it('should handle complex nested expressions with mixed operators', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a && (b || c))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b && (c || d))',
-            fixed: '!a || !b || !(c || d)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !(c || d)) {}',
-      code: 'if (!(a && b && (c || d))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b || c) && d)',
-            fixed: '!a || !(b || c) || !d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !(b || c) || !d) {}',
-      code: 'if (!(a && (b || c) && d)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b && c && (d || e))',
-            fixed: '!a || !b || !c || !(d || e)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !c || !(d || e)) {}',
-      code: 'if (!(a && b && c && (d || e))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b && c) && d)',
-            fixed: '!a || !b || !c || !d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !c || !d) {}',
-      code: 'if (!(a && (b && c) && d)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b || (c && d)))',
-            fixed: '!a || !(b || (c && d))',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !(b || (c && d))) {}',
-      code: 'if (!(a && (b || (c && d)))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b && (c || d)))',
-            fixed: '!a || !b || !(c || d)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !(c || d)) {}',
-      code: 'if (!(a && (b && (c || d)))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b && (c && d))',
-            fixed: '!a || !b || !c || !d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || !c || !d) {}',
-      code: 'if (!(a && b && (c && d))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && (b || c) && (d || e))',
-            fixed: '!a || !(b || c) || !(d || e)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !(b || c) || !(d || e)) {}',
-      code: 'if (!(a && (b || c) && (d || e))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b || c) {}',
-      code: 'if (!(a && b) || c) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(b && !c)',
-            fixed: '!b || c',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      code: 'if (a || !(b && !c)) {}',
-      output: 'if (a || !b || c) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '(!a || !b)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if ((!a || !b) && (!c || !d)) {}',
-      code: 'if (!(a && b) && (!c || !d)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const arr = [...(!a || !b ? [1] : [2])]',
-      code: 'const arr = [...(!(a && b) ? [1] : [2])]',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      /* eslint-disable no-template-curly-in-string */
-      output: 'const str = `${!a || !b}`',
-      code: 'const str = `${!(a && b)}`',
-      /* eslint-enable no-template-curly-in-string */
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'const { prop = !a || !b } = obj',
-      code: 'const { prop = !(a && b) } = obj',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a > b && c < d)',
-            fixed: 'a <= b || c >= d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (a <= b || c >= d) {}',
-      code: 'if (!(a > b && c < d)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(foo() && bar())',
-            fixed: '!foo() || !bar()',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!foo() || !bar()) {}',
-      code: 'if (!(foo() && bar())) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(obj.prop && obj.method())',
-            fixed: '!obj.prop || !obj.method()',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!obj.prop || !obj.method()) {}',
-      code: 'if (!(obj.prop && obj.method())) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'function foo() { return !a || !b }',
-      code: 'function foo() { return !(a && b) }',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(obj.method().prop && obj?.optionalMethod?.())',
-            fixed: '!obj.method().prop || !obj?.optionalMethod?.()',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!obj.method().prop || !obj?.optionalMethod?.()) {}',
-      code: 'if (!(obj.method().prop && obj?.optionalMethod?.())) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a?.b && c?.d)',
-            fixed: '!a?.b || !c?.d',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a?.b || !c?.d) {}',
-      code: 'if (!(a?.b && c?.d)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!((a ?? b) && (c ?? d))',
-            fixed: '!(a ?? b) || !(c ?? d)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!(a ?? b) || !(c ?? d)) {}',
-      code: 'if (!((a ?? b) && (c ?? d))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a instanceof A && b instanceof B)',
-            fixed: '!(a instanceof A) || !(b instanceof B)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!(a instanceof A) || !(b instanceof B)) {}',
-      code: 'if (!(a instanceof A && b instanceof B)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a  ||  !b) {}',
+    })
+
+    expect(result.output).toBe('if (!a || !(b || c)) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a && (b || c))` with `!a || !(b || c)`',
+    )
+  })
+
+  it('should handle spacing and formatting', async () => {
+    let { result: spacingResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a  &&  b)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a ||\n    !b) {}',
+    })
+    expect(spacingResult.output).toBe('if (!a  ||  !b) {}')
+
+    let { result: multilineResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
       code: 'if (!(a &&\n    b)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || // important condition\n    !b) {}',
+    })
+    expect(multilineResult.output).toBe('if (!a ||\n    !b) {}')
+  })
+
+  it('should handle comments', async () => {
+    let { result: lineCommentResult } = await invalid({
       code: 'if (!(a && // important condition\n    b)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b)',
-            fixed: '!a || !b',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || /* this is why we need b */ !b) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(lineCommentResult.output).toBe(
+      'if (!a || // important condition\n    !b) {}',
+    )
+
+    let { result: blockCommentResult } = await invalid({
       code: 'if (!(a && /* this is why we need b */ b)) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a && b(c))',
-            fixed: '!a || !b(c)',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
-      output: 'if (!a || !b(c)) {}',
-      code: 'if (!(a && b(c))) {}',
-    },
-    {
-      errors: [
-        {
-          data: {
-            original: '!(a === b && (c || d(e, f)))',
-            fixed: 'a !== b || !(c || d(e, f))',
-          },
-          messageId: 'convertNegatedConjunction',
-        },
-      ],
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(blockCommentResult.output).toBe(
+      'if (!a || /* this is why we need b */ !b) {}',
+    )
+  })
+
+  it('should handle function calls and method calls', async () => {
+    let { result: functionResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(foo() && bar())) {}',
+    })
+    expect(functionResult.output).toBe('if (!foo() || !bar()) {}')
+
+    let { result: methodResult } = await invalid({
+      code: 'if (!(obj.prop && obj.method())) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(methodResult.output).toBe('if (!obj.prop || !obj.method()) {}')
+  })
+
+  it('should handle optional chaining', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a?.b && c?.d)) {}',
+    })
+
+    expect(result.output).toBe('if (!a?.b || !c?.d) {}')
+  })
+
+  it('should handle nullish coalescing', async () => {
+    let { result } = await invalid({
+      code: 'if (!((a ?? b) && (c ?? d))) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe('if (!(a ?? b) || !(c ?? d)) {}')
+  })
+
+  it('should handle instanceof operator', async () => {
+    let { result } = await invalid({
+      code: 'if (!(a instanceof A && b instanceof B)) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe('if (!(a instanceof A) || !(b instanceof B)) {}')
+  })
+
+  it('should handle comparison operators with negation', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a > b && c < d)) {}',
+    })
+
+    expect(result.output).toBe('if (a <= b || c >= d) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated conjunction `!(a > b && c < d)` with `a <= b || c >= d`',
+    )
+  })
+
+  it('should handle complex formatting with multiline expressions', async () => {
+    let { result } = await invalid({
       code: dedent`
         function func() {
           return !(
@@ -618,36 +311,37 @@ ruleTester.run('noNegatedConjunction', rule, {
           )
         }
       `,
-      output: dedent`
-        function func() {
-          return a !== b ||
-            !(c ||
-              d(e, f))
-        }
-      `,
-    },
-  ],
-  valid: [
-    'if (!a) {}',
-    'if (a && b) {}',
-    'if (a || b) {}',
-    'if (~(a && b)) {}',
-    'if (!(a || b)) {}',
-    'if (a && b && c) {}',
-    'const x = a && b',
-    'const x = a || b',
-    'const x = !(a || b)',
-    'let x = a && b',
-    'let x = a || b',
-    'let x = !(a || b)',
-    'var x = a && b',
-    'var x = a || b',
-    'var x = !(a || b)',
-    'foo(!a || !b)',
-    'const f = () => a || b',
-    'if (!(a && b || c)) {}',
-    'if (!(a || b && c)) {}',
-    'if (!((a && b) || c)) {}',
-    'foo(!(a && !b))',
-  ],
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe(dedent`
+      function func() {
+        return a !== b ||
+          !(c ||
+            d(e, f))
+      }
+    `)
+  })
+
+  it('should work in various expression contexts', async () => {
+    let { result: spreadResult } = await invalid({
+      code: 'const arr = [...(!(a && b) ? [1] : [2])]',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(spreadResult.output).toBe('const arr = [...(!a || !b ? [1] : [2])]')
+
+    let { result: templateResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      // eslint-disable-next-line no-template-curly-in-string
+      code: 'const str = `${!(a && b)}`',
+    })
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(templateResult.output).toBe('const str = `${!a || !b}`')
+
+    let { result: destructuringResult } = await invalid({
+      code: 'const { prop = !(a && b) } = obj',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(destructuringResult.output).toBe('const { prop = !a || !b } = obj')
+  })
 })
