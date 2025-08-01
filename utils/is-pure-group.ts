@@ -16,16 +16,14 @@ type ParentedNode = { parent?: ParentedNode } & Node
  *
  * - `!(a && b)` → true (no mixed operators)
  * - `((a && b) || c)` → true (operators at different nesting levels)
- * - `(a && b || c)` → false (mixed operators at same level)
+ * - `(a && b || c)` → false (mixed operators at same level).
  *
  * The function traverses up the AST to find the outermost parenthesized
  * expression, then analyzes the logical operators within that scope.
  *
- * @param {Expression} node - The AST node to analyze
- * @param {Rule.RuleContext} context - ESLint rule context, used to get source
- *   code.
- * @returns {boolean} True if the expression doesn't mix operators at the top
- *   level.
+ * @param node - The AST node to analyze.
+ * @param context - ESLint rule context, used to get source code.
+ * @returns True if the expression doesn't mix operators at the top level.
  */
 export function isPureGroup(
   node: Expression,
@@ -48,9 +46,9 @@ export function isPureGroup(
  * groups), the logical operators are uniform. In other words, if both `&&` and
  * `||` are found at the top level, it returns true indicating a mix.
  *
- * @param {string} code - The code string to analyze.
- * @returns {boolean} True if a mix of `&&` and `||` is found at the top level,
- *   false otherwise.
+ * @param code - The code string to analyze.
+ * @returns True if a mix of `&&` and `||` is found at the top level, false
+ *   otherwise.
  */
 function hasMixedOperators(code: string): boolean {
   let depth = 0
@@ -89,8 +87,8 @@ function hasMixedOperators(code: string): boolean {
  * the code starts with `!(`, the function removes the leading `!(` and the
  * final `)`. If it starts with `(` it removes only the outer parentheses.
  *
- * @param {string} code - The code string to process.
- * @returns {string} The inner code, with the outermost parentheses removed.
+ * @param code - The code string to process.
+ * @returns The inner code, with the outermost parentheses removed.
  */
 function getCodeInsideParentheses(code: string): string {
   if (code.startsWith('!(')) {

@@ -12,11 +12,10 @@
  *
  * @template T - The type of the object.
  * @template K - The key of the property in the object.
- * @param {K} property - The property name to extract from the object.
- * @param {(value: unknown) => boolean} predicate - The predicate function to
- *   apply to the property's value.
- * @returns {(obj: T) => boolean} A function that takes an object of type T and
- *   applies the predicate to its specified property.
+ * @param property - The property name to extract from the object.
+ * @param predicate - The predicate function to apply to the property's value.
+ * @returns A function that takes an object of type T and applies the predicate
+ *   to its specified property.
  */
 export function applyToProperty<
   T extends Record<K, V>,

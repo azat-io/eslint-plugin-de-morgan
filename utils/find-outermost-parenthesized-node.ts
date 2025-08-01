@@ -9,14 +9,13 @@ type ParentedNode = { parent?: ParentedNode } & Node
  * outermost logical expression node that is explicitly wrapped in parentheses.
  * The function checks the node and its parents (while they are
  * LogicalExpression) and returns the first node that is wrapped in parentheses
- * (i.e. where the characters immediately before its range and at its end form a
+ * (i.e. Where the characters immediately before its range and at its end form a
  * matching pair of parentheses). If none is found, the function returns the
- * topmost LogicalExpression.
+ * topmost LogicalExpression..
  *
- * @param {ParentedNode} node - The starting expression node.
- * @param {string} sourceCode - The full source code text.
- * @returns {ParentedNode} The outermost parenthesized node found in the parent
- *   chain.
+ * @param node - The starting expression node.
+ * @param sourceCode - The full source code text.
+ * @returns The outermost parenthesized node found in the parent chain.
  */
 export function findOutermostParenthesizedNode(
   node: ParentedNode,
@@ -45,11 +44,11 @@ export function findOutermostParenthesizedNode(
  * Checks if the characters immediately before and at the end of the given
  * node's range in the source code form a pair of parentheses.
  *
- * @param {number} start - The start index of the node's range.
- * @param {number} end - The end index of the node's range.
- * @param {string} sourceCode - The full source code text.
- * @returns {boolean} True if the character immediately before start is `(` and
- *   the character at index end is `)`, false otherwise.
+ * @param start - The start index of the node's range.
+ * @param end - The end index of the node's range.
+ * @param sourceCode - The full source code text.
+ * @returns True if the character immediately before start is `(` and the
+ *   character at index end is `)`, false otherwise.
  */
 function isInParentheses(
   start: number,

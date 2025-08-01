@@ -13,10 +13,8 @@
  *   console.log(result) // true
  *
  * @template Arguments - The types of parameters that will be tested.
- * @param {...Arguments} parameters - The parameters to be tested by the
- *   predicates.
- * @returns {(predicates: ((...args: Arguments) => boolean)[]) => boolean} A
- *   function that takes multiple predicates and returns `true` if all
+ * @param parameters - The parameters to be tested by the predicates.
+ * @returns A function that takes multiple predicates and returns `true` if all
  *   predicates return `true`, otherwise `false`.
  */
 export function createTestWithParameters<Arguments extends unknown[]>(

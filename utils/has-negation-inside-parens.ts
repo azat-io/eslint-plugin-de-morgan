@@ -12,10 +12,9 @@ import { getNodeContent } from './get-node-content'
  * given negated expression. This is useful for determining if De Morgan's laws
  * can be applied without changing the logic.
  *
- * @param {Node} node - The starting node, assumed to be of the form `!(...)`.
- * @param {Rule.RuleContext} context - The ESLint rule context, used to access
- *   source code.
- * @returns {boolean} True if there is a negation (`!`) inside the parentheses.
+ * @param node - The starting node, assumed to be of the form `!(...)`.
+ * @param context - The ESLint rule context, used to access source code.
+ * @returns True if there is a negation (`!`) inside the parentheses.
  */
 export function hasNegationInsideParens(
   node: Node,
@@ -36,8 +35,8 @@ export function hasNegationInsideParens(
  * (`!`). Double negations (`!!`) are ignored as they are typically used for
  * type coercion.
  *
- * @param {Node} node - The AST expression node to check.
- * @returns {boolean} True if the expression contains a relevant `!` inside.
+ * @param node - The AST expression node to check.
+ * @returns True if the expression contains a relevant `!` inside.
  */
 function hasNegationInside(node: Node): boolean {
   if (

@@ -22,13 +22,13 @@ import { isBoolean } from './is-boolean'
  *    toggled.
  * 2. If the expression is a boolean literal, it returns the toggled boolean
  *    literal.
- * 3. If the expression is a `UnaryExpression` (i.e. already negated), it will
+ * 3. If the expression is a `UnaryExpression` (i.e. Already negated), it will
  *    return the expression without the leading '!'.
- * 4. Otherwise, it returns the expression with a '!' prepended.
+ * 4. Otherwise, it returns the expression with a '!' prepended..
  *
- * @param {Expression} node - The expression node to toggle negation on.
- * @param {Rule.RuleContext} context - The ESLint rule context.
- * @returns {string} The toggled expression.
+ * @param node - The expression node to toggle negation on.
+ * @param context - The ESLint rule context.
+ * @returns The toggled expression.
  */
 export function toggleNegation(
   node: Expression,
@@ -67,9 +67,9 @@ export function toggleNegation(
  * returns the expression with the operator toggled, e.g. `a === b` becomes `a
  * !== b`.
  *
- * @param {BinaryExpression} node - The binary expression ESLint node.
- * @param {Rule.RuleContext} context - The ESLint rule context.
- * @returns {string} The toggled expression.
+ * @param node - The binary expression ESLint node.
+ * @param context - The ESLint rule context.
+ * @returns The toggled expression.
  */
 function toggleBinaryExpression(
   node: BinaryExpression,
@@ -128,9 +128,9 @@ function toggleLogicalExpression(
  * does not assume that the given expression is necessarily a UnaryExpression;
  * it simply toggles the presence of a leading '!' in the source text.
  *
- * @param {Expression} node - The ESLint expression node.
- * @param {Rule.RuleContext} context - The ESLint rule context.
- * @returns {string} The expression with toggled negation.
+ * @param node - The ESLint expression node.
+ * @param context - The ESLint rule context.
+ * @returns The expression with toggled negation.
  */
 function toggleUnaryExpression(
   node: Expression,
@@ -146,8 +146,8 @@ function toggleUnaryExpression(
  * removes it and returns the resulting string. Otherwise, it prepends an
  * exclamation mark to the string and returns it.
  *
- * @param {string} code - The code string to toggle the exclamation mark on.
- * @returns {string} The code string with the toggled exclamation mark.
+ * @param code - The code string to toggle the exclamation mark on.
+ * @returns The code string with the toggled exclamation mark.
  */
 function toggleCode(code: string): string {
   return code.startsWith('!') ? code.replace(/^!/u, '') : `!${code}`
@@ -158,8 +158,8 @@ function toggleCode(code: string): string {
  * toggled boolean literal as a string: `true` becomes `"false"` and `false`
  * becomes `"true"`.
  *
- * @param {Literal} node - The ESLint literal node.
- * @returns {string} The toggled boolean literal.
+ * @param node - The ESLint literal node.
+ * @returns The toggled boolean literal.
  */
 function toggleBooleanLiteral(node: Literal): string {
   return node.value ? 'false' : 'true'

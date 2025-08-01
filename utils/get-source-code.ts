@@ -3,8 +3,8 @@ import type { SourceCode, Rule } from 'eslint'
 /**
  * Retrieves the source code object from the given ESLint rule context.
  *
- * @param {Rule.RuleContext} context - The ESLint rule context.
- * @returns {SourceCode} The source code object.
+ * @param context - The ESLint rule context.
+ * @returns The source code object.
  */
 export function getSourceCode(context: Rule.RuleContext): SourceCode {
   return (

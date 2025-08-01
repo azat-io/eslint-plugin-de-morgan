@@ -12,11 +12,9 @@
  *   console.log(isEvenOrNegative(-3)) // true
  *   console.log(isEvenOrNegative(3)) // false
  *
- * @template T The argument types for the predicates.
- * @param {...((...args: T) => boolean)[]} predicates - The predicates to
- *   combine.
- * @returns {(...args: T) => boolean} A function that returns `true` if any
- *   predicate returns `true`, otherwise `false`.
+ * @param predicates - The predicates to combine.
+ * @returns A function that returns `true` if any predicate returns `true`,
+ *   otherwise `false`.
  */
 export function or<Arguments extends unknown[]>(
   ...predicates: ((...arguments_: Arguments) => boolean)[]

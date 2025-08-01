@@ -7,9 +7,9 @@ import { getSourceCode } from './get-source-code'
  * Retrieves the source code text of the given AST node using the provided
  * context.
  *
- * @param {Node} node - The AST node.
- * @param {Rule.RuleContext} context - The ESLint rule context.
- * @returns {string} The source code corresponding to the node.
+ * @param node - The AST node.
+ * @param context - The ESLint rule context.
+ * @returns The source code corresponding to the node.
  */
 export function getNodeContent(node: Node, context: Rule.RuleContext): string {
   return getSourceCode(context).getText(node)

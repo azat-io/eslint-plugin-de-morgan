@@ -12,10 +12,9 @@ type ParentedNode = { parent?: Node } & Node
  * `while`, `for`), logical expressions (`&&`, `||`), explicit boolean coercions
  * (`!!`, `Boolean(expr)`), and comparison operations (`===`, `!==`, `<`, `>`).
  *
- * @param {ParentedNode} node - The AST node to check.
- * @param {Rule.RuleContext} [_context] - The ESLint rule context (technical
- *   argument).
- * @returns {boolean} True if the expression is used in a boolean context.
+ * @param node - The AST node to check.
+ * @param [_context] - The ESLint rule context (technical argument).
+ * @returns True if the expression is used in a boolean context.
  */
 export function hasBooleanContext(
   node: ParentedNode,
@@ -37,12 +36,12 @@ export function hasBooleanContext(
  * - `if (expr) {...}`
  * - `while (expr) {...}`
  * - `for (; expr; ) {...}`
- * - `expr ? a : b` (ternary)
+ * - `expr ? A : b` (ternary)
  * - Logical expressions (`&&`, `||`)
- * - Explicit coercion via `!!expr`
+ * - Explicit coercion via `!!expr`.
  *
- * @param {Node} parent - The parent node in the AST.
- * @returns {boolean} True if the node is in a boolean context.
+ * @param parent - The parent node in the AST.
+ * @returns True if the node is in a boolean context.
  */
 function isControlFlowBooleanContext(parent: Node): boolean {
   return booleanControlFlowNodes.has(parent.type)
@@ -63,10 +62,10 @@ let booleanControlFlowNodes = new Set<Node['type']>([
  * boolean value. Supported operators:
  *
  * - Comparison: `===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`
- * - Type checking: `in`, `instanceof`
+ * - Type checking: `in`, `instanceof`.
  *
- * @param {Node} parent - The parent node in the AST.
- * @returns {boolean} True if the node is a part of a binary comparison.
+ * @param parent - The parent node in the AST.
+ * @returns True if the node is a part of a binary comparison.
  */
 function isBooleanOperation(parent: Node): boolean {
   return isBinaryExpression(parent) && booleanOperators.has(parent.operator)
@@ -89,8 +88,8 @@ let booleanOperators = new Set<BinaryOperator>([
  * Checks if the given node is passed to a function that explicitly converts it
  * to a boolean.
  *
- * @param {Node} parent - The parent node in the AST.
- * @returns {boolean} True if the node is passed to `Boolean()`.
+ * @param parent - The parent node in the AST.
+ * @returns True if the node is passed to `Boolean()`.
  */
 function isBooleanFunction(parent: Node): boolean {
   return (

@@ -68,9 +68,9 @@ const OPERATOR_MAPPING: Partial<Record<LogicalOperator, LogicalOperator>> = {
  * B) -> !A && !B)`. Preserves formatting, comments, and whitespace in the
  * transformed expression.
  *
- * @param {TransformOptions} options - The transformation options.
- * @returns {string | null} The transformed expression or null if transformation
- *   is not applicable.
+ * @param options - The transformation options.
+ * @returns The transformed expression or null if transformation is not
+ *   applicable.
  */
 export function transform({
   shouldWrapInParens,
@@ -108,8 +108,8 @@ export function transform({
 /**
  * Transforms an expression with special formatting (comments, multiple spaces).
  *
- * @param {TransformUtilityOptions} options - The transformation options.
- * @returns {string} The transformed expression with preserved formatting.
+ * @param options - The transformation options.
+ * @returns The transformed expression with preserved formatting.
  */
 function transformWithFormatting({
   sourceOperator,
@@ -151,8 +151,8 @@ function transformWithFormatting({
  * Iteratively flattens a logical expression tree into a list of operands and
  * transforms them using a stack-based approach for better performance.
  *
- * @param {FlattenOperandsOptions} options - The flattening options.
- * @returns {string[]} Array of transformed operands.
+ * @param options - The flattening options.
+ * @returns Array of transformed operands.
  */
 function flattenOperands({
   expressionType,
@@ -185,8 +185,8 @@ function flattenOperands({
 /**
  * Transforms a simple logical expression without special formatting.
  *
- * @param {TransformUtilityOptions} options - The transformation options.
- * @returns {string} The transformed expression.
+ * @param options - The transformation options.
+ * @returns The transformed expression.
  */
 function transformSimple({
   expressionType,
@@ -206,9 +206,9 @@ function transformSimple({
 /**
  * Checks if the expression matches the specified logical type.
  *
- * @param {Expression} expression - The expression to check.
- * @param {ExpressionType} type - The type to check against.
- * @returns {boolean} True if the expression matches the type, false otherwise.
+ * @param expression - The expression to check.
+ * @param type - The type to check against.
+ * @returns True if the expression matches the type, false otherwise.
  */
 function matchesExpressionType(
   expression: Expression,
@@ -223,8 +223,8 @@ function matchesExpressionType(
  * Checks if the text contains special formatting like comments or multiple
  * spaces.
  *
- * @param {string} text - The text to check.
- * @returns {boolean} True if the text contains special formatting.
+ * @param text - The text to check.
+ * @returns True if the text contains special formatting.
  */
 function hasSpecialFormatting(text: string): boolean {
   return (

@@ -19,15 +19,13 @@ import type {
  *   const isNot = hasOperator('!')
  *   isNot({ type: 'UnaryExpression', operator: '!' }) // returns true
  *
- * @param {LogicalOperator | UnaryOperator} operator - The operator to check
- *   for. For LogicalOperator: `&&`, `||`, `??` For UnaryOperator: `-`, `+`,
- *   `!`, `~`, `typeof`, etc.
- * @returns {(node: LogicalExpression | UnaryExpression) => boolean} A predicate
- *   function that:
+ * @param operator - The operator to check for. For LogicalOperator: `&&`, `||`,
+ *   `??` For UnaryOperator: `-`, `+`, `!`, `~`, `typeof`, etc.
+ * @returns A predicate function that:
  *
  *   - Takes a LogicalExpression or UnaryExpression node
  *   - Returns `true` if the node's operator matches the specified operator
- *   - Returns `false` otherwise
+ *   - Returns `false` otherwise.
  */
 export function hasOperator(operator: LogicalOperator | UnaryOperator) {
   return (node: LogicalExpression | UnaryExpression): boolean =>
