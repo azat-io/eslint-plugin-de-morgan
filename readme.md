@@ -22,11 +22,11 @@ In Boolean algebra, De Morgan’s laws are two transformation rules that are bot
 
 **First Law:**
 
-$\neg (A \land B) \equiv (\neg A) \lor (\neg B)$
+_¬(A ∧ B) ≡ (¬A) ∨ (¬B)_
 
 **Second Law:**
 
-$\neg (A \lor B) \equiv (\neg A) \land (\neg B)$
+_¬(A ∨ B) ≡ (¬A) ∧ (¬B)_
 
 Using these principles, the plugin provides two ESLint rules:
 
