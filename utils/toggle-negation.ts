@@ -9,7 +9,6 @@ import type { Rule } from 'eslint'
 
 import { isLogicalExpression } from './is-logical-expression'
 import { isBinaryExpression } from './is-binary-expression'
-import { getNodeContent } from './get-node-content'
 import { parenthesize } from './parenthesize'
 import { isBoolean } from './is-boolean'
 
@@ -75,8 +74,8 @@ function toggleBinaryExpression(
   node: BinaryExpression,
   context: Rule.RuleContext,
 ): string {
-  let left = getNodeContent(node.left, context).trim()
-  let right = getNodeContent(node.right, context).trim()
+  let left = context.sourceCode.getText(node.left).trim()
+  let right = context.sourceCode.getText(node.right).trim()
 
   let notTransformableOperators: BinaryOperator[] = [
     '<<',
@@ -117,7 +116,7 @@ function toggleLogicalExpression(
   node: LogicalExpression,
   context: Rule.RuleContext,
 ): string {
-  let content = getNodeContent(node, context).trim()
+  let content = context.sourceCode.getText(node).trim()
   return toggleCode(parenthesize(content))
 }
 
@@ -136,7 +135,7 @@ function toggleUnaryExpression(
   node: Expression,
   context: Rule.RuleContext,
 ): string {
-  let content = getNodeContent(node, context).trim()
+  let content = context.sourceCode.getText(node).trim()
   return toggleCode(content)
 }
 

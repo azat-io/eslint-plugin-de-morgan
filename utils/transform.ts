@@ -6,9 +6,7 @@ import type {
 } from 'estree'
 import type { Rule } from 'eslint'
 
-import { getNodeContent } from './get-node-content'
 import { toggleNegation } from './toggle-negation'
-import { getSourceCode } from './get-source-code'
 import { isConjunction } from './is-conjunction'
 import { isDisjunction } from './is-disjunction'
 import { parenthesize } from './parenthesize'
@@ -87,7 +85,7 @@ export function transform({
     return null
   }
 
-  let originalText = getNodeContent(argument, context)
+  let originalText = context.sourceCode.getText(argument)
   let targetOperator = OPERATOR_MAPPING[sourceOperator]!
 
   let transformUtilityOptions: TransformUtilityOptions = {
@@ -117,7 +115,7 @@ function transformWithFormatting({
   expression,
   context,
 }: TransformUtilityOptions): string {
-  let sourceCode = getSourceCode(context)
+  let { sourceCode } = context
 
   let leftText = toggleNegation(expression.left, context)
   let rightText = toggleNegation(expression.right, context)
