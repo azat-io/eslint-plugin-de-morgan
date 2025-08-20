@@ -68,7 +68,6 @@ function createFakeContext(sourceText: string): Rule.RuleContext {
   }
 
   return {
-    getSourceCode: () => fakeSourceCode,
     sourceCode: fakeSourceCode,
   } as unknown as Rule.RuleContext
 }
