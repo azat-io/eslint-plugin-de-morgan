@@ -5,7 +5,6 @@ import { findOutermostParenthesizedNode } from './find-outermost-parenthesized-n
 import { hasNegationOperator } from './has-negation-operator'
 import { isLogicalExpression } from './is-logical-expression'
 import { isUnaryExpression } from './is-unary-expression'
-import { getNodeContent } from './get-node-content'
 
 /**
  * Checks if there is a negation (`!`) inside the outermost parentheses of a
@@ -20,7 +19,7 @@ export function hasNegationInsideParens(
   node: Node,
   context: Rule.RuleContext,
 ): boolean {
-  let sourceCode = getNodeContent(node, context)
+  let sourceCode = context.sourceCode.getText(node)
   let outermostNode = findOutermostParenthesizedNode(node, sourceCode)
 
   if (!isUnaryExpression(outermostNode)) {

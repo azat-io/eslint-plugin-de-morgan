@@ -20,9 +20,9 @@ type FakeNode = {
 let currentCode = ''
 
 let fakeContext: Rule.RuleContext = {
-  getSourceCode: () => ({
+  sourceCode: {
     getText: () => currentCode,
-  }),
+  },
 } as Rule.RuleContext
 
 describe('isPureGroup', () => {

@@ -5,7 +5,6 @@ import { createTestWithParameters } from '../utils/create-test-with-parameters'
 import { hasNegationInsideParens } from '../utils/has-negation-inside-parens'
 import { hasBooleanContext } from '../utils/has-boolean-context'
 import { applyToProperty } from '../utils/apply-to-property'
-import { getNodeContent } from '../utils/get-node-content'
 import { isConjunction } from '../utils/is-conjunction'
 import { sanitizeCode } from '../utils/sanitize-code'
 import { isPureGroup } from '../utils/is-pure-group'
@@ -38,7 +37,7 @@ export default {
         })
 
         if (fixedExpression) {
-          let originalExpression = getNodeContent(node, context)
+          let originalExpression = context.sourceCode.getText(node)
 
           context.report({
             data: {
