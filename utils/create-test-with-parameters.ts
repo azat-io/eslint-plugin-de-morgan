@@ -20,14 +20,6 @@
 export function createTestWithParameters<Arguments extends unknown[]>(
   ...parameters: Arguments
 ) {
-  return (
-    ...predicates: ((...arguments_: Arguments) => boolean)[]
-  ): boolean => {
-    for (let predicate of predicates) {
-      if (!predicate(...parameters)) {
-        return false
-      }
-    }
-    return true
-  }
+  return (...predicates: ((...arguments_: Arguments) => boolean)[]): boolean =>
+    predicates.every(predicate => predicate(...parameters))
 }
