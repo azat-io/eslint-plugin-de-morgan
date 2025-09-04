@@ -2,8 +2,6 @@ import type { Expression, Node } from 'estree'
 import type { Rule } from 'eslint'
 
 import { findOutermostParenthesizedNode } from './find-outermost-parenthesized-node'
-import { getNodeContent } from './get-node-content'
-import { getSourceCode } from './get-source-code'
 
 type ParentedNode = { parent?: ParentedNode } & Node
 
@@ -29,12 +27,12 @@ export function isPureGroup(
   node: Expression,
   context: Rule.RuleContext,
 ): boolean {
-  let sourceCode = getSourceCode(context).getText()
+  let sourceCode = context.sourceCode.getText()
   let outermostNode = findOutermostParenthesizedNode(
     node as ParentedNode,
     sourceCode,
   )
-  let fullCode = getNodeContent(outermostNode, context)
+  let fullCode = context.sourceCode.getText(outermostNode)
   let innerCode = getCodeInsideParentheses(fullCode)
 
   return !hasMixedOperators(innerCode)
