@@ -53,6 +53,7 @@
     "@azat-io/typescript-config": "^1.1.1",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/types": "^19.8.1",
     "@humanwhocodes/crosspost": "^0.16.0",
     "@humanwhocodes/social-changelog": "^0.4.0",
     "@types/estree": "^1.0.8",
