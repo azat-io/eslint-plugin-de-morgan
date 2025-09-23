@@ -42,25 +42,47 @@ De Morgan’s laws are a cornerstone of Boolean algebra and have several practic
 
 - **Clarity**: Rewriting complex negations often results in expressions that more clearly communicate the underlying logic.
 
-For example:
-
-```js
-if (!(a && !b && c >= 10 && d !== e)) {
-  /* ... */
-}
-```
-
-Becomes:
-
-```js
-if (!a || b || c < 10 || d === e) {
-  /* ... */
-}
-```
-
 - **Avoiding Logical Errors**: When dealing with nested logical expressions, small mistakes in the placement of negations can lead to subtle bugs. By enforcing a consistent style based on well-known laws, the plugin helps reduce such errors.
 
 - **Simplification**: In some cases, the transformed expression may be simpler to evaluate and optimize, both for human readers and for compilers / interpreters.
+
+### Examples
+
+**Base example**
+
+Before:
+
+```js
+if (!(a && b)) {
+  /* ... */
+}
+```
+
+After:
+
+```js
+if (!a || !b) {
+  /* ... */
+}
+```
+
+**More complex example**
+
+Before:
+
+```js
+if (!(a || !b || c >= 10 || d !== e)) {
+  /* ... */
+}
+```
+
+After:
+
+```js
+if (!a && b && c < 10 && d === e) {
+  /* ... */
+}
+```
 
 ## Installation
 
@@ -106,10 +128,10 @@ module.exports = {
 
 🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/use/command-line-interface#--fix).
 
-| Name                                                                                                                  | Description                                                  | 🔧  |
-| :-------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- | :-- |
-| [no-negated-conjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md) | Transforms the negation of a conjunction into the equivalent | 🔧  |
-| [no-negated-disjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-disjunction.md) | Transforms the negation of a disjunction into the equivalent | 🔧  |
+| Name                                                                                                                  | Description                                                              | 🔧  |
+| :-------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- | :-- |
+| [no-negated-conjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md) | Transforms the negation of a conjunction into the equivalent disjunction | 🔧  |
+| [no-negated-disjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-disjunction.md) | Transforms the negation of a disjunction into the equivalent conjunction | 🔧  |
 
 ## Further Reading
 
