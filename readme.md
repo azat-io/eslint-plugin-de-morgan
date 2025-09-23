@@ -9,6 +9,7 @@
 />
 
 [![Version](https://img.shields.io/npm/v/eslint-plugin-de-morgan.svg?color=4a32c3&labelColor=26272b)](https://npmjs.com/package/eslint-plugin-de-morgan)
+[![Monthly Download](https://img.shields.io/npm/dm/eslint-plugin-de-morgan.svg?color=4a32c3&labelColor=26272b)](https://npmjs.com/package/eslint-plugin-de-morgan)
 [![Code Coverage](https://img.shields.io/codecov/c/github/azat-io/eslint-plugin-de-morgan.svg?color=4a32c3&labelColor=26272b)](https://npmjs.com/package/eslint-plugin-de-morgan)
 [![GitHub License](https://img.shields.io/badge/license-MIT-232428.svg?color=4a32c3&labelColor=26272b)](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/license.md)
 
@@ -105,10 +106,10 @@ module.exports = {
 
 🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/use/command-line-interface#--fix).
 
-| Name                   | Description                                                  | 🔧  |
-| :--------------------- | :----------------------------------------------------------- | :-- |
-| no-negated-conjunction | Transforms the negation of a conjunction into the equivalent | 🔧  |
-| no-negated-disjunction | Transforms the negation of a disjunction into the equivalent | 🔧  |
+| Name                                                                                                                  | Description                                                  | 🔧  |
+| :-------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- | :-- |
+| [no-negated-conjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md) | Transforms the negation of a conjunction into the equivalent | 🔧  |
+| [no-negated-disjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-disjunction.md) | Transforms the negation of a disjunction into the equivalent | 🔧  |
 
 ## Further Reading
 
