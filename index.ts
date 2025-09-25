@@ -21,7 +21,7 @@ interface PluginConfig {
 
 let pluginName = 'de-morgan'
 
-let rules: Record<string, Rule.RuleModule> = {
+export let rules: Record<string, Rule.RuleModule> = {
   'no-negated-conjunction': noNegatedConjunction,
   'no-negated-disjunction': noNegatedDisjunction,
 }
@@ -50,14 +50,16 @@ function createLegacyConfig(): Linter.LegacyConfig {
   }
 }
 
+export let configs = {
+  'recommended-legacy': createLegacyConfig(),
+  recommended: createConfig(),
+}
+
 export default {
-  configs: {
-    'recommended-legacy': createLegacyConfig(),
-    recommended: createConfig(),
-  },
   meta: {
     version: packageVersion,
     name: packageName,
   },
+  configs,
   rules,
 } as PluginConfig
