@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.0.0
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v1.3.1...v2.0.0)
+
+### 🚀 Features
+
+- ⚠️ Move to esm only ([5edc216](https://github.com/azat-io/eslint-plugin-de-morgan/commit/5edc216))
+- ⚠️ Remove get source code legacy func support ([721b90d](https://github.com/azat-io/eslint-plugin-de-morgan/commit/721b90d))
+- ⚠️ Drop nodejs v18 support ([0e0829c](https://github.com/azat-io/eslint-plugin-de-morgan/commit/0e0829c))
+
+### 🐞 Bug Fixes
+
+- Fix plugin usage with legacy configurations ([19bbaad](https://github.com/azat-io/eslint-plugin-de-morgan/commit/19bbaad))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️ Move to esm only ([5edc216](https://github.com/azat-io/eslint-plugin-de-morgan/commit/5edc216))
+- ⚠️ Remove get source code legacy func support ([721b90d](https://github.com/azat-io/eslint-plugin-de-morgan/commit/721b90d))
+- ⚠️ Drop nodejs v18 support ([0e0829c](https://github.com/azat-io/eslint-plugin-de-morgan/commit/0e0829c))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v1.3.1
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v1.3.0...v1.3.1)
