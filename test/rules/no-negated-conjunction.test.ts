@@ -1,19 +1,23 @@
 import { createRuleTester } from 'eslint-vitest-rule-tester'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import dedent from 'dedent'
 
 import rule from '../../rules/no-negated-conjunction'
 
-describe('no-negated-conjunction', () => {
-  let { invalid, valid } = createRuleTester({
-    configs: {
-      languageOptions: {
-        parserOptions: {
-          sourceType: 'module',
-          ecmaVersion: 2020,
-        },
+let testerConfig = {
+  configs: {
+    languageOptions: {
+      parserOptions: {
+        sourceType: 'module' as const,
+        ecmaVersion: 2020 as const,
       },
     },
+  },
+}
+
+describe('no-negated-conjunction', () => {
+  let { invalid, valid } = createRuleTester({
+    ...testerConfig,
     name: 'no-negated-conjunction',
     rule,
   })
@@ -343,5 +347,35 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
     })
     expect(destructuringResult.output).toBe('const { prop = !a || !b } = obj')
+  })
+
+  it('should skip reporting when transform cannot produce a fix', async () => {
+    vi.resetModules()
+
+    let transformMock = vi.fn().mockReturnValue(null)
+
+    vi.doMock('../../utils/transform', () => ({
+      transform: transformMock,
+    }))
+
+    try {
+      let { default: mockedRule } = await import(
+        '../../rules/no-negated-conjunction'
+      )
+      let { valid: validRule } = createRuleTester({
+        ...testerConfig,
+        name: 'no-negated-conjunction transform fallback',
+        rule: mockedRule,
+      })
+
+      await validRule('if (!(a && b)) {}')
+
+      expect(transformMock).toHaveBeenCalledWith(
+        expect.objectContaining({ expressionType: 'conjunction' }),
+      )
+    } finally {
+      vi.doUnmock('../../utils/transform')
+      vi.resetModules()
+    }
   })
 })
