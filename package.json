@@ -49,7 +49,7 @@
     "test:usage": "knip"
   },
   "devDependencies": {
-    "@azat-io/eslint-config": "^2.57.0",
+    "@azat-io/eslint-config": "^2.59.0",
     "@azat-io/typescript-config": "^1.1.1",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
@@ -58,25 +58,25 @@
     "@humanwhocodes/social-changelog": "^0.4.0",
     "@types/estree": "^1.0.8",
     "@types/node": "^24.10.1",
-    "@vitest/coverage-v8": "^4.0.12",
+    "@vitest/coverage-v8": "^4.0.15",
     "changelogen": "^0.6.2",
-    "changelogithub": "^13.16.1",
+    "changelogithub": "^14.0.0",
     "clean-publish": "^6.0.1",
-    "cspell": "^9.3.2",
+    "cspell": "^9.4.0",
     "dedent": "^1.7.0",
     "eslint": "9.39.1",
     "eslint-plugin-eslint-plugin": "^7.2.0",
     "eslint-vitest-rule-tester": "^3.0.0",
     "jiti": "^2.6.1",
-    "knip": "^5.70.1",
-    "prettier": "^3.6.2",
-    "prettier-plugin-jsdoc": "^1.5.0",
+    "knip": "^5.71.0",
+    "prettier": "^3.7.4",
+    "prettier-plugin-jsdoc": "^1.7.0",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.4",
+    "vite": "^7.2.6",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-prettier-format": "^1.0.0",
-    "vitest": "^4.0.12"
+    "vitest": "^4.0.15"
   },
   "peerDependencies": {
     "eslint": ">=8.0.0"

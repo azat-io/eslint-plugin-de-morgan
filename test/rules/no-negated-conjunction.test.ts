@@ -359,9 +359,8 @@ describe('no-negated-conjunction', () => {
     }))
 
     try {
-      let { default: mockedRule } = await import(
-        '../../rules/no-negated-conjunction'
-      )
+      let { default: mockedRule } =
+        await import('../../rules/no-negated-conjunction')
       let { valid: validRule } = createRuleTester({
         ...testerConfig,
         name: 'no-negated-conjunction transform fallback',
