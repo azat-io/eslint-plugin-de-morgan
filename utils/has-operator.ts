@@ -10,12 +10,10 @@ import type {
  * operator.
  *
  * @example
- *   // Check for logical AND operator
  *   const isAnd = hasOperator('&&')
  *   isAnd({ type: 'LogicalExpression', operator: '&&' }) // returns true
  *
  * @example
- *   // Check for logical NOT operator
  *   const isNot = hasOperator('!')
  *   isNot({ type: 'UnaryExpression', operator: '!' }) // returns true
  *
