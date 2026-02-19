@@ -12,42 +12,66 @@ import { isDisjunction } from './is-disjunction'
 import { parenthesize } from './parenthesize'
 
 interface TransformUtilityOptions {
-  /** The source logical operator. */
+  /**
+   * The source logical operator.
+   */
   sourceOperator: LogicalOperator
 
-  /** The target logical operator. */
+  /**
+   * The target logical operator.
+   */
   targetOperator: LogicalOperator
 
-  /** The type of logical expression. */
+  /**
+   * The type of logical expression.
+   */
   expressionType: ExpressionType
 
-  /** The logical expression to transform. */
+  /**
+   * The logical expression to transform.
+   */
   expression: LogicalExpression
 
-  /** The ESLint rule context. */
+  /**
+   * The ESLint rule context.
+   */
   context: Rule.RuleContext
 }
 
 interface TransformOptions {
-  /** The type of logical expression to transform. */
+  /**
+   * The type of logical expression to transform.
+   */
   expressionType: ExpressionType
 
-  /** Whether the transformed expression should be wrapped in parentheses. */
+  /**
+   * Whether the transformed expression should be wrapped in parentheses.
+   */
   shouldWrapInParens: boolean
 
-  /** The ESLint rule context. */
+  /**
+   * The ESLint rule context.
+   */
   context: Rule.RuleContext
 
-  /** The UnaryExpression node to transform. */
+  /**
+   * The UnaryExpression node to transform.
+   */
   node: UnaryExpression
 }
 
 interface FlattenOperandsOptions {
-  /** The type of logical expression. */
+  /**
+   * The type of logical expression.
+   */
   expressionType: ExpressionType
-  /** The ESLint rule context. */
+  /**
+   * The ESLint rule context.
+   */
   context: Rule.RuleContext
-  /** The logical expression to flatten. */
+  /**
+   * The logical expression to flatten.
+   */
   expression: Expression
 }
 
@@ -96,8 +120,9 @@ export function transform({
     context,
   }
 
-  let result = hasSpecialFormatting(originalText)
-    ? transformWithFormatting(transformUtilityOptions)
+  let result =
+    hasSpecialFormatting(originalText) ?
+      transformWithFormatting(transformUtilityOptions)
     : transformSimple(transformUtilityOptions)
 
   return parenthesize(result, shouldWrapInParens)
@@ -212,8 +237,8 @@ function matchesExpressionType(
   expression: Expression,
   type: ExpressionType,
 ): boolean {
-  return type === 'conjunction'
-    ? isConjunction(expression)
+  return type === 'conjunction' ?
+      isConjunction(expression)
     : isDisjunction(expression)
 }
 

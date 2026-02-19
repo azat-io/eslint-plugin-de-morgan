@@ -4,13 +4,16 @@
  * it returns `false`.
  *
  * @example
- *   let isEven = (x: number) => x % 2 === 0
- *   let isNegative = (x: number) => x < 0
  *
- *   let isEvenOrNegative = or(isEven, isNegative)
- *   console.log(isEvenOrNegative(2)) // true
- *   console.log(isEvenOrNegative(-3)) // true
- *   console.log(isEvenOrNegative(3)) // false
+ * ```ts
+ * let isEven = (x: number) => x % 2 === 0
+ * let isNegative = (x: number) => x < 0
+ *
+ * let isEvenOrNegative = or(isEven, isNegative)
+ * console.log(isEvenOrNegative(2)) // true
+ * console.log(isEvenOrNegative(-3)) // true
+ * console.log(isEvenOrNegative(3)) // false
+ * ```
  *
  * @param predicates - The predicates to combine.
  * @returns A function that returns `true` if any predicate returns `true`,

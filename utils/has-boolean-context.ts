@@ -20,8 +20,8 @@ export function hasBooleanContext(
   node: ParentedNode,
   _context: Rule.RuleContext,
 ): boolean {
-  return node.parent
-    ? isControlFlowBooleanContext(node.parent) ||
+  return node.parent ?
+      isControlFlowBooleanContext(node.parent) ||
         isBooleanOperation(node.parent) ||
         isBooleanFunction(node.parent)
     : false

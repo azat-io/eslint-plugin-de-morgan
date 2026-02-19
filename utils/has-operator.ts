@@ -10,12 +10,18 @@ import type {
  * operator.
  *
  * @example
- *   const isAnd = hasOperator('&&')
- *   isAnd({ type: 'LogicalExpression', operator: '&&' }) // returns true
+ *
+ * ```ts
+ * const isAnd = hasOperator('&&')
+ * isAnd({ type: 'LogicalExpression', operator: '&&' }) // returns true
+ * ```
  *
  * @example
- *   const isNot = hasOperator('!')
- *   isNot({ type: 'UnaryExpression', operator: '!' }) // returns true
+ *
+ * ```ts
+ * const isNot = hasOperator('!')
+ * isNot({ type: 'UnaryExpression', operator: '!' }) // returns true
+ * ```
  *
  * @param operator - The operator to check for. For LogicalOperator: `&&`, `||`,
  *   `??` For UnaryOperator: `-`, `+`, `!`, `~`, `typeof`, etc.

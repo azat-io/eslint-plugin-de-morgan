@@ -4,11 +4,14 @@
  * predicate to it, returning the result.
  *
  * @example
- *   let isPositive = (x: number) => x > 0
- *   let testValue = applyToProperty('value', isPositive)
  *
- *   console.log(testValue({ value: 10 })) // true
- *   console.log(testValue({ value: -5 })) // false
+ * ```ts
+ * let isPositive = (x: number) => x > 0
+ * let testValue = applyToProperty('value', isPositive)
+ *
+ * console.log(testValue({ value: 10 })) // true
+ * console.log(testValue({ value: -5 })) // false
+ * ```
  *
  * @template T - The type of the object.
  * @template K - The key of the property in the object.

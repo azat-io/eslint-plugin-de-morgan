@@ -5,12 +5,15 @@
  * `true`.
  *
  * @example
- *   let test = createTestWithParameters(3, 4)
- *   let result = test(
- *     (x, y) => x + y > 0,
- *     (x, y) => x * y < 100,
- *   )
- *   console.log(result) // true
+ *
+ * ```ts
+ * let test = createTestWithParameters(3, 4)
+ * let result = test(
+ *   (x, y) => x + y > 0,
+ *   (x, y) => x * y < 100,
+ * )
+ * console.log(result) // true
+ * ```
  *
  * @template Arguments - The types of parameters that will be tested.
  * @param parameters - The parameters to be tested by the predicates.

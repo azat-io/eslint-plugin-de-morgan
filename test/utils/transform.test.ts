@@ -40,9 +40,9 @@ function createConjunction(
   return {
     range: [
       left.range ? left.range[0] : 0,
-      right.range
-        ? right.range[1]
-        : leftText.length + formattingBetween.length + rightText.length,
+      right.range ?
+        right.range[1]
+      : leftText.length + formattingBetween.length + rightText.length,
     ],
     raw: `${leftText}${formattingBetween}${rightText}`,
     type: 'LogicalExpression',
