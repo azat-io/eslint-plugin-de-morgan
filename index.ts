@@ -50,7 +50,7 @@ function createLegacyConfig(): Linter.LegacyConfig {
   }
 }
 
-export let configs = {
+export let configs: PluginConfig['configs'] = {
   'recommended-legacy': createLegacyConfig(),
   recommended: createConfig(),
 }
