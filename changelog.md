@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.1.0
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.0.0...v2.1.0)
+
+### 🚀 Features
+
+- Support eslint v10
+  ([59b0ac8](https://github.com/azat-io/eslint-plugin-de-morgan/commit/59b0ac8))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.0.0
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v1.3.1...v2.0.0)
