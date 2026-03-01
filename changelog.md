@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.1.1
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.0...v2.1.1)
+
+### 🐞 Bug Fixes
+
+- Add explicit type annotation to configs export
+  ([2dab08c](https://github.com/azat-io/eslint-plugin-de-morgan/commit/2dab08c))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.1.0
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.0.0...v2.1.0)
