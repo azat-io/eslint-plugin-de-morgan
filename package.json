@@ -49,27 +49,27 @@
     "test:usage": "knip"
   },
   "devDependencies": {
-    "@azat-io/eslint-config": "^2.67.0",
+    "@azat-io/eslint-config": "^2.70.0",
     "@azat-io/prettier-config": "^1.1.1",
     "@azat-io/typescript-config": "^1.1.1",
-    "@commitlint/cli": "^20.4.0",
-    "@commitlint/config-conventional": "^20.4.0",
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@commitlint/types": "^20.4.0",
-    "@humanwhocodes/crosspost": "^1.0.2",
+    "@humanwhocodes/crosspost": "^1.0.3",
     "@humanwhocodes/social-changelog": "^0.4.0",
     "@types/estree": "^1.0.8",
-    "@types/node": "^25.1.0",
+    "@types/node": "^25.3.3",
     "@vitest/coverage-v8": "^4.0.18",
     "changelogen": "^0.6.2",
     "changelogithub": "^14.0.0",
-    "clean-publish": "^6.0.1",
-    "cspell": "^9.6.2",
+    "clean-publish": "^6.0.3",
+    "cspell": "^9.7.0",
     "dedent": "^1.7.1",
-    "eslint": "9.39.2",
-    "eslint-plugin-eslint-plugin": "^7.3.0",
-    "eslint-vitest-rule-tester": "^3.0.1",
+    "eslint": "10.0.2",
+    "eslint-plugin-eslint-plugin": "^7.3.1",
+    "eslint-vitest-rule-tester": "^3.1.0",
     "jiti": "^2.6.1",
-    "knip": "^5.84.1",
+    "knip": "^5.85.0",
     "prettier": "^3.8.1",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^5.9.3",
@@ -79,7 +79,7 @@
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "eslint": ">=8.0.0"
+    "eslint": "^8.45.0 || ^9.0.0 || ^10.0.0"
   },
   "engines": {
     "node": "^20.0.0 || >=22.0.0"

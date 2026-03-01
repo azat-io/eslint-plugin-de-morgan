@@ -56,7 +56,6 @@ export default {
         'Transforms the negation of a disjunction !(A || B) into the ' +
         'equivalent !A && !B according to De Morgan’s law',
       url: `https://github.com/${repository}/blob/main/docs/no-negated-disjunction.md`,
-      category: 'Best Practices',
       recommended: true,
     },
     messages: {
