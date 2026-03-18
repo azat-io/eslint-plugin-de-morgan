@@ -5,17 +5,20 @@ import path from 'node:path'
 
 export default defineConfig({
   build: {
+    rolldownOptions: {
+      external: (id: string) => !id.startsWith('.') && !path.isAbsolute(id),
+      experimental: {
+        attachDebugInfo: 'none',
+      },
+      output: {
+        preserveModules: true,
+      },
+    },
     lib: {
       entry: [path.resolve(import.meta.dirname, 'index.ts')],
       fileName: (_format, entryName) => `${entryName}.js`,
       name: 'eslint-plugin-de-morgan',
       formats: ['es'],
-    },
-    rollupOptions: {
-      external: (id: string) => !id.startsWith('.') && !path.isAbsolute(id),
-      output: {
-        preserveModules: true,
-      },
     },
     minify: false,
   },
