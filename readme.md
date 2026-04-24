@@ -5,7 +5,6 @@
   alt="ESLint Plugin De Morgan logo"
   align="right"
   height="160"
-  width="160"
 />
 
 [![Version](https://img.shields.io/npm/v/eslint-plugin-de-morgan.svg?color=4a32c3&labelColor=26272b)](https://npmjs.com/package/eslint-plugin-de-morgan)
