@@ -327,6 +327,27 @@ describe('no-negated-conjunction', () => {
     `)
   })
 
+  it('should preserve balanced parentheses for multiline grouped disjunctions', async () => {
+    let { result } = await invalid({
+      code: dedent`
+        function f(a, b, c, d) {
+          return !(
+            (a || b) &&
+            (c || d)
+          )
+        }
+      `,
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe(dedent`
+      function f(a, b, c, d) {
+        return !(a || b) ||
+          !(c || d)
+      }
+    `)
+  })
+
   it('should work in various expression contexts', async () => {
     let { result: spreadResult } = await invalid({
       code: 'const arr = [...(!(a && b) ? [1] : [2])]',

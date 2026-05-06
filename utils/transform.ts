@@ -151,13 +151,9 @@ function transformWithFormatting({
 
   let [, leftEnd] = expression.left.range
   let [rightStart] = expression.right.range
-  let textBetween = sourceCode.text.slice(leftEnd, rightStart)
-
-  let endsWithOpeningParen = /\(\s*$/u.test(textBetween)
-
-  if (endsWithOpeningParen) {
-    textBetween = textBetween.replace(/\(\s*$/u, '')
-  }
+  let textBetween = normalizeTextBetweenOperands(
+    sourceCode.text.slice(leftEnd, rightStart),
+  )
 
   let formattedOperator = textBetween.replaceAll(
     new RegExp(
@@ -256,4 +252,38 @@ function hasSpecialFormatting(text: string): boolean {
     text.includes('\n') ||
     /\s{2,}/u.test(text)
   )
+}
+
+/**
+ * Removes boundary grouping parentheses from the text between operands while
+ * preserving the original spacing, line breaks, and comments around the logical
+ * operator.
+ *
+ * @param textBetween - The original text between the left and right operands.
+ * @returns Normalized text without boundary grouping parentheses.
+ */
+function normalizeTextBetweenOperands(textBetween: string): string {
+  return removeTrailingGroupingParens(removeLeadingGroupingParens(textBetween))
+}
+
+/**
+ * Removes trailing opening grouping parentheses from the text between operands
+ * while preserving any leading whitespace.
+ *
+ * @param text - The text between operands.
+ * @returns Text without trailing opening grouping parentheses.
+ */
+function removeTrailingGroupingParens(text: string): string {
+  return text.replace(/(?:\s*\()+\s*$/u, match => match.match(/^\s*/u)![0])
+}
+
+/**
+ * Removes leading closing grouping parentheses from the text between operands
+ * while preserving any trailing whitespace.
+ *
+ * @param text - The text between operands.
+ * @returns Text without leading closing grouping parentheses.
+ */
+function removeLeadingGroupingParens(text: string): string {
+  return text.replace(/^\s*(?:\)\s*)+/u, match => match.match(/\s*$/u)![0])
 }
