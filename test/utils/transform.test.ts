@@ -114,9 +114,9 @@ describe('transform', () => {
     let context = createFakeContext('a && b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -134,9 +134,9 @@ describe('transform', () => {
     let context = createFakeContext('a && b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: true,
+      node: unaryExpr,
       context,
     })
 
@@ -156,9 +156,9 @@ describe('transform', () => {
     let context = createFakeContext('a  &&  b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -181,9 +181,9 @@ describe('transform', () => {
     let context = createFakeContext('a && b && c')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -214,9 +214,9 @@ describe('transform', () => {
     let context = createFakeContext('a && !b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -245,9 +245,9 @@ describe('transform', () => {
     let context = createFakeContext('a || b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -268,9 +268,9 @@ describe('transform', () => {
     let context = createFakeContext('a && // comment\n    b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: true,
+      node: unaryExpr,
       context,
     })
 
@@ -300,9 +300,9 @@ describe('transform', () => {
     let context = createFakeContext(deepExpression.raw ?? '')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -338,9 +338,9 @@ describe('transform', () => {
     let context = createFakeContext(deepExpression.raw ?? '')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 
@@ -386,9 +386,9 @@ describe('transform', () => {
     let context = createFakeContext('a  &&  b')
 
     let result = transform({
-      node: unaryExpr as unknown as UnaryExpression,
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      node: unaryExpr,
       context,
     })
 

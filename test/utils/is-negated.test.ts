@@ -1,4 +1,4 @@
-import type { BinaryExpression, UnaryExpression, Node } from 'estree'
+import type { Node } from 'estree'
 
 import { describe, expect, it } from 'vitest'
 
@@ -13,7 +13,7 @@ describe('isNegated', () => {
       type: 'UnaryExpression',
       operator: '!',
       prefix: true,
-    } as UnaryExpression
+    }
 
     expect(isNegated(node)).toBeTruthy()
   })
@@ -39,7 +39,7 @@ describe('isNegated', () => {
       left: { type: 'Literal', value: 1 },
       type: 'BinaryExpression',
       operator: '+',
-    } as BinaryExpression
+    }
 
     expect(isNegated(node)).toBeFalsy()
   })
@@ -57,7 +57,7 @@ describe('isNegated', () => {
       type: 'UnaryExpression',
       operator: '!',
       prefix: true,
-    } as UnaryExpression
+    }
     expect(isNegated(node)).toBeFalsy()
   })
 })

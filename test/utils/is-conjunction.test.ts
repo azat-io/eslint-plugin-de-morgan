@@ -1,4 +1,4 @@
-import type { LogicalExpression, Node } from 'estree'
+import type { Node } from 'estree'
 
 import { describe, expect, it } from 'vitest'
 
@@ -13,7 +13,7 @@ describe('isConjunction', () => {
       left: { type: 'Identifier', name: 'a' },
       type: 'LogicalExpression',
       operator: '&&',
-    } as LogicalExpression
+    }
 
     expect(isConjunction(node)).toBeTruthy()
   })
@@ -26,7 +26,7 @@ describe('isConjunction', () => {
       left: { type: 'Identifier', name: 'a' },
       type: 'LogicalExpression',
       operator: '||',
-    } as LogicalExpression
+    }
 
     expect(isConjunction(node)).toBeFalsy()
   })

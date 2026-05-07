@@ -1,4 +1,4 @@
-import type { UnaryExpression, Expression } from 'estree'
+import type { Expression } from 'estree'
 
 import { describe, expect, it } from 'vitest'
 
@@ -13,7 +13,7 @@ describe('hasNegationOperator', () => {
       type: 'UnaryExpression',
       operator: '!',
       prefix: true,
-    } as UnaryExpression
+    }
     expect(hasNegationOperator(node)).toBeTruthy()
   })
 
@@ -25,7 +25,7 @@ describe('hasNegationOperator', () => {
       type: 'UnaryExpression',
       operator: '-',
       prefix: true,
-    } as UnaryExpression
+    }
     expect(hasNegationOperator(node)).toBeFalsy()
   })
 
