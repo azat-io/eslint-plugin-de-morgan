@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.1.2
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.1...v2.1.2)
+
+### 🐞 Bug Fixes
+
+- Avoid invalid autofixes for grouped boolean expressions
+  ([1173aaa](https://github.com/azat-io/eslint-plugin-de-morgan/commit/1173aaa))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.1.1
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.0...v2.1.1)
