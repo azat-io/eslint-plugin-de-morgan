@@ -7,9 +7,9 @@ import { applyToProperty } from '../utils/apply-to-property'
 import { isDisjunction } from '../utils/is-disjunction'
 import { sanitizeCode } from '../utils/sanitize-code'
 import { isPureGroup } from '../utils/is-pure-group'
+import { repository as repo } from '../package.json'
 import { isNegated } from '../utils/is-negated'
 import { transform } from '../utils/transform'
-import { repository } from '../package.json'
 import { not } from '../utils/not'
 import { or } from '../utils/or'
 
@@ -55,7 +55,7 @@ export default {
       description:
         'Transforms the negation of a disjunction !(A || B) into the ' +
         'equivalent !A && !B according to De Morgan’s law',
-      url: `https://github.com/${repository}/blob/main/docs/no-negated-disjunction.md`,
+      url: `https://github.com/${repo}/blob/main/docs/no-negated-disjunction.md`,
       recommended: true,
     },
     messages: {

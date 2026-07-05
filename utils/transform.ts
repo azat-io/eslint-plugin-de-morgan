@@ -191,10 +191,10 @@ function flattenOperands({
       continue
     }
 
-    let logicalExpr = expr as LogicalExpression
+    let logicalExpression = expr as LogicalExpression
     stack.push(
-      { expr: logicalExpr.right, depth: depth + 1 },
-      { expr: logicalExpr.left, depth: depth + 1 },
+      { expr: logicalExpression.right, depth: depth + 1 },
+      { expr: logicalExpression.left, depth: depth + 1 },
     )
   }
 

@@ -109,14 +109,14 @@ describe('transform', () => {
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [5, 6])
     let conjunction = createConjunction(leftId, rightId)
-    let unaryExpr = createUnaryExpression(conjunction)
+    let unaryExpression = createUnaryExpression(conjunction)
 
     let context = createFakeContext('a && b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -129,14 +129,14 @@ describe('transform', () => {
     let leftId = createIdentifier('a', [0, 1])
     let rightId = createIdentifier('b', [5, 6])
     let conjunction = createConjunction(leftId, rightId)
-    let unaryExpr = createUnaryExpression(conjunction)
+    let unaryExpression = createUnaryExpression(conjunction)
 
     let context = createFakeContext('a && b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: true,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -151,14 +151,14 @@ describe('transform', () => {
     let conjunction = createConjunction(leftId, rightId, '  &&  ')
     conjunction.raw = 'a  &&  b'
 
-    let unaryExpr = createUnaryExpression(conjunction)
+    let unaryExpression = createUnaryExpression(conjunction)
 
     let context = createFakeContext('a  &&  b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -176,14 +176,14 @@ describe('transform', () => {
     let outerConjunction = createConjunction(idA, innerConjunction)
     outerConjunction.raw = 'a && b && c'
 
-    let unaryExpr = createUnaryExpression(outerConjunction)
+    let unaryExpression = createUnaryExpression(outerConjunction)
 
     let context = createFakeContext('a && b && c')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -209,14 +209,14 @@ describe('transform', () => {
     let conjunction = createConjunction(idA, notB)
     conjunction.raw = 'a && !b'
 
-    let unaryExpr = createUnaryExpression(conjunction)
+    let unaryExpression = createUnaryExpression(conjunction)
 
     let context = createFakeContext('a && !b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -240,14 +240,14 @@ describe('transform', () => {
       parent: null,
     }
 
-    let unaryExpr = createUnaryExpression(disjunction)
+    let unaryExpression = createUnaryExpression(disjunction)
 
     let context = createFakeContext('a || b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -263,14 +263,14 @@ describe('transform', () => {
     let conjunction = createConjunction(leftId, rightId, ' && // comment\n    ')
     conjunction.raw = 'a && // comment\n    b'
 
-    let unaryExpr = createUnaryExpression(conjunction)
+    let unaryExpression = createUnaryExpression(conjunction)
 
     let context = createFakeContext('a && // comment\n    b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: true,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -295,14 +295,14 @@ describe('transform', () => {
     }
 
     let deepExpression = createDeepNestedConjunction(15)
-    let unaryExpr = createUnaryExpression(deepExpression)
+    let unaryExpression = createUnaryExpression(deepExpression)
 
     let context = createFakeContext(deepExpression.raw ?? '')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -333,14 +333,14 @@ describe('transform', () => {
     }
 
     let deepExpression = createDeepNestedConjunction(15)
-    let unaryExpr = createUnaryExpression(deepExpression)
+    let unaryExpression = createUnaryExpression(deepExpression)
 
     let context = createFakeContext(deepExpression.raw ?? '')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 
@@ -381,14 +381,16 @@ describe('transform', () => {
       left: leftId,
     }
 
-    let unaryExpr = createUnaryExpression(conjunction as FakeLogicalExpression)
+    let unaryExpression = createUnaryExpression(
+      conjunction as FakeLogicalExpression,
+    )
 
     let context = createFakeContext('a  &&  b')
 
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
-      node: unaryExpr,
+      node: unaryExpression,
       context,
     })
 

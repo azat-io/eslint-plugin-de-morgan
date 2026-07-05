@@ -38,21 +38,23 @@ export function hasNegationInsideParens(
  * @returns True if the expression contains a relevant `!` inside.
  */
 function hasNegationInside(node: Node): boolean {
-  if (
-    isUnaryExpression(node) &&
-    node.operator === '!' &&
-    isUnaryExpression(node.argument) &&
-    node.argument.operator === '!'
+  let current = node
+
+  while (
+    isUnaryExpression(current) &&
+    current.operator === '!' &&
+    isUnaryExpression(current.argument) &&
+    current.argument.operator === '!'
   ) {
-    return hasNegationInside(node.argument.argument)
+    current = current.argument.argument
   }
 
-  if (hasNegationOperator(node)) {
+  if (hasNegationOperator(current)) {
     return true
   }
 
-  if (isLogicalExpression(node)) {
-    return hasNegationInside(node.left) || hasNegationInside(node.right)
+  if (isLogicalExpression(current)) {
+    return hasNegationInside(current.left) || hasNegationInside(current.right)
   }
 
   return false
