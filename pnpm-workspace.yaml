@@ -7,4 +7,9 @@ configDependencies:
 
 onlyBuiltDependenciesFile: node_modules/.pnpm-config/@pnpm/plugin-trusted-deps/allow.json
 
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@azat-io/*'
+
 sideEffectsCache: false
+
