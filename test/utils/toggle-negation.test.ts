@@ -171,6 +171,34 @@ describe('toggleNegation', () => {
     expect(result).toBe('!(a === b)')
   })
 
+  it('should wrap low-precedence expressions in negation', () => {
+    expect.assertions(5)
+
+    let cases: { type: string; raw: string }[] = [
+      { type: 'ConditionalExpression', raw: 'b ? c : d' },
+      { type: 'ArrowFunctionExpression', raw: 'x => x' },
+      { type: 'AssignmentExpression', raw: 'b = c' },
+      { type: 'SequenceExpression', raw: 'b, c' },
+      { type: 'YieldExpression', raw: 'yield' },
+    ]
+    for (let { type, raw } of cases) {
+      let node = { type, raw } as unknown as Expression
+      let result = toggleNegation(node, fakeContext)
+      expect(result).toBe(`!(${raw})`)
+    }
+  })
+
+  it('should not strip negation from a low-precedence expression', () => {
+    expect.assertions(1)
+
+    let node = {
+      type: 'SequenceExpression',
+      raw: '!b, c',
+    } as unknown as Expression
+    let result = toggleNegation(node, fakeContext)
+    expect(result).toBe('!(!b, c)')
+  })
+
   it('should wrap relational expressions in negation instead of toggling', () => {
     expect.assertions(4)
 

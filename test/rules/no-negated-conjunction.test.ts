@@ -9,10 +9,22 @@ let testerConfig = {
     languageOptions: {
       parserOptions: {
         sourceType: 'module' as const,
-        ecmaVersion: 2020 as const,
+        ecmaVersion: 2022 as const,
       },
     },
   },
+}
+
+function run(source: string, values: unknown[]): unknown {
+  // eslint-disable-next-line typescript/no-implied-eval, no-new-func
+  let execute = new Function(
+    'a',
+    'b',
+    'c',
+    'd',
+    `let r; ${source}; return r`,
+  ) as (...functionArguments: unknown[]) => unknown
+  return execute(...values)
 }
 
 describe('no-negated-conjunction', () => {
@@ -357,6 +369,50 @@ describe('no-negated-conjunction', () => {
     expect(result.output).toBe('if (a /* keep */ !== b || !c) {}')
   })
 
+  it('should wrap parenthesized low-precedence operands in negation', async () => {
+    let { result: ternaryResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (b ? c : d))) {}',
+    })
+    expect(ternaryResult.output).toBe('if (!a || !(b ? c : d)) {}')
+
+    let { result: sequenceResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (b, c))) {}',
+    })
+    expect(sequenceResult.output).toBe('if (!a || !(b, c)) {}')
+
+    let { result: negatedSequenceResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (!b, c))) {}',
+    })
+    expect(negatedSequenceResult.output).toBe('if (!a || !(!b, c)) {}')
+
+    let { result: assignmentResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (b = c))) {}',
+    })
+    expect(assignmentResult.output).toBe('if (!a || !(b = c)) {}')
+
+    let { result: logicalAssignmentResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (b &&= c))) {}',
+    })
+    expect(logicalAssignmentResult.output).toBe('if (!a || !(b &&= c)) {}')
+
+    let { result: arrowResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && (x => x))) {}',
+    })
+    expect(arrowResult.output).toBe('if (!a || !(x => x)) {}')
+
+    let { result: yieldResult } = await invalid({
+      code: 'function* g(a) { if (!(a && (yield))) {} }',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(yieldResult.output).toBe('function* g(a) { if (!a || !(yield)) {} }')
+  })
+
   it('should handle complex formatting with multiline expressions', async () => {
     let { result } = await invalid({
       code: dedent`
@@ -430,17 +486,6 @@ describe('no-negated-conjunction', () => {
       code,
     })
 
-    function run(source: string, values: unknown[]): unknown {
-      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
-      let execute = new Function(
-        'a',
-        'b',
-        'c',
-        `let r; ${source}; return r`,
-      ) as (...functionArguments: unknown[]) => unknown
-      return execute(...values)
-    }
-
     expect(run(result.output, [Number.NaN, 1, true])).toBe(
       run(code, [Number.NaN, 1, true]),
     )
@@ -450,18 +495,6 @@ describe('no-negated-conjunction', () => {
   })
 
   it('should preserve runtime behavior for parenthesized low-precedence operands', async () => {
-    function run(source: string, values: unknown[]): unknown {
-      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
-      let execute = new Function(
-        'a',
-        'b',
-        'c',
-        'd',
-        `let r; ${source}; return r`,
-      ) as (...functionArguments: unknown[]) => unknown
-      return execute(...values)
-    }
-
     let ternaryCode = 'if (!(a && (b ? c : d))) { r = 1 } else { r = 2 }'
     let { result: ternaryResult } = await invalid({
       errors: ['convertNegatedConjunction'],
@@ -514,7 +547,7 @@ describe('no-negated-conjunction', () => {
       code,
     })
 
-    function run(source: string): unknown {
+    function runGenerator(source: string): unknown {
       // eslint-disable-next-line typescript/no-implied-eval, no-new-func
       let execute = new Function(
         `let r; ${source}; let iterator = g(true); iterator.next(); iterator.next(false); return r`,
@@ -522,7 +555,102 @@ describe('no-negated-conjunction', () => {
       return execute()
     }
 
-    expect(run(result.output)).toBe(run(code))
+    expect(runGenerator(result.output)).toBe(runGenerator(code))
+  })
+
+  it('should preserve runtime behavior when the fixed expression has a parent operator', async () => {
+    let nullishCode = 'r = c ?? !(a && b)'
+    let { result: nullishResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: nullishCode,
+    })
+    expect(run(nullishResult.output, [true, true, null])).toBe(
+      run(nullishCode, [true, true, null]),
+    )
+
+    let comparisonCode = 'r = !(a && b) === c'
+    let { result: comparisonResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: comparisonCode,
+    })
+    expect(run(comparisonResult.output, [false, false, false])).toBe(
+      run(comparisonCode, [false, false, false]),
+    )
+
+    let inCode = 'r = !(a && b) in c'
+    let { result: inResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: inCode,
+    })
+    expect(run(inResult.output, [false, false, {}])).toBe(
+      run(inCode, [false, false, {}]),
+    )
+
+    let unaryMinusCode = 'r = -!(a && b)'
+    let { result: unaryMinusResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: unaryMinusCode,
+    })
+    expect(run(unaryMinusResult.output, [true, true])).toBe(
+      run(unaryMinusCode, [true, true]),
+    )
+
+    let additionCode = 'r = 1 + !(a && b)'
+    let { result: additionResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: additionCode,
+    })
+    expect(run(additionResult.output, [true, false])).toBe(
+      run(additionCode, [true, false]),
+    )
+
+    let voidCode = 'r = void !(a && b)'
+    let { result: voidResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: voidCode,
+    })
+    expect(run(voidResult.output, [true, false])).toBe(
+      run(voidCode, [true, false]),
+    )
+
+    let indexCode = 'r = c[+!(a && b)]'
+    let { result: indexResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: indexCode,
+    })
+    expect(run(indexResult.output, [true, true, ['first', 'second']])).toBe(
+      run(indexCode, [true, true, ['first', 'second']]),
+    )
+  })
+
+  it('should preserve runtime behavior in statement-level parent contexts', async () => {
+    let newlineCode = 'r = c\n!(a && b) && d'
+    let { result: newlineResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: newlineCode,
+    })
+    expect(run(newlineResult.output, [true, true, 5, false])).toBe(
+      run(newlineCode, [true, true, 5, false]),
+    )
+
+    let statementCode = 'r = 1; !(function(){} === b && c); r = 2'
+    let { result: statementResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: statementCode,
+    })
+    expect(run(statementResult.output, [0, 5, true])).toBe(
+      run(statementCode, [0, 5, true]),
+    )
+
+    let forInitCode =
+      'for (var i = !(a == b in c && d); i; i = false) { r = 1 }'
+    let { result: forInitResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: forInitCode,
+    })
+    expect(run(forInitResult.output, [true, 'k', {}, true])).toBe(
+      run(forInitCode, [true, 'k', {}, true]),
+    )
   })
 
   it('should skip reporting when transform cannot produce a fix', async () => {
