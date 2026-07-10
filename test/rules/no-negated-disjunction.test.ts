@@ -332,6 +332,41 @@ describe('no-negated-disjunction', () => {
     expect(result.output).toBe('if (!(a /* keep */ < b) && !c) {}')
   })
 
+  it('should preserve parentheses of sub-operands when toggling equality operators', async () => {
+    let { result: logicalResult } = await invalid({
+      code: 'if (!((a || b) === c || d)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(logicalResult.output).toBe('if ((a || b) !== c && !d) {}')
+
+    let { result: bitmaskResult } = await invalid({
+      code: 'if (!((flags & 4) === 0 || x)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(bitmaskResult.output).toBe('if ((flags & 4) !== 0 && !x) {}')
+
+    let { result: assignmentResult } = await invalid({
+      code: 'if (!((a = b) === c || d)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(assignmentResult.output).toBe('if ((a = b) !== c && !d) {}')
+
+    let { result: nullishResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: '!((a ?? b) === c || d)',
+    })
+    expect(nullishResult.output).toBe('(a ?? b) !== c && !d')
+  })
+
+  it('should preserve comments inside toggled comparisons', async () => {
+    let { result } = await invalid({
+      code: 'if (!(a /* keep */ === b || c)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+
+    expect(result.output).toBe('if (a /* keep */ !== b && !c) {}')
+  })
+
   it('should handle complex formatting with multiline expressions', async () => {
     let { result } = await invalid({
       code: dedent`

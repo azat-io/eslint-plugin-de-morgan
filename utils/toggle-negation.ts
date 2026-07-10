@@ -63,11 +63,11 @@ export function toggleNegation(
 /**
  * Toggles the operator in a BinaryExpression. Only equality operators (`===`,
  * `!==`, `==`, and `!=`) are exact logical complements, so only they are
- * toggled, e.g. `a === b` becomes `a !== b`. Every other binary expression is
+ * toggled, e.g. `a === b` becomes `a !== b`. The toggle replaces just the
+ * operator token inside the node's original source text, so parentheses and
+ * comments around the operands are preserved. Every other binary expression is
  * wrapped in `!(…)` instead — relational operators like `<` cannot be toggled
- * because both `a < b` and `a >= b` are false when an operand is NaN. The
- * wrapper keeps the node's original source text, so parentheses and comments
- * inside the expression are preserved.
+ * because both `a < b` and `a >= b` are false when an operand is NaN.
  *
  * @param node - The binary expression ESLint node.
  * @param context - The ESLint rule context.
@@ -77,6 +77,8 @@ function toggleBinaryExpression(
   node: BinaryExpression,
   context: Rule.RuleContext,
 ): string {
+  let text = context.sourceCode.getText(node)
+
   let operatorMap: Partial<Record<BinaryOperator, BinaryOperator>> = {
     '===': '!==',
     '!==': '===',
@@ -86,12 +88,23 @@ function toggleBinaryExpression(
 
   let toggledOperator = operatorMap[node.operator]
   if (!toggledOperator) {
-    return `!(${context.sourceCode.getText(node).trim()})`
+    return `!(${text})`
   }
 
-  let left = context.sourceCode.getText(node.left).trim()
-  let right = context.sourceCode.getText(node.right).trim()
-  return `${left} ${toggledOperator} ${right}`
+  let operatorToken = context.sourceCode.getTokenAfter(node.left, {
+    filter: token => token.value === node.operator,
+  })
+  if (!operatorToken || !node.range) {
+    return `!(${text})`
+  }
+
+  let [nodeStart] = node.range
+  let [tokenStart, tokenEnd] = operatorToken.range
+  return (
+    text.slice(0, tokenStart - nodeStart) +
+    toggledOperator +
+    text.slice(tokenEnd - nodeStart)
+  )
 }
 
 function toggleLogicalExpression(

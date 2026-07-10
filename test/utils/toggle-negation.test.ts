@@ -26,16 +26,22 @@ interface FakeBinaryExpression extends BinaryExpression {
   raw: string
 }
 
+interface FakeIdentifier {
+  tokenAfter?: FakeOperatorToken
+  type: 'Identifier'
+  name: string
+  raw: string
+}
+
 interface FakeLiteral extends SimpleLiteral {
   type: 'Literal'
   value: boolean
   raw: string
 }
 
-interface FakeIdentifier {
-  type: 'Identifier'
-  name: string
-  raw: string
+interface FakeOperatorToken {
+  range: [number, number]
+  value: string
 }
 
 interface FakeUnaryExpression extends UnaryExpression {
@@ -44,20 +50,28 @@ interface FakeUnaryExpression extends UnaryExpression {
 
 let fakeContext: Rule.RuleContext = {
   sourceCode: {
+    getTokenAfter: (node: { tokenAfter?: FakeOperatorToken } & Node) =>
+      node.tokenAfter ?? null,
     getText: (node: { raw: string } & Node) => node.raw,
   },
-} as Rule.RuleContext
+} as unknown as Rule.RuleContext
 
 describe('toggleNegation', () => {
   it('should toggle binary expression operator from === to !==', () => {
     expect.assertions(1)
 
     let node: FakeBinaryExpression = {
+      left: {
+        tokenAfter: { range: [2, 5], value: '===' },
+        type: 'Identifier',
+        name: 'a',
+        raw: 'a',
+      },
       right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
       type: 'BinaryExpression',
       operator: '===',
       raw: 'a === b',
+      range: [0, 7],
     }
     let result = toggleNegation(node, fakeContext)
     expect(result).toBe('a !== b')
@@ -67,11 +81,17 @@ describe('toggleNegation', () => {
     expect.assertions(1)
 
     let node: FakeBinaryExpression = {
+      left: {
+        tokenAfter: { range: [2, 5], value: '!==' },
+        type: 'Identifier',
+        name: 'a',
+        raw: 'a',
+      },
       right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
       type: 'BinaryExpression',
       operator: '!==',
       raw: 'a !== b',
+      range: [0, 7],
     }
     let result = toggleNegation(node, fakeContext)
     expect(result).toBe('a === b')
@@ -81,11 +101,17 @@ describe('toggleNegation', () => {
     expect.assertions(1)
 
     let node: FakeBinaryExpression = {
+      left: {
+        tokenAfter: { range: [2, 4], value: '==' },
+        type: 'Identifier',
+        name: 'a',
+        raw: 'a',
+      },
       right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
       type: 'BinaryExpression',
       operator: '==',
       raw: 'a == b',
+      range: [0, 6],
     }
     let result = toggleNegation(node, fakeContext)
     expect(result).toBe('a != b')
@@ -95,14 +121,54 @@ describe('toggleNegation', () => {
     expect.assertions(1)
 
     let node: FakeBinaryExpression = {
+      left: {
+        tokenAfter: { range: [2, 4], value: '!=' },
+        type: 'Identifier',
+        name: 'a',
+        raw: 'a',
+      },
       right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
       type: 'BinaryExpression',
       operator: '!=',
       raw: 'a != b',
+      range: [0, 6],
     }
     let result = toggleNegation(node, fakeContext)
     expect(result).toBe('a == b')
+  })
+
+  it('should wrap equality expression when operator token cannot be located', () => {
+    expect.assertions(1)
+
+    let node: FakeBinaryExpression = {
+      right: { type: 'Identifier', name: 'b', raw: 'b' },
+      left: { type: 'Identifier', name: 'a', raw: 'a' },
+      type: 'BinaryExpression',
+      operator: '===',
+      raw: 'a === b',
+      range: [0, 7],
+    }
+    let result = toggleNegation(node, fakeContext)
+    expect(result).toBe('!(a === b)')
+  })
+
+  it('should wrap equality expression when node range is missing', () => {
+    expect.assertions(1)
+
+    let node: FakeBinaryExpression = {
+      left: {
+        tokenAfter: { range: [2, 5], value: '===' },
+        type: 'Identifier',
+        name: 'a',
+        raw: 'a',
+      },
+      right: { type: 'Identifier', name: 'b', raw: 'b' },
+      type: 'BinaryExpression',
+      operator: '===',
+      raw: 'a === b',
+    }
+    let result = toggleNegation(node, fakeContext)
+    expect(result).toBe('!(a === b)')
   })
 
   it('should wrap relational expressions in negation instead of toggling', () => {
