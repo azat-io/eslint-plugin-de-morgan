@@ -653,6 +653,49 @@ describe('no-negated-conjunction', () => {
     )
   })
 
+  it('should preserve runtime behavior when stripping negation in value contexts', async () => {
+    let chainCode = 'r = c && !(!a && b)'
+    let { result: chainResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: chainCode,
+    })
+    expect(run(chainResult.output, [5, 0, 1])).toBe(run(chainCode, [5, 0, 1]))
+
+    let ternaryCode = 'r = c ? !(!a && b) : 0'
+    let { result: ternaryResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: ternaryCode,
+    })
+    expect(run(ternaryResult.output, [5, 0, 1])).toBe(
+      run(ternaryCode, [5, 0, 1]),
+    )
+
+    let comparisonCode = 'r = c === !(!a && b)'
+    let { result: comparisonResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: comparisonCode,
+    })
+    expect(run(comparisonResult.output, [5, 0, true])).toBe(
+      run(comparisonCode, [5, 0, true]),
+    )
+
+    let typeofCode = 'r = typeof !(!a && b)'
+    let { result: typeofResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: typeofCode,
+    })
+    expect(run(typeofResult.output, [5, 0])).toBe(run(typeofCode, [5, 0]))
+
+    let inKeyCode = 'r = !(!a && b) in c'
+    let { result: inKeyResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: inKeyCode,
+    })
+    expect(run(inKeyResult.output, [5, 0, { 5: 1 }])).toBe(
+      run(inKeyCode, [5, 0, { 5: 1 }]),
+    )
+  })
+
   it('should skip reporting when transform cannot produce a fix', async () => {
     vi.resetModules()
 

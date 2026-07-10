@@ -583,6 +583,24 @@ describe('no-negated-disjunction', () => {
     )
   })
 
+  it('should preserve runtime behavior when stripping negation in value contexts', async () => {
+    let chainCode = 'r = c && !(b || !a)'
+    let { result: chainResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: chainCode,
+    })
+    expect(run(chainResult.output, [5, 0, 1])).toBe(run(chainCode, [5, 0, 1]))
+
+    let comparisonCode = 'r = c === !(b || !a)'
+    let { result: comparisonResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: comparisonCode,
+    })
+    expect(run(comparisonResult.output, [5, 0, true])).toBe(
+      run(comparisonCode, [5, 0, true]),
+    )
+  })
+
   it('should skip reporting when transform cannot produce a fix', async () => {
     vi.resetModules()
 

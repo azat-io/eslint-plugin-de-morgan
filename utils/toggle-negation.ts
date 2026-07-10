@@ -25,13 +25,21 @@ import { isBoolean } from './is-boolean'
  *    return the expression without the leading '!'.
  * 4. Otherwise, it returns the expression with a '!' prepended..
  *
+ * When `canStripNegation` is false, an already negated expression keeps an
+ * exact double negation (`!x` becomes `!!x`) instead of being stripped to the
+ * bare operand. Stripping is only truthiness-preserving, so it is unsafe in
+ * positions where the produced value itself is observable.
+ *
  * @param node - The expression node to toggle negation on.
  * @param context - The ESLint rule context.
+ * @param canStripNegation - Whether a leading '!' may be stripped from an
+ *   already negated expression.
  * @returns The toggled expression.
  */
 export function toggleNegation(
   node: Expression,
   context: Rule.RuleContext,
+  canStripNegation = true,
 ): string {
   let toggleStrategies: {
     transformer(node: Expression, context: Rule.RuleContext): string
@@ -57,7 +65,7 @@ export function toggleNegation(
     }
   }
 
-  return toggleUnaryExpression(node, context)
+  return toggleUnaryExpression(node, context, canStripNegation)
 }
 
 /**
@@ -114,17 +122,21 @@ function toggleBinaryExpression(
  * bind looser than the unary '!' operator (assignments, ternaries, sequences,
  * arrow functions, and `yield`) are wrapped in `!(…)` instead, since prepending
  * a bare '!' would re-associate them and change the meaning or produce invalid
- * code. This function does not assume that the given expression is necessarily
- * a UnaryExpression; it simply toggles the presence of a leading '!' in the
- * source text.
+ * code. When `canStripNegation` is false, a leading '!' is never stripped and
+ * an exact double negation is emitted instead, so the result stays a strict
+ * boolean. This function does not assume that the given expression is
+ * necessarily a UnaryExpression; it simply toggles the presence of a leading
+ * '!' in the source text.
  *
  * @param node - The ESLint expression node.
  * @param context - The ESLint rule context.
+ * @param canStripNegation - Whether a leading '!' may be stripped.
  * @returns The expression with toggled negation.
  */
 function toggleUnaryExpression(
   node: Expression,
   context: Rule.RuleContext,
+  canStripNegation: boolean,
 ): string {
   let content = context.sourceCode.getText(node).trim()
 
@@ -137,6 +149,10 @@ function toggleUnaryExpression(
   ])
   if (lowPrecedenceTypes.has(node.type)) {
     return `!(${content})`
+  }
+
+  if (!canStripNegation) {
+    return `!${content}`
   }
 
   return toggleCode(content)

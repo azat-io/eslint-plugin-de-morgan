@@ -33,6 +33,11 @@ interface TransformUtilityOptions {
   expression: LogicalExpression
 
   /**
+   * Whether a leading '!' may be stripped from already negated operands.
+   */
+  canStripNegation: boolean
+
+  /**
    * The ESLint rule context.
    */
   context: Rule.RuleContext
@@ -50,6 +55,11 @@ interface TransformOptions {
   shouldWrapInParens: boolean
 
   /**
+   * Whether a leading '!' may be stripped from already negated operands.
+   */
+  canStripNegation: boolean
+
+  /**
    * The ESLint rule context.
    */
   context: Rule.RuleContext
@@ -65,6 +75,10 @@ interface FlattenOperandsOptions {
    * The type of logical expression.
    */
   expressionType: ExpressionType
+  /**
+   * Whether a leading '!' may be stripped from already negated operands.
+   */
+  canStripNegation: boolean
   /**
    * The ESLint rule context.
    */
@@ -96,6 +110,7 @@ const OPERATOR_MAPPING: Partial<Record<LogicalOperator, LogicalOperator>> = {
  */
 export function transform({
   shouldWrapInParens,
+  canStripNegation,
   expressionType,
   context,
   node,
@@ -114,6 +129,7 @@ export function transform({
 
   let transformUtilityOptions: TransformUtilityOptions = {
     expression: argument,
+    canStripNegation,
     expressionType,
     sourceOperator,
     targetOperator,
@@ -135,6 +151,7 @@ export function transform({
  * @returns The transformed expression with preserved formatting.
  */
 function transformWithFormatting({
+  canStripNegation,
   sourceOperator,
   targetOperator,
   expression,
@@ -142,8 +159,8 @@ function transformWithFormatting({
 }: TransformUtilityOptions): string {
   let { sourceCode } = context
 
-  let leftText = toggleNegation(expression.left, context)
-  let rightText = toggleNegation(expression.right, context)
+  let leftText = toggleNegation(expression.left, context, canStripNegation)
+  let rightText = toggleNegation(expression.right, context, canStripNegation)
 
   if (!expression.left.range || !expression.right.range) {
     return `${leftText} ${targetOperator} ${rightText}`
@@ -174,6 +191,7 @@ function transformWithFormatting({
  * @returns Array of transformed operands.
  */
 function flattenOperands({
+  canStripNegation,
   expressionType,
   expression,
   context,
@@ -187,7 +205,7 @@ function flattenOperands({
     let { depth, expr } = stack.pop()!
 
     if (depth > MAX_DEPTH || !matchesExpressionType(expr, expressionType)) {
-      result.push(toggleNegation(expr, context))
+      result.push(toggleNegation(expr, context, canStripNegation))
       continue
     }
 
@@ -208,12 +226,14 @@ function flattenOperands({
  * @returns The transformed expression.
  */
 function transformSimple({
+  canStripNegation,
   expressionType,
   targetOperator,
   expression,
   context,
 }: TransformUtilityOptions): string {
   let operands = flattenOperands({
+    canStripNegation,
     expressionType,
     expression,
     context,

@@ -116,6 +116,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -136,6 +137,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: true,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -158,6 +160,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -183,6 +186,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -216,6 +220,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -247,6 +252,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -270,6 +276,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: true,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -302,6 +309,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -340,6 +348,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })
@@ -390,6 +399,7 @@ describe('transform', () => {
     let result = transform({
       expressionType: 'conjunction',
       shouldWrapInParens: false,
+      canStripNegation: true,
       node: unaryExpression,
       context,
     })

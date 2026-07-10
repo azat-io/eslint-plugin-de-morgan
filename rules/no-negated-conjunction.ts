@@ -3,6 +3,7 @@ import type { Rule } from 'eslint'
 
 import { createTestWithParameters } from '../utils/create-test-with-parameters'
 import { hasNegationInsideParens } from '../utils/has-negation-inside-parens'
+import { isInTruthinessContext } from '../utils/is-in-truthiness-context'
 import { getStatementSafeFix } from '../utils/get-statement-safe-fix'
 import { needsParentParens } from '../utils/needs-parent-parens'
 import { hasBooleanContext } from '../utils/has-boolean-context'
@@ -31,9 +32,11 @@ export default {
         )
       ) {
         let shouldWrapInParens = needsParentParens(node, '||')
+        let canStripNegation = isInTruthinessContext(node)
         let fixedExpression = transform({
           expressionType: 'conjunction',
           shouldWrapInParens,
+          canStripNegation,
           context,
           node,
         })
