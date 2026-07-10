@@ -105,18 +105,21 @@ describe('toggleNegation', () => {
     expect(result).toBe('a == b')
   })
 
-  it('should toggle binary expression operator from > to <=', () => {
-    expect.assertions(1)
+  it('should wrap relational expressions in negation instead of toggling', () => {
+    expect.assertions(4)
 
-    let node: FakeBinaryExpression = {
-      right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
-      type: 'BinaryExpression',
-      operator: '>',
-      raw: 'a > b',
+    let operators = ['<', '>', '<=', '>='] as const
+    for (let operator of operators) {
+      let node: FakeBinaryExpression = {
+        right: { type: 'Identifier', name: 'b', raw: 'b' },
+        left: { type: 'Identifier', name: 'a', raw: 'a' },
+        type: 'BinaryExpression',
+        raw: `a ${operator} b`,
+        operator,
+      }
+      let result = toggleNegation(node, fakeContext)
+      expect(result).toBe(`!(a ${operator} b)`)
     }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('a <= b')
   })
 
   it('should toggle binary expression operator from in to !in', () => {

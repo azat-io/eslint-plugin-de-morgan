@@ -307,11 +307,29 @@ describe('no-negated-disjunction', () => {
       code: 'if (!(a > b || c < d)) {}',
     })
 
-    expect(result.output).toBe('if (a <= b && c >= d) {}')
+    expect(result.output).toBe('if (!(a > b) && !(c < d)) {}')
     expect(result.messages[0]).toHaveProperty(
       'message',
-      'Replace negated disjunction `!(a > b || c < d)` with `a <= b && c >= d`',
+      'Replace negated disjunction `!(a > b || c < d)` with `!(a > b) && !(c < d)`',
     )
+  })
+
+  it('should preserve parentheses of sub-operands in wrapped comparisons', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a < (x = y) || d)) {}',
+    })
+
+    expect(result.output).toBe('if (!(a < (x = y)) && !d) {}')
+  })
+
+  it('should preserve comments inside wrapped comparisons', async () => {
+    let { result } = await invalid({
+      code: 'if (!(a /* keep */ < b || c)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+
+    expect(result.output).toBe('if (!(a /* keep */ < b) && !c) {}')
   })
 
   it('should handle complex formatting with multiline expressions', async () => {
@@ -398,6 +416,32 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
     })
     expect(nestedResult3.output).toBe('if (!a && !b && !c && !d) {}')
+  })
+
+  it('should preserve runtime behavior when relational operands are NaN', async () => {
+    let code = 'if (!(a < b || c)) { r = 1 } else { r = 2 }'
+    let { result } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code,
+    })
+
+    function run(source: string, values: unknown[]): unknown {
+      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
+      let execute = new Function(
+        'a',
+        'b',
+        'c',
+        `let r; ${source}; return r`,
+      ) as (...functionArguments: unknown[]) => unknown
+      return execute(...values)
+    }
+
+    expect(run(result.output, [Number.NaN, 1, false])).toBe(
+      run(code, [Number.NaN, 1, false]),
+    )
+    expect(run(result.output, [undefined, 1, false])).toBe(
+      run(code, [undefined, 1, false]),
+    )
   })
 
   it('should skip reporting when transform cannot produce a fix', async () => {

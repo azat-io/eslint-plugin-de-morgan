@@ -44,13 +44,17 @@ Transforming them into a conjunction of negations makes the logic explicit:
 This rule is auto-fixable. When applied, it automatically rewrites code such as:
 
 ```js
-const foo = !(a || !b || c >= 10)
+if (!(a || !b || c >= 10)) {
+  /* ... */
+}
 ```
 
 To:
 
 ```js
-const foo = !a && b && c < 10
+if (!a && b && !(c >= 10)) {
+  /* ... */
+}
 ```
 
 ## Options

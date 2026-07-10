@@ -61,10 +61,13 @@ export function toggleNegation(
 }
 
 /**
- * Toggles the operator in a BinaryExpression. This function expects that the
- * operator is one of the supported ones: `===`, `!==`, `==`, or `!=`. It
- * returns the expression with the operator toggled, e.g. `a === b` becomes `a
- * !== b`.
+ * Toggles the operator in a BinaryExpression. Only equality operators (`===`,
+ * `!==`, `==`, and `!=`) are exact logical complements, so only they are
+ * toggled, e.g. `a === b` becomes `a !== b`. Every other binary expression is
+ * wrapped in `!(…)` instead — relational operators like `<` cannot be toggled
+ * because both `a < b` and `a >= b` are false when an operand is NaN. The
+ * wrapper keeps the node's original source text, so parentheses and comments
+ * inside the expression are preserved.
  *
  * @param node - The binary expression ESLint node.
  * @param context - The ESLint rule context.
@@ -74,41 +77,20 @@ function toggleBinaryExpression(
   node: BinaryExpression,
   context: Rule.RuleContext,
 ): string {
-  let left = context.sourceCode.getText(node.left).trim()
-  let right = context.sourceCode.getText(node.right).trim()
-
-  let notTransformableOperators: BinaryOperator[] = [
-    '<<',
-    '>>',
-    '>>>',
-    '+',
-    '-',
-    '*',
-    '/',
-    '%',
-    '**',
-    '|',
-    '^',
-    '&',
-    'in',
-    'instanceof',
-  ]
-
-  if (notTransformableOperators.includes(node.operator)) {
-    return `!(${left} ${node.operator} ${right})`
-  }
-
-  let operatorMap: Record<string, BinaryOperator> = {
+  let operatorMap: Partial<Record<BinaryOperator, BinaryOperator>> = {
     '===': '!==',
     '!==': '===',
     '==': '!=',
     '!=': '==',
-    '<': '>=',
-    '>': '<=',
-    '<=': '>',
-    '>=': '<',
   }
+
   let toggledOperator = operatorMap[node.operator]
+  if (!toggledOperator) {
+    return `!(${context.sourceCode.getText(node).trim()})`
+  }
+
+  let left = context.sourceCode.getText(node.left).trim()
+  let right = context.sourceCode.getText(node.right).trim()
   return `${left} ${toggledOperator} ${right}`
 }
 
