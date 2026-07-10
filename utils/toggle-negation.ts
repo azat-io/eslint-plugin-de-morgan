@@ -107,20 +107,16 @@ function toggleBinaryExpression(
   )
 }
 
-function toggleLogicalExpression(
-  node: LogicalExpression,
-  context: Rule.RuleContext,
-): string {
-  let content = context.sourceCode.getText(node).trim()
-  return toggleCode(parenthesize(content))
-}
-
 /**
  * Toggles the negation of the given expression. If the expression starts with a
  * '!', this function removes the leading '!' and returns the rest of the
- * expression. Otherwise, it prepends a '!' to the expression. This function
- * does not assume that the given expression is necessarily a UnaryExpression;
- * it simply toggles the presence of a leading '!' in the source text.
+ * expression. Otherwise, it prepends a '!' to the expression. Expressions that
+ * bind looser than the unary '!' operator (assignments, ternaries, sequences,
+ * arrow functions, and `yield`) are wrapped in `!(…)` instead, since prepending
+ * a bare '!' would re-associate them and change the meaning or produce invalid
+ * code. This function does not assume that the given expression is necessarily
+ * a UnaryExpression; it simply toggles the presence of a leading '!' in the
+ * source text.
  *
  * @param node - The ESLint expression node.
  * @param context - The ESLint rule context.
@@ -131,7 +127,36 @@ function toggleUnaryExpression(
   context: Rule.RuleContext,
 ): string {
   let content = context.sourceCode.getText(node).trim()
+
+  let lowPrecedenceTypes = new Set<Expression['type']>([
+    'ArrowFunctionExpression',
+    'ConditionalExpression',
+    'AssignmentExpression',
+    'SequenceExpression',
+    'YieldExpression',
+  ])
+  if (lowPrecedenceTypes.has(node.type)) {
+    return `!(${content})`
+  }
+
   return toggleCode(content)
+}
+
+/**
+ * Toggles the negation of a logical expression. The expression is wrapped in
+ * parentheses if it is not already parenthesized, and the leading '!' is
+ * toggled, e.g. `a && b` becomes `!(a && b)`.
+ *
+ * @param node - The logical expression ESLint node.
+ * @param context - The ESLint rule context.
+ * @returns The toggled expression.
+ */
+function toggleLogicalExpression(
+  node: LogicalExpression,
+  context: Rule.RuleContext,
+): string {
+  let content = context.sourceCode.getText(node).trim()
+  return toggleCode(parenthesize(content))
 }
 
 /**

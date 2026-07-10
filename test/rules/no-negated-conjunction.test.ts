@@ -449,6 +449,82 @@ describe('no-negated-conjunction', () => {
     )
   })
 
+  it('should preserve runtime behavior for parenthesized low-precedence operands', async () => {
+    function run(source: string, values: unknown[]): unknown {
+      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
+      let execute = new Function(
+        'a',
+        'b',
+        'c',
+        'd',
+        `let r; ${source}; return r`,
+      ) as (...functionArguments: unknown[]) => unknown
+      return execute(...values)
+    }
+
+    let ternaryCode = 'if (!(a && (b ? c : d))) { r = 1 } else { r = 2 }'
+    let { result: ternaryResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: ternaryCode,
+    })
+    expect(run(ternaryResult.output, [false, true, 0, 1])).toBe(
+      run(ternaryCode, [false, true, 0, 1]),
+    )
+
+    let sequenceCode = 'if (!(a && (b, c))) { r = 1 } else { r = 2 }'
+    let { result: sequenceResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: sequenceCode,
+    })
+    expect(run(sequenceResult.output, [true, true, false])).toBe(
+      run(sequenceCode, [true, true, false]),
+    )
+
+    let assignmentCode = 'if (!(a && (b = c))) { r = 1 } else { r = 2 }'
+    let { result: assignmentResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: assignmentCode,
+    })
+    expect(run(assignmentResult.output, [true, true, false])).toBe(
+      run(assignmentCode, [true, true, false]),
+    )
+
+    let arrowCode = 'if (!(a && (x => x))) { r = 1 } else { r = 2 }'
+    let { result: arrowResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: arrowCode,
+    })
+    expect(run(arrowResult.output, [true])).toBe(run(arrowCode, [true]))
+
+    let negatedSequenceCode = 'if (!(a && (!b, c))) { r = 1 } else { r = 2 }'
+    let { result: negatedSequenceResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: negatedSequenceCode,
+    })
+    expect(run(negatedSequenceResult.output, [true, false, false])).toBe(
+      run(negatedSequenceCode, [true, false, false]),
+    )
+  })
+
+  it('should preserve runtime behavior for parenthesized yield operands', async () => {
+    let code =
+      'function* g(a) { if (!(a && (yield))) { r = 1 } else { r = 2 } }'
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code,
+    })
+
+    function run(source: string): unknown {
+      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
+      let execute = new Function(
+        `let r; ${source}; let iterator = g(true); iterator.next(); iterator.next(false); return r`,
+      ) as () => unknown
+      return execute()
+    }
+
+    expect(run(result.output)).toBe(run(code))
+  })
+
   it('should skip reporting when transform cannot produce a fix', async () => {
     vi.resetModules()
 

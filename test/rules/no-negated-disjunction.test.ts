@@ -479,6 +479,47 @@ describe('no-negated-disjunction', () => {
     )
   })
 
+  it('should preserve runtime behavior for parenthesized low-precedence operands', async () => {
+    function run(source: string, values: unknown[]): unknown {
+      // eslint-disable-next-line typescript/no-implied-eval, no-new-func
+      let execute = new Function(
+        'a',
+        'b',
+        'c',
+        'd',
+        `let r; ${source}; return r`,
+      ) as (...functionArguments: unknown[]) => unknown
+      return execute(...values)
+    }
+
+    let ternaryCode = 'if (!(a || (b ? c : d))) { r = 1 } else { r = 2 }'
+    let { result: ternaryResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: ternaryCode,
+    })
+    expect(run(ternaryResult.output, [true, false, 0, 1])).toBe(
+      run(ternaryCode, [true, false, 0, 1]),
+    )
+
+    let sequenceCode = 'if (!(a || (b, c))) { r = 1 } else { r = 2 }'
+    let { result: sequenceResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: sequenceCode,
+    })
+    expect(run(sequenceResult.output, [false, true, false])).toBe(
+      run(sequenceCode, [false, true, false]),
+    )
+
+    let assignmentCode = 'if (!(a || (b = c))) { r = 1 } else { r = 2 }'
+    let { result: assignmentResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: assignmentCode,
+    })
+    expect(run(assignmentResult.output, [false, true, false])).toBe(
+      run(assignmentCode, [false, true, false]),
+    )
+  })
+
   it('should skip reporting when transform cannot produce a fix', async () => {
     vi.resetModules()
 
