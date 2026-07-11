@@ -1,5 +1,26 @@
 # Changelog
 
+## v2.1.3
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.2...v2.1.3)
+
+### 🐞 Bug Fixes
+
+- Avoid unsafe toggling of relational operators in autofix
+  ([db46a69](https://github.com/azat-io/eslint-plugin-de-morgan/commit/db46a69))
+- Preserve parentheses when toggling equality operators
+  ([7061b59](https://github.com/azat-io/eslint-plugin-de-morgan/commit/7061b59))
+- Parenthesize low-precedence operands when adding negation
+  ([16a95f4](https://github.com/azat-io/eslint-plugin-de-morgan/commit/16a95f4))
+- Parenthesize autofix result against its parent context
+  ([122b953](https://github.com/azat-io/eslint-plugin-de-morgan/commit/122b953))
+- Keep double negation for operands in value contexts
+  ([f10e3d7](https://github.com/azat-io/eslint-plugin-de-morgan/commit/f10e3d7))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.1.2
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.1...v2.1.2)
