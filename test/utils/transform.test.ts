@@ -2,8 +2,11 @@ import type { LogicalExpression, UnaryExpression, Identifier } from 'estree'
 import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
+import { Linter } from 'eslint'
 
 import { transform } from '../../utils/transform'
+
+let linter = new Linter()
 
 type FakeNode = {
   parent: FakeNode | null
@@ -28,6 +31,40 @@ type FakeIdentifier = {
   raw: string
 } & Identifier &
   FakeNode
+
+function transformCode(
+  code: string,
+  expressionType: 'conjunction' | 'disjunction',
+  shouldWrapInParens: boolean = false,
+): string | null {
+  let results: (string | null)[] = []
+  let rule: Rule.RuleModule = {
+    create: context => ({
+      UnaryExpression: node => {
+        results.push(
+          transform({
+            canStripNegation: true,
+            shouldWrapInParens,
+            expressionType,
+            context,
+            node,
+          }),
+        )
+      },
+    }),
+  }
+
+  linter.verify(code, {
+    plugins: { test: { rules: { transform: rule } } },
+    rules: { 'test/transform': 'error' },
+  })
+
+  let [result] = results
+  if (result === undefined) {
+    throw new Error(`Expected a negated expression in: ${code}`)
+  }
+  return result
+}
 
 function createConjunction(
   left: FakeNode,
@@ -148,24 +185,7 @@ describe('transform', () => {
   it('should preserve formatting in the transformed expression', () => {
     expect.assertions(1)
 
-    let leftId = createIdentifier('a', [0, 1])
-    let rightId = createIdentifier('b', [7, 8])
-    let conjunction = createConjunction(leftId, rightId, '  &&  ')
-    conjunction.raw = 'a  &&  b'
-
-    let unaryExpression = createUnaryExpression(conjunction)
-
-    let context = createFakeContext('a  &&  b')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: false,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBe('!a  ||  !b')
+    expect(transformCode('!(a  &&  b)', 'conjunction')).toBe('!a  ||  !b')
   })
 
   it('should transform a negated conjunction with multiple operands', () => {
@@ -263,25 +283,36 @@ describe('transform', () => {
   it('should handle complex formatting and comments', () => {
     expect.assertions(1)
 
-    let leftId = createIdentifier('a', [0, 1])
-    let rightId = createIdentifier('b', [20, 21])
+    expect(
+      transformCode('!(a && // comment\n    b)', 'conjunction', true),
+    ).toBe('(!a || // comment\n    !b)')
+  })
 
-    let conjunction = createConjunction(leftId, rightId, ' && // comment\n    ')
-    conjunction.raw = 'a && // comment\n    b'
+  it('should drop grouping parentheses without comments', () => {
+    expect.assertions(1)
 
-    let unaryExpression = createUnaryExpression(conjunction)
+    expect(transformCode('!((a) &&\n    (b))', 'conjunction')).toBe(
+      '!a ||\n    !b',
+    )
+  })
 
-    let context = createFakeContext('a && // comment\n    b')
+  it('should keep grouping parentheses that contain comments', () => {
+    expect.assertions(2)
 
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: true,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
+    expect(transformCode('!(a || (/* keep */ b))', 'disjunction')).toBe(
+      '!a && !(/* keep */ b)',
+    )
+    expect(transformCode('!((a // keep\n) || b)', 'disjunction')).toBe(
+      '!(a // keep\n) && !b',
+    )
+  })
 
-    expect(result).toBe('(!a || // comment\n    !b)')
+  it('should not replace operators inside comments', () => {
+    expect.assertions(1)
+
+    expect(transformCode('!(a && /* a && b */ b)', 'conjunction')).toBe(
+      '!a || /* a && b */ !b',
+    )
   })
 
   it('should handle deeply nested conjunctions by limiting recursion depth', () => {
@@ -360,50 +391,5 @@ describe('transform', () => {
 
     let operatorCount = (result?.match(/\|\|/gu) ?? []).length
     expect(operatorCount).toBeLessThan(15)
-  })
-
-  it('should handle special formatting with missing ranges', () => {
-    expect.assertions(1)
-
-    let leftId = {
-      type: 'Identifier',
-      range: [0, 1],
-      id: 'id_a',
-      name: 'a',
-      raw: 'a',
-    }
-
-    let rightId = {
-      type: 'Identifier',
-      id: 'id_b',
-      name: 'b',
-      raw: 'b',
-    }
-
-    let conjunction = {
-      type: 'LogicalExpression',
-      id: 'conjunction',
-      raw: 'a  &&  b',
-      operator: '&&',
-      right: rightId,
-      range: [0, 8],
-      left: leftId,
-    }
-
-    let unaryExpression = createUnaryExpression(
-      conjunction as FakeLogicalExpression,
-    )
-
-    let context = createFakeContext('a  &&  b')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: false,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBe('!a || !b')
   })
 })

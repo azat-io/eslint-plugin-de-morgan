@@ -263,6 +263,34 @@ describe('no-negated-disjunction', () => {
     )
   })
 
+  it('should preserve comments inside grouped operands', async () => {
+    let { result: rightResult } = await invalid({
+      code: 'const x = !(a || (/* keep */ b))',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(rightResult.output).toBe('const x = !a && !(/* keep */ b)')
+
+    let { result: leftResult } = await invalid({
+      code: 'const x = !((a /* keep */) || b)',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(leftResult.output).toBe('const x = !(a /* keep */) && !b')
+
+    let { result: lineCommentResult } = await invalid({
+      code: 'const x = !(a || (// keep\n  b))',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(lineCommentResult.output).toBe('const x = !a && !(// keep\n  b)')
+  })
+
+  it('should not replace operators inside comments', async () => {
+    let { result } = await invalid({
+      code: 'if (!(a || /* a || b */ b)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(result.output).toBe('if (!a && /* a || b */ !b) {}')
+  })
+
   it('should handle function calls and method calls', async () => {
     let { result: functionResult } = await invalid({
       errors: ['convertNegatedDisjunction'],

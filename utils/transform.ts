@@ -6,6 +6,7 @@ import type {
 } from 'estree'
 import type { Rule } from 'eslint'
 
+import { getGroupingParens } from './get-grouping-parens'
 import { toggleNegation } from './toggle-negation'
 import { isConjunction } from './is-conjunction'
 import { isDisjunction } from './is-disjunction'
@@ -89,6 +90,18 @@ interface FlattenOperandsOptions {
   expression: Expression
 }
 
+interface NegatedOperand {
+  /**
+   * The range of the original operand, including its grouping parentheses.
+   */
+  range: [number, number]
+
+  /**
+   * The negated operand text.
+   */
+  text: string
+}
+
 type ExpressionType = 'conjunction' | 'disjunction'
 
 const MAX_DEPTH = 10
@@ -145,42 +158,44 @@ export function transform({
 }
 
 /**
- * Transforms an expression with special formatting (comments, multiple spaces).
+ * Negates an operand of a logical expression. The grouping parentheses of the
+ * operand are dropped, unless they contain comments: such an operand is negated
+ * together with its parentheses, so the comments are preserved.
  *
- * @param options - The transformation options.
- * @returns The transformed expression with preserved formatting.
+ * @param node - The operand to negate.
+ * @param context - The ESLint rule context.
+ * @param canStripNegation - Whether a leading '!' may be stripped from an
+ *   already negated operand.
+ * @returns The negated operand and the range of the original operand.
  */
-function transformWithFormatting({
-  canStripNegation,
-  sourceOperator,
-  targetOperator,
-  expression,
-  context,
-}: TransformUtilityOptions): string {
+function negateOperand(
+  node: Expression,
+  context: Rule.RuleContext,
+  canStripNegation: boolean,
+): NegatedOperand {
   let { sourceCode } = context
+  let parens = getGroupingParens(node, sourceCode)
 
-  let leftText = toggleNegation(expression.left, context, canStripNegation)
-  let rightText = toggleNegation(expression.right, context, canStripNegation)
-
-  if (!expression.left.range || !expression.right.range) {
-    return `${leftText} ${targetOperator} ${rightText}`
+  if (!parens) {
+    return {
+      text: toggleNegation(node, context, canStripNegation),
+      range: node.range!,
+    }
   }
 
-  let [, leftEnd] = expression.left.range
-  let [rightStart] = expression.right.range
-  let textBetween = normalizeTextBetweenOperands(
-    sourceCode.text.slice(leftEnd, rightStart),
-  )
+  let [opening, closing] = parens
+  let range: [number, number] = [opening.range[0], closing.range[1]]
+  let hasComments =
+    sourceCode.commentsExistBetween(opening, node) ||
+    sourceCode.commentsExistBetween(node, closing)
 
-  let formattedOperator = textBetween.replaceAll(
-    new RegExp(
-      sourceOperator.replaceAll(/[$()*+.?[\\\]^{|}]/gu, String.raw`\$&`),
-      'gu',
-    ),
-    targetOperator,
-  )
-
-  return `${leftText}${formattedOperator}${rightText}`
+  return {
+    text:
+      hasComments ?
+        `!${sourceCode.text.slice(...range)}`
+      : toggleNegation(node, context, canStripNegation),
+    range,
+  }
 }
 
 /**
@@ -217,6 +232,39 @@ function flattenOperands({
   }
 
   return result
+}
+
+/**
+ * Transforms an expression with special formatting (comments, multiple spaces).
+ * The text between the operands is taken from outside their grouping
+ * parentheses, so it contains only whitespace, comments, and the operator. The
+ * operator token is replaced by its position, which leaves comments intact.
+ *
+ * @param options - The transformation options.
+ * @returns The transformed expression with preserved formatting.
+ */
+function transformWithFormatting({
+  canStripNegation,
+  sourceOperator,
+  targetOperator,
+  expression,
+  context,
+}: TransformUtilityOptions): string {
+  let { sourceCode } = context
+
+  let left = negateOperand(expression.left, context, canStripNegation)
+  let right = negateOperand(expression.right, context, canStripNegation)
+  let operatorToken = sourceCode.getTokenAfter(expression.left, {
+    filter: token => token.value === sourceOperator,
+  })!
+
+  return (
+    left.text +
+    sourceCode.text.slice(left.range[1], operatorToken.range[0]) +
+    targetOperator +
+    sourceCode.text.slice(operatorToken.range[1], right.range[0]) +
+    right.text
+  )
 }
 
 /**
@@ -272,38 +320,4 @@ function hasSpecialFormatting(text: string): boolean {
     text.includes('\n') ||
     /\s{2,}/u.test(text)
   )
-}
-
-/**
- * Removes boundary grouping parentheses from the text between operands while
- * preserving the original spacing, line breaks, and comments around the logical
- * operator.
- *
- * @param textBetween - The original text between the left and right operands.
- * @returns Normalized text without boundary grouping parentheses.
- */
-function normalizeTextBetweenOperands(textBetween: string): string {
-  return removeTrailingGroupingParens(removeLeadingGroupingParens(textBetween))
-}
-
-/**
- * Removes trailing opening grouping parentheses from the text between operands
- * while preserving any leading whitespace.
- *
- * @param text - The text between operands.
- * @returns Text without trailing opening grouping parentheses.
- */
-function removeTrailingGroupingParens(text: string): string {
-  return text.replace(/(?:\s*\()+\s*$/u, match => match.match(/^\s*/u)![0])
-}
-
-/**
- * Removes leading closing grouping parentheses from the text between operands
- * while preserving any trailing whitespace.
- *
- * @param text - The text between operands.
- * @returns Text without leading closing grouping parentheses.
- */
-function removeLeadingGroupingParens(text: string): string {
-  return text.replace(/^\s*(?:\)\s*)+/u, match => match.match(/\s*$/u)![0])
 }
