@@ -10,7 +10,6 @@ import { hasBooleanContext } from '../utils/has-boolean-context'
 import { applyToProperty } from '../utils/apply-to-property'
 import { isConjunction } from '../utils/is-conjunction'
 import { sanitizeCode } from '../utils/sanitize-code'
-import { isPureGroup } from '../utils/is-pure-group'
 import { repository as repo } from '../package.json'
 import { isNegated } from '../utils/is-negated'
 import { transform } from '../utils/transform'
@@ -27,7 +26,6 @@ export default {
         test(
           isNegated,
           applyToProperty('argument', isConjunction),
-          isPureGroup,
           or(hasBooleanContext, not(hasNegationInsideParens)),
         )
       ) {

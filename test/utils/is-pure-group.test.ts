@@ -1,292 +1,78 @@
-import type { LogicalExpression, Expression } from 'estree'
 import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
+import { Linter } from 'eslint'
 
 import { isPureGroup } from '../../utils/is-pure-group'
 
-type FakeLogicalExpression = {
-  range: [number, number]
-  parent?: FakeNode
-  code: string
-} & LogicalExpression
+let linter = new Linter()
 
-type FakeNode = {
-  range: [number, number]
-  parent?: FakeNode
-  code: string
-} & Expression
+function checkPureGroup(code: string): boolean {
+  let results: boolean[] = []
+  let rule: Rule.RuleModule = {
+    create: context => ({
+      UnaryExpression: node => {
+        results.push(isPureGroup(node, context))
+      },
+    }),
+  }
 
-let currentCode = ''
+  linter.verify(code, {
+    plugins: { test: { rules: { 'is-pure-group': rule } } },
+    rules: { 'test/is-pure-group': 'error' },
+  })
 
-let fakeContext: Rule.RuleContext = {
-  sourceCode: {
-    getText: () => currentCode,
-  },
-} as Rule.RuleContext
+  let [result] = results
+  if (result === undefined) {
+    throw new Error(`Expected a negated expression in: ${code}`)
+  }
+  return result
+}
 
 describe('isPureGroup', () => {
-  it('should return false for a mixed group: (a && b || c)', () => {
-    expect.assertions(1)
+  it('should return true for a group with a single logical operator', () => {
+    expect.assertions(3)
 
-    let code = '(a && b || c)'
-    currentCode = code
-
-    let node: FakeLogicalExpression = {
-      left: {
-        right: {
-          type: 'Identifier',
-          range: [6, 7],
-          name: 'b',
-          code: 'b',
-        } as FakeNode,
-        left: {
-          type: 'Identifier',
-          range: [1, 2],
-          name: 'a',
-          code: 'a',
-        } as FakeNode,
-        type: 'LogicalExpression',
-        operator: '&&',
-        code: 'a && b',
-        range: [1, 7],
-      } as FakeLogicalExpression,
-      right: {
-        type: 'Identifier',
-        range: [11, 12],
-        name: 'c',
-        code: 'c',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      range: [0, code.length],
-      operator: '||',
-      code,
-    }
-
-    expect(isPureGroup(node, fakeContext)).toBeFalsy()
+    expect(checkPureGroup('!(a && b)')).toBeTruthy()
+    expect(checkPureGroup('!(a || b || c)')).toBeTruthy()
+    expect(checkPureGroup('!a')).toBeTruthy()
   })
 
-  it('should return true for a pure group with nested grouping: ((a && b) || c)', () => {
-    expect.assertions(1)
+  it('should return false for a group with mixed logical operators', () => {
+    expect.assertions(3)
 
-    let code = '((a && b) || c)'
-    currentCode = code
-
-    let node: FakeLogicalExpression = {
-      left: {
-        right: {
-          type: 'Identifier',
-          range: [7, 8],
-          name: 'b',
-          code: 'b',
-        } as FakeNode,
-        left: {
-          type: 'Identifier',
-          range: [2, 3],
-          name: 'a',
-          code: 'a',
-        } as FakeNode,
-        type: 'LogicalExpression',
-        code: '(a && b)',
-        operator: '&&',
-        range: [1, 9],
-      } as FakeLogicalExpression,
-      right: {
-        type: 'Identifier',
-        range: [13, 14],
-        name: 'c',
-        code: 'c',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      range: [0, code.length],
-      operator: '||',
-      code,
-    }
-
-    expect(isPureGroup(node, fakeContext)).toBeTruthy()
+    expect(checkPureGroup('!(a && b || c)')).toBeFalsy()
+    expect(checkPureGroup('!(a || b && c)')).toBeFalsy()
+    expect(checkPureGroup('!(a || b && c || d)')).toBeFalsy()
   })
 
-  it('should return true for a group with only &&: (a && b)', () => {
-    expect.assertions(1)
+  it('should treat parenthesized operands as separate groups', () => {
+    expect.assertions(4)
 
-    let code = '(a && b)'
-    currentCode = code
-
-    let node: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [6, 7],
-        name: 'b',
-        code: 'b',
-      } as FakeNode,
-      left: {
-        type: 'Identifier',
-        range: [1, 2],
-        name: 'a',
-        code: 'a',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      range: [0, code.length],
-      operator: '&&',
-      code,
-    }
-
-    expect(isPureGroup(node, fakeContext)).toBeTruthy()
+    expect(checkPureGroup('!((a && b) || c)')).toBeTruthy()
+    expect(checkPureGroup('!(a || (b && c))')).toBeTruthy()
+    expect(checkPureGroup('!(a || (b || c && d))')).toBeTruthy()
+    expect(checkPureGroup('!(a || (b) && c)')).toBeFalsy()
   })
 
-  it('should handle deeply nested expressions: (((a && b) || c) && d)', () => {
-    expect.assertions(1)
+  it('should ignore operators outside of logical expressions', () => {
+    expect.assertions(6)
 
-    let code = '(((a && b) || c) && d)'
-    currentCode = code
-
-    let innerNode: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [8, 9],
-        name: 'b',
-        code: 'b',
-      } as FakeNode,
-      left: {
-        type: 'Identifier',
-        range: [3, 4],
-        name: 'a',
-        code: 'a',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      code: '(a && b)',
-      operator: '&&',
-      range: [2, 10],
-    }
-
-    let middleNode: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [14, 15],
-        name: 'c',
-        code: 'c',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      code: '((a && b) || c)',
-      left: innerNode,
-      operator: '||',
-      range: [1, 16],
-    }
-
-    innerNode.parent = middleNode
-
-    let outerNode: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [20, 21],
-        name: 'd',
-        code: 'd',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      range: [0, code.length],
-      left: middleNode,
-      operator: '&&',
-      code,
-    }
-
-    middleNode.parent = outerNode
-
-    expect(isPureGroup(innerNode, fakeContext)).toBeTruthy()
+    expect(checkPureGroup("!(a || b === '&&')")).toBeTruthy()
+    expect(checkPureGroup('!(a || /* && */ b)')).toBeTruthy()
+    expect(checkPureGroup('!(a || b[c && d])')).toBeTruthy()
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(checkPureGroup('!(a || `${c && d}`)')).toBeTruthy()
+    expect(checkPureGroup('!(a || /&&/u.test(b))')).toBeTruthy()
+    expect(checkPureGroup('!(a && b[c || d])')).toBeTruthy()
   })
 
-  it('should stop at the first parenthesized parent: a && (b || c)', () => {
-    expect.assertions(1)
+  it('should not depend on the formatting around the negated group', () => {
+    expect.assertions(4)
 
-    let code = 'a && (b || c)'
-    currentCode = code
-
-    let innerNode: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [11, 12],
-        name: 'c',
-        code: 'c',
-      } as FakeNode,
-      left: {
-        type: 'Identifier',
-        range: [6, 7],
-        name: 'b',
-        code: 'b',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      code: '(b || c)',
-      operator: '||',
-      range: [5, 13],
-    }
-
-    let outerNode: FakeLogicalExpression = {
-      left: {
-        type: 'Identifier',
-        range: [0, 1],
-        name: 'a',
-        code: 'a',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      range: [0, code.length],
-      right: innerNode,
-      operator: '&&',
-      code,
-    }
-
-    innerNode.parent = outerNode
-
-    expect(isPureGroup(innerNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should stop at outer parentheses when checking parent chain: (a && (b || c))', () => {
-    expect.assertions(1)
-
-    let code = '(a && (b || c))'
-    currentCode = code
-
-    let innerNode: FakeLogicalExpression = {
-      right: {
-        type: 'Identifier',
-        range: [12, 13],
-        name: 'c',
-        code: 'c',
-      } as FakeNode,
-      left: {
-        type: 'Identifier',
-        range: [7, 8],
-        name: 'b',
-        code: 'b',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      code: '(b || c)',
-      operator: '||',
-      range: [6, 14],
-    }
-
-    let middleNode: FakeLogicalExpression = {
-      left: {
-        type: 'Identifier',
-        range: [1, 2],
-        name: 'a',
-        code: 'a',
-      } as FakeNode,
-      type: 'LogicalExpression',
-      code: 'a && (b || c)',
-      right: innerNode,
-      operator: '&&',
-      range: [1, 14],
-    }
-
-    innerNode.parent = middleNode
-
-    let outerNode: FakeLogicalExpression = {
-      ...middleNode,
-      range: [0, code.length],
-      code,
-    }
-
-    middleNode.parent = outerNode
-
-    expect(isPureGroup(innerNode, fakeContext)).toBeTruthy()
+    expect(checkPureGroup('! (a && b || c)')).toBeFalsy()
+    expect(checkPureGroup('!/* note */(a && b || c)')).toBeFalsy()
+    expect(checkPureGroup('!((a && b || c))')).toBeFalsy()
+    expect(checkPureGroup("!(a && b === ')' || c)")).toBeFalsy()
   })
 })

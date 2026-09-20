@@ -230,6 +230,40 @@ describe('no-negated-conjunction', () => {
     )
   })
 
+  it('should ignore logical operators outside of the negated group', async () => {
+    let { result: stringResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: "if (!(a && b === '||')) {}",
+    })
+    expect(stringResult.output).toBe("if (!a || b !== '||') {}")
+
+    let { result: commentResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && /* || */ b)) {}',
+    })
+    expect(commentResult.output).toBe('if (!a || /* || */ !b) {}')
+
+    let { result: memberResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'if (!(a && b[c || d])) {}',
+    })
+    expect(memberResult.output).toBe('if (!a || !b[c || d]) {}')
+
+    let { result: templateResult } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      // eslint-disable-next-line no-template-curly-in-string
+      code: 'if (!(a && `${c || d}`)) {}',
+    })
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(templateResult.output).toBe('if (!a || !`${c || d}`) {}')
+
+    let { result: regexResult } = await invalid({
+      code: 'if (!(a && /x||y/u.test(b))) {}',
+      errors: ['convertNegatedConjunction'],
+    })
+    expect(regexResult.output).toBe('if (!a || !/x||y/u.test(b)) {}')
+  })
+
   it('should handle spacing and formatting', async () => {
     let { result: spacingResult } = await invalid({
       errors: ['convertNegatedConjunction'],

@@ -80,6 +80,13 @@ describe('no-negated-disjunction', () => {
     await valid('foo(!(a || !b))')
   })
 
+  it('should allow mixed operators regardless of formatting', async () => {
+    await valid('if (! (a && b || c)) {}')
+    await valid('if (!/* note */(a && b || c)) {}')
+    await valid('if (!((a && b || c))) {}')
+    await valid("if (!(a && b === ')' || c)) {}")
+  })
+
   it('should transform simple negated disjunction in if statement', async () => {
     let { result } = await invalid({
       errors: ['convertNegatedDisjunction'],
@@ -229,6 +236,40 @@ describe('no-negated-disjunction', () => {
       'message',
       'Replace negated disjunction `!(a || (b && c))` with `!a && !(b && c)`',
     )
+  })
+
+  it('should ignore logical operators outside of the negated group', async () => {
+    let { result: stringResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: "if (!(a || b === '&&')) {}",
+    })
+    expect(stringResult.output).toBe("if (!a && b !== '&&') {}")
+
+    let { result: commentResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a || /* && */ b)) {}',
+    })
+    expect(commentResult.output).toBe('if (!a && /* && */ !b) {}')
+
+    let { result: memberResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a || b[c && d])) {}',
+    })
+    expect(memberResult.output).toBe('if (!a && !b[c && d]) {}')
+
+    let { result: templateResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      // eslint-disable-next-line no-template-curly-in-string
+      code: 'if (!(a || `${c && d}`)) {}',
+    })
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(templateResult.output).toBe('if (!a && !`${c && d}`) {}')
+
+    let { result: regexResult } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a || /&&/u.test(b))) {}',
+    })
+    expect(regexResult.output).toBe('if (!a && !/&&/u.test(b)) {}')
   })
 
   it('should handle spacing and formatting', async () => {

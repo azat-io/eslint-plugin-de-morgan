@@ -1,94 +1,48 @@
-import type { Expression } from 'estree'
+import type { LogicalOperator, UnaryExpression, Expression } from 'estree'
 import type { Rule } from 'eslint'
 
-import { findOutermostParenthesizedNode } from './find-outermost-parenthesized-node'
+import { isLogicalExpression } from './is-logical-expression'
+import { getGroupingParens } from './get-grouping-parens'
 
 /**
- * Determines if a logical expression is "pure" - meaning it doesn't mix
- * different logical operators (&& and ||) at the same nesting level within its
- * outermost parentheses.
+ * Determines if the operand of a negated expression is a "pure" logical group -
+ * meaning it doesn't mix different logical operators (&& and ||) without
+ * grouping parentheses.
  *
  * Examples:
  *
  * - `!(a && b)` → true (no mixed operators)
- * - `((a && b) || c)` → true (operators at different nesting levels)
- * - `(a && b || c)` → false (mixed operators at same level).
+ * - `!((a && b) || c)` → true (operators at different nesting levels)
+ * - `!(a && b || c)` → false (mixed operators at same level).
  *
- * The function traverses up the AST to find the outermost parenthesized
- * expression, then analyzes the logical operators within that scope.
+ * The function walks the AST of the operand and descends only into logical
+ * expressions that are not wrapped in their own parentheses, so operators
+ * inside strings, comments, template literals, regular expressions, or other
+ * nested expressions do not affect the result.
  *
- * @param node - The AST node to analyze.
- * @param context - ESLint rule context, used to get source code.
+ * @param node - The negated expression node.
+ * @param context - ESLint rule context, used to access tokens.
  * @returns True if the expression doesn't mix operators at the top level.
  */
 export function isPureGroup(
-  node: Expression,
+  node: UnaryExpression,
   context: Rule.RuleContext,
 ): boolean {
-  let sourceCode = context.sourceCode.getText()
-  let outermostNode = findOutermostParenthesizedNode(node, sourceCode)
-  let fullCode = context.sourceCode.getText(outermostNode)
-  let innerCode = getCodeInsideParentheses(fullCode)
+  let operators = new Set<LogicalOperator>()
+  let stack: Expression[] = [node.argument]
 
-  return !hasMixedOperators(innerCode)
-}
+  while (stack.length > 0) {
+    let expression = stack.pop()!
 
-/**
- * Analyzes the given code string (which is assumed to have no outer
- * parentheses) and determines if, at the top level (outside of any nested
- * groups), the logical operators are uniform. In other words, if both `&&` and
- * `||` are found at the top level, it returns true indicating a mix.
- *
- * @param code - The code string to analyze.
- * @returns True if a mix of `&&` and `||` is found at the top level, false
- *   otherwise.
- */
-function hasMixedOperators(code: string): boolean {
-  let depth = 0
-  let operatorFound: string | null = null
-
-  for (let i = 0; i < code.length; i++) {
-    let char = code[i]
-    if (char === '(') {
-      depth++
-      continue
-    }
-    if (char === ')') {
-      depth--
-      continue
-    }
-    if (depth !== 0) {
-      continue
-    }
-
-    let twoChars = code.slice(i, i + 2)
-    if (twoChars === '&&' || twoChars === '||') {
-      if (operatorFound === null) {
-        operatorFound = twoChars
-      } else if (operatorFound !== twoChars) {
-        return true
-      }
-      i++
+    if (isLogicalExpression(expression)) {
+      operators.add(expression.operator)
+      stack.push(
+        ...[expression.left, expression.right].filter(
+          operand => !getGroupingParens(operand, context.sourceCode),
+        ),
+      )
     }
   }
 
-  return false
-}
-
-/**
- * Extracts the inner code from a code string that is wrapped in parentheses. If
- * the code starts with `!(`, the function removes the leading `!(` and the
- * final `)`. If it starts with `(` it removes only the outer parentheses.
- *
- * @param code - The code string to process.
- * @returns The inner code, with the outermost parentheses removed.
- */
-function getCodeInsideParentheses(code: string): string {
-  if (code.startsWith('!(')) {
-    return code.slice(2, -1)
-  }
-  if (code.startsWith('(')) {
-    return code.slice(1, -1)
-  }
-  return code
+  return operators.size < 2
 }

@@ -1,32 +1,24 @@
 import type { Node } from 'estree'
 import type { Rule } from 'eslint'
 
-import { findOutermostParenthesizedNode } from './find-outermost-parenthesized-node'
 import { hasNegationOperator } from './has-negation-operator'
 import { isLogicalExpression } from './is-logical-expression'
 import { isUnaryExpression } from './is-unary-expression'
 
 /**
- * Checks if there is a negation (`!`) inside the outermost parentheses of a
- * given negated expression. This is useful for determining if De Morgan's laws
- * can be applied without changing the logic.
+ * Checks if there is a negation (`!`) inside the parentheses of a given negated
+ * expression. This is useful for determining if De Morgan's laws can be applied
+ * without changing the logic.
  *
  * @param node - The starting node, assumed to be of the form `!(...)`.
- * @param context - The ESLint rule context, used to access source code.
+ * @param [_context] - The ESLint rule context (technical argument).
  * @returns True if there is a negation (`!`) inside the parentheses.
  */
 export function hasNegationInsideParens(
   node: Node,
-  context: Rule.RuleContext,
+  _context: Rule.RuleContext,
 ): boolean {
-  let sourceCode = context.sourceCode.getText(node)
-  let outermostNode = findOutermostParenthesizedNode(node, sourceCode)
-
-  if (!isUnaryExpression(outermostNode)) {
-    return false
-  }
-
-  return hasNegationInside(outermostNode.argument)
+  return isUnaryExpression(node) && hasNegationInside(node.argument)
 }
 
 /**
