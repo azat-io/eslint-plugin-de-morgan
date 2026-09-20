@@ -32,6 +32,8 @@ type FakeIdentifier = {
 } & Identifier &
   FakeNode
 
+const DEEP_NESTING_DEPTH = 15
+
 function transformCode(
   code: string,
   expressionType: 'conjunction' | 'disjunction',
@@ -66,6 +68,29 @@ function transformCode(
   return result
 }
 
+function expectDeepNestingIsTruncated(shouldNegateOperands: boolean): void {
+  let deepExpression = createDeepNestedConjunction(shouldNegateOperands)
+  let unaryExpression = createUnaryExpression(deepExpression)
+
+  let context = createFakeContext(deepExpression.raw ?? '')
+
+  let result = transform({
+    expressionType: 'conjunction',
+    shouldWrapInParens: false,
+    canStripNegation: true,
+    node: unaryExpression,
+    context,
+  })
+
+  expect(result).toBeDefined()
+  expect(result).not.toBeNull()
+
+  expect(result?.includes('||')).toBeTruthy()
+
+  let operatorCount = (result?.match(/\|\|/gu) ?? []).length
+  expect(operatorCount).toBeLessThan(DEEP_NESTING_DEPTH)
+}
+
 function createConjunction(
   left: FakeNode,
   right: FakeNode,
@@ -89,6 +114,42 @@ function createConjunction(
     right,
     left,
   }
+}
+
+function transformSimpleConjunction(
+  shouldWrapInParens: boolean,
+): string | null {
+  let leftId = createIdentifier('a', [0, 1])
+  let rightId = createIdentifier('b', [5, 6])
+  let conjunction = createConjunction(leftId, rightId)
+  let unaryExpression = createUnaryExpression(conjunction)
+
+  let context = createFakeContext('a && b')
+
+  return transform({
+    expressionType: 'conjunction',
+    canStripNegation: true,
+    node: unaryExpression,
+    shouldWrapInParens,
+    context,
+  })
+}
+
+function createDeepNestedConjunction(shouldNegateOperands: boolean): FakeNode {
+  let operandText = shouldNegateOperands ? '!a' : 'a'
+  let node: FakeNode = createIdentifier('a', [0, 1])
+
+  for (let i = 0; i < DEEP_NESTING_DEPTH; i++) {
+    let operand = createIdentifier('a', [i * 4 + 4, i * 4 + 5])
+
+    node = createConjunction(
+      node,
+      shouldNegateOperands ? createUnaryExpression(operand) : operand,
+    )
+    node.raw = `${node.raw} && ${operandText}`
+  }
+
+  return node
 }
 
 function createFakeContext(sourceText: string): Rule.RuleContext {
@@ -143,43 +204,13 @@ describe('transform', () => {
   it('should transform a simple negated conjunction', () => {
     expect.assertions(1)
 
-    let leftId = createIdentifier('a', [0, 1])
-    let rightId = createIdentifier('b', [5, 6])
-    let conjunction = createConjunction(leftId, rightId)
-    let unaryExpression = createUnaryExpression(conjunction)
-
-    let context = createFakeContext('a && b')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: false,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBe('!a || !b')
+    expect(transformSimpleConjunction(false)).toBe('!a || !b')
   })
 
   it('should transform a negated conjunction and wrap in parentheses when requested', () => {
     expect.assertions(1)
 
-    let leftId = createIdentifier('a', [0, 1])
-    let rightId = createIdentifier('b', [5, 6])
-    let conjunction = createConjunction(leftId, rightId)
-    let unaryExpression = createUnaryExpression(conjunction)
-
-    let context = createFakeContext('a && b')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: true,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBe('(!a || !b)')
+    expect(transformSimpleConjunction(true)).toBe('(!a || !b)')
   })
 
   it('should preserve formatting in the transformed expression', () => {
@@ -318,78 +349,12 @@ describe('transform', () => {
   it('should handle deeply nested conjunctions by limiting recursion depth', () => {
     expect.assertions(4)
 
-    function createDeepNestedConjunction(depth: number): FakeNode {
-      let node: FakeNode = createIdentifier('a', [0, 1])
-
-      for (let i = 0; i < depth; i++) {
-        node = createConjunction(
-          node,
-          createIdentifier('a', [i * 4 + 4, i * 4 + 5]),
-        )
-        node.raw = `${node.raw} && a`
-      }
-
-      return node
-    }
-
-    let deepExpression = createDeepNestedConjunction(15)
-    let unaryExpression = createUnaryExpression(deepExpression)
-
-    let context = createFakeContext(deepExpression.raw ?? '')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: false,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBeDefined()
-    expect(result).not.toBeNull()
-
-    expect(result?.includes('||')).toBeTruthy()
-
-    let operatorCount = (result?.match(/\|\|/gu) ?? []).length
-    expect(operatorCount).toBeLessThan(15)
+    expectDeepNestingIsTruncated(false)
   })
 
   it('should handle deeply nested conjunctions with negated operands', () => {
     expect.assertions(4)
 
-    function createDeepNestedConjunction(depth: number): FakeNode {
-      let node: FakeNode = createIdentifier('a', [0, 1])
-
-      for (let i = 0; i < depth; i++) {
-        node = createConjunction(
-          node,
-          createUnaryExpression(createIdentifier('a', [i * 4 + 4, i * 4 + 5])),
-        )
-        node.raw = `${node.raw} && !a`
-      }
-
-      return node
-    }
-
-    let deepExpression = createDeepNestedConjunction(15)
-    let unaryExpression = createUnaryExpression(deepExpression)
-
-    let context = createFakeContext(deepExpression.raw ?? '')
-
-    let result = transform({
-      expressionType: 'conjunction',
-      shouldWrapInParens: false,
-      canStripNegation: true,
-      node: unaryExpression,
-      context,
-    })
-
-    expect(result).toBeDefined()
-    expect(result).not.toBeNull()
-
-    expect(result?.includes('||')).toBeTruthy()
-
-    let operatorCount = (result?.match(/\|\|/gu) ?? []).length
-    expect(operatorCount).toBeLessThan(15)
+    expectDeepNestingIsTruncated(true)
   })
 })

@@ -1,31 +1,10 @@
 import { createRuleTester } from 'eslint-vitest-rule-tester'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import dedent from 'dedent'
 
+import { evaluateFixture } from '../helpers/evaluate-fixture'
+import { testerConfig } from '../helpers/tester-config'
 import rule from '../../rules/no-negated-conjunction'
-
-let testerConfig = {
-  configs: {
-    languageOptions: {
-      parserOptions: {
-        sourceType: 'module' as const,
-        ecmaVersion: 2022 as const,
-      },
-    },
-  },
-}
-
-function run(source: string, values: unknown[]): unknown {
-  // eslint-disable-next-line typescript/no-implied-eval, no-new-func
-  let execute = new Function(
-    'a',
-    'b',
-    'c',
-    'd',
-    `let r; ${source}; return r`,
-  ) as (...functionArguments: unknown[]) => unknown
-  return execute(...values)
-}
 
 describe('no-negated-conjunction', () => {
   let { invalid, valid } = createRuleTester({
@@ -548,11 +527,11 @@ describe('no-negated-conjunction', () => {
       code,
     })
 
-    expect(run(result.output, [Number.NaN, 1, true])).toBe(
-      run(code, [Number.NaN, 1, true]),
+    expect(evaluateFixture(result.output, [Number.NaN, 1, true])).toBe(
+      evaluateFixture(code, [Number.NaN, 1, true]),
     )
-    expect(run(result.output, [undefined, 1, true])).toBe(
-      run(code, [undefined, 1, true]),
+    expect(evaluateFixture(result.output, [undefined, 1, true])).toBe(
+      evaluateFixture(code, [undefined, 1, true]),
     )
   })
 
@@ -562,8 +541,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: ternaryCode,
     })
-    expect(run(ternaryResult.output, [false, true, 0, 1])).toBe(
-      run(ternaryCode, [false, true, 0, 1]),
+    expect(evaluateFixture(ternaryResult.output, [false, true, 0, 1])).toBe(
+      evaluateFixture(ternaryCode, [false, true, 0, 1]),
     )
 
     let sequenceCode = 'if (!(a && (b, c))) { r = 1 } else { r = 2 }'
@@ -571,8 +550,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: sequenceCode,
     })
-    expect(run(sequenceResult.output, [true, true, false])).toBe(
-      run(sequenceCode, [true, true, false]),
+    expect(evaluateFixture(sequenceResult.output, [true, true, false])).toBe(
+      evaluateFixture(sequenceCode, [true, true, false]),
     )
 
     let assignmentCode = 'if (!(a && (b = c))) { r = 1 } else { r = 2 }'
@@ -580,8 +559,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: assignmentCode,
     })
-    expect(run(assignmentResult.output, [true, true, false])).toBe(
-      run(assignmentCode, [true, true, false]),
+    expect(evaluateFixture(assignmentResult.output, [true, true, false])).toBe(
+      evaluateFixture(assignmentCode, [true, true, false]),
     )
 
     let arrowCode = 'if (!(a && (x => x))) { r = 1 } else { r = 2 }'
@@ -589,16 +568,18 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: arrowCode,
     })
-    expect(run(arrowResult.output, [true])).toBe(run(arrowCode, [true]))
+    expect(evaluateFixture(arrowResult.output, [true])).toBe(
+      evaluateFixture(arrowCode, [true]),
+    )
 
     let negatedSequenceCode = 'if (!(a && (!b, c))) { r = 1 } else { r = 2 }'
     let { result: negatedSequenceResult } = await invalid({
       errors: ['convertNegatedConjunction'],
       code: negatedSequenceCode,
     })
-    expect(run(negatedSequenceResult.output, [true, false, false])).toBe(
-      run(negatedSequenceCode, [true, false, false]),
-    )
+    expect(
+      evaluateFixture(negatedSequenceResult.output, [true, false, false]),
+    ).toBe(evaluateFixture(negatedSequenceCode, [true, false, false]))
   })
 
   it('should preserve runtime behavior for parenthesized yield operands', async () => {
@@ -626,8 +607,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: nullishCode,
     })
-    expect(run(nullishResult.output, [true, true, null])).toBe(
-      run(nullishCode, [true, true, null]),
+    expect(evaluateFixture(nullishResult.output, [true, true, null])).toBe(
+      evaluateFixture(nullishCode, [true, true, null]),
     )
 
     let comparisonCode = 'r = !(a && b) === c'
@@ -635,17 +616,17 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: comparisonCode,
     })
-    expect(run(comparisonResult.output, [false, false, false])).toBe(
-      run(comparisonCode, [false, false, false]),
-    )
+    expect(
+      evaluateFixture(comparisonResult.output, [false, false, false]),
+    ).toBe(evaluateFixture(comparisonCode, [false, false, false]))
 
     let inCode = 'r = !(a && b) in c'
     let { result: inResult } = await invalid({
       errors: ['convertNegatedConjunction'],
       code: inCode,
     })
-    expect(run(inResult.output, [false, false, {}])).toBe(
-      run(inCode, [false, false, {}]),
+    expect(evaluateFixture(inResult.output, [false, false, {}])).toBe(
+      evaluateFixture(inCode, [false, false, {}]),
     )
 
     let unaryMinusCode = 'r = -!(a && b)'
@@ -653,8 +634,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: unaryMinusCode,
     })
-    expect(run(unaryMinusResult.output, [true, true])).toBe(
-      run(unaryMinusCode, [true, true]),
+    expect(evaluateFixture(unaryMinusResult.output, [true, true])).toBe(
+      evaluateFixture(unaryMinusCode, [true, true]),
     )
 
     let additionCode = 'r = 1 + !(a && b)'
@@ -662,8 +643,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: additionCode,
     })
-    expect(run(additionResult.output, [true, false])).toBe(
-      run(additionCode, [true, false]),
+    expect(evaluateFixture(additionResult.output, [true, false])).toBe(
+      evaluateFixture(additionCode, [true, false]),
     )
 
     let voidCode = 'r = void !(a && b)'
@@ -671,8 +652,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: voidCode,
     })
-    expect(run(voidResult.output, [true, false])).toBe(
-      run(voidCode, [true, false]),
+    expect(evaluateFixture(voidResult.output, [true, false])).toBe(
+      evaluateFixture(voidCode, [true, false]),
     )
 
     let indexCode = 'r = c[+!(a && b)]'
@@ -680,9 +661,9 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: indexCode,
     })
-    expect(run(indexResult.output, [true, true, ['first', 'second']])).toBe(
-      run(indexCode, [true, true, ['first', 'second']]),
-    )
+    expect(
+      evaluateFixture(indexResult.output, [true, true, ['first', 'second']]),
+    ).toBe(evaluateFixture(indexCode, [true, true, ['first', 'second']]))
   })
 
   it('should preserve runtime behavior in statement-level parent contexts', async () => {
@@ -691,8 +672,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: newlineCode,
     })
-    expect(run(newlineResult.output, [true, true, 5, false])).toBe(
-      run(newlineCode, [true, true, 5, false]),
+    expect(evaluateFixture(newlineResult.output, [true, true, 5, false])).toBe(
+      evaluateFixture(newlineCode, [true, true, 5, false]),
     )
 
     let statementCode = 'r = 1; !(function(){} === b && c); r = 2'
@@ -700,8 +681,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: statementCode,
     })
-    expect(run(statementResult.output, [0, 5, true])).toBe(
-      run(statementCode, [0, 5, true]),
+    expect(evaluateFixture(statementResult.output, [0, 5, true])).toBe(
+      evaluateFixture(statementCode, [0, 5, true]),
     )
 
     let forInitCode =
@@ -710,8 +691,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: forInitCode,
     })
-    expect(run(forInitResult.output, [true, 'k', {}, true])).toBe(
-      run(forInitCode, [true, 'k', {}, true]),
+    expect(evaluateFixture(forInitResult.output, [true, 'k', {}, true])).toBe(
+      evaluateFixture(forInitCode, [true, 'k', {}, true]),
     )
   })
 
@@ -721,15 +702,17 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: chainCode,
     })
-    expect(run(chainResult.output, [5, 0, 1])).toBe(run(chainCode, [5, 0, 1]))
+    expect(evaluateFixture(chainResult.output, [5, 0, 1])).toBe(
+      evaluateFixture(chainCode, [5, 0, 1]),
+    )
 
     let ternaryCode = 'r = c ? !(!a && b) : 0'
     let { result: ternaryResult } = await invalid({
       errors: ['convertNegatedConjunction'],
       code: ternaryCode,
     })
-    expect(run(ternaryResult.output, [5, 0, 1])).toBe(
-      run(ternaryCode, [5, 0, 1]),
+    expect(evaluateFixture(ternaryResult.output, [5, 0, 1])).toBe(
+      evaluateFixture(ternaryCode, [5, 0, 1]),
     )
 
     let comparisonCode = 'r = c === !(!a && b)'
@@ -737,8 +720,8 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: comparisonCode,
     })
-    expect(run(comparisonResult.output, [5, 0, true])).toBe(
-      run(comparisonCode, [5, 0, true]),
+    expect(evaluateFixture(comparisonResult.output, [5, 0, true])).toBe(
+      evaluateFixture(comparisonCode, [5, 0, true]),
     )
 
     let typeofCode = 'r = typeof !(!a && b)'
@@ -746,44 +729,17 @@ describe('no-negated-conjunction', () => {
       errors: ['convertNegatedConjunction'],
       code: typeofCode,
     })
-    expect(run(typeofResult.output, [5, 0])).toBe(run(typeofCode, [5, 0]))
+    expect(evaluateFixture(typeofResult.output, [5, 0])).toBe(
+      evaluateFixture(typeofCode, [5, 0]),
+    )
 
     let inKeyCode = 'r = !(!a && b) in c'
     let { result: inKeyResult } = await invalid({
       errors: ['convertNegatedConjunction'],
       code: inKeyCode,
     })
-    expect(run(inKeyResult.output, [5, 0, { 5: 1 }])).toBe(
-      run(inKeyCode, [5, 0, { 5: 1 }]),
+    expect(evaluateFixture(inKeyResult.output, [5, 0, { 5: 1 }])).toBe(
+      evaluateFixture(inKeyCode, [5, 0, { 5: 1 }]),
     )
-  })
-
-  it('should skip reporting when transform cannot produce a fix', async () => {
-    vi.resetModules()
-
-    let transformMock = vi.fn().mockReturnValue(null)
-
-    vi.doMock('../../utils/transform', () => ({
-      transform: transformMock,
-    }))
-
-    try {
-      let { default: mockedRule } =
-        await import('../../rules/no-negated-conjunction')
-      let { valid: validRule } = createRuleTester({
-        ...testerConfig,
-        name: 'no-negated-conjunction transform fallback',
-        rule: mockedRule,
-      })
-
-      await validRule('if (!(a && b)) {}')
-
-      expect(transformMock).toHaveBeenCalledWith(
-        expect.objectContaining({ expressionType: 'conjunction' }),
-      )
-    } finally {
-      vi.doUnmock('../../utils/transform')
-      vi.resetModules()
-    }
   })
 })

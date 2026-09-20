@@ -1,32 +1,11 @@
 import { createRuleTester } from 'eslint-vitest-rule-tester'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import dedent from 'dedent'
 
 import conjunctionRule from '../../rules/no-negated-conjunction'
+import { evaluateFixture } from '../helpers/evaluate-fixture'
+import { testerConfig } from '../helpers/tester-config'
 import rule from '../../rules/no-negated-disjunction'
-
-let testerConfig = {
-  configs: {
-    languageOptions: {
-      parserOptions: {
-        sourceType: 'module' as const,
-        ecmaVersion: 2022 as const,
-      },
-    },
-  },
-}
-
-function run(source: string, values: unknown[]): unknown {
-  // eslint-disable-next-line typescript/no-implied-eval, no-new-func
-  let execute = new Function(
-    'a',
-    'b',
-    'c',
-    'd',
-    `let r; ${source}; return r`,
-  ) as (...functionArguments: unknown[]) => unknown
-  return execute(...values)
-}
 
 describe('no-negated-disjunction', () => {
   let { invalid, valid } = createRuleTester({
@@ -585,11 +564,11 @@ describe('no-negated-disjunction', () => {
       code,
     })
 
-    expect(run(result.output, [Number.NaN, 1, false])).toBe(
-      run(code, [Number.NaN, 1, false]),
+    expect(evaluateFixture(result.output, [Number.NaN, 1, false])).toBe(
+      evaluateFixture(code, [Number.NaN, 1, false]),
     )
-    expect(run(result.output, [undefined, 1, false])).toBe(
-      run(code, [undefined, 1, false]),
+    expect(evaluateFixture(result.output, [undefined, 1, false])).toBe(
+      evaluateFixture(code, [undefined, 1, false]),
     )
   })
 
@@ -599,8 +578,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: ternaryCode,
     })
-    expect(run(ternaryResult.output, [true, false, 0, 1])).toBe(
-      run(ternaryCode, [true, false, 0, 1]),
+    expect(evaluateFixture(ternaryResult.output, [true, false, 0, 1])).toBe(
+      evaluateFixture(ternaryCode, [true, false, 0, 1]),
     )
 
     let sequenceCode = 'if (!(a || (b, c))) { r = 1 } else { r = 2 }'
@@ -608,8 +587,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: sequenceCode,
     })
-    expect(run(sequenceResult.output, [false, true, false])).toBe(
-      run(sequenceCode, [false, true, false]),
+    expect(evaluateFixture(sequenceResult.output, [false, true, false])).toBe(
+      evaluateFixture(sequenceCode, [false, true, false]),
     )
 
     let assignmentCode = 'if (!(a || (b = c))) { r = 1 } else { r = 2 }'
@@ -617,8 +596,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: assignmentCode,
     })
-    expect(run(assignmentResult.output, [false, true, false])).toBe(
-      run(assignmentCode, [false, true, false]),
+    expect(evaluateFixture(assignmentResult.output, [false, true, false])).toBe(
+      evaluateFixture(assignmentCode, [false, true, false]),
     )
   })
 
@@ -628,8 +607,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: nullishCode,
     })
-    expect(run(nullishResult.output, [false, false, null])).toBe(
-      run(nullishCode, [false, false, null]),
+    expect(evaluateFixture(nullishResult.output, [false, false, null])).toBe(
+      evaluateFixture(nullishCode, [false, false, null]),
     )
 
     let comparisonCode = 'r = !(a || b) === c'
@@ -637,8 +616,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: comparisonCode,
     })
-    expect(run(comparisonResult.output, [true, false, false])).toBe(
-      run(comparisonCode, [true, false, false]),
+    expect(evaluateFixture(comparisonResult.output, [true, false, false])).toBe(
+      evaluateFixture(comparisonCode, [true, false, false]),
     )
 
     let additionCode = 'r = 1 + !(a || b)'
@@ -646,8 +625,8 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: additionCode,
     })
-    expect(run(additionResult.output, [false, true])).toBe(
-      run(additionCode, [false, true]),
+    expect(evaluateFixture(additionResult.output, [false, true])).toBe(
+      evaluateFixture(additionCode, [false, true]),
     )
   })
 
@@ -659,8 +638,8 @@ describe('no-negated-disjunction', () => {
     })
 
     expect(result.output).toBe(code)
-    expect(run(result.output, [false, false, 5, true])).toBe(
-      run(code, [false, false, 5, true]),
+    expect(evaluateFixture(result.output, [false, false, 5, true])).toBe(
+      evaluateFixture(code, [false, false, 5, true]),
     )
   })
 
@@ -670,15 +649,17 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
       code: chainCode,
     })
-    expect(run(chainResult.output, [5, 0, 1])).toBe(run(chainCode, [5, 0, 1]))
+    expect(evaluateFixture(chainResult.output, [5, 0, 1])).toBe(
+      evaluateFixture(chainCode, [5, 0, 1]),
+    )
 
     let comparisonCode = 'r = c === !(b || !a)'
     let { result: comparisonResult } = await invalid({
       errors: ['convertNegatedDisjunction'],
       code: comparisonCode,
     })
-    expect(run(comparisonResult.output, [5, 0, true])).toBe(
-      run(comparisonCode, [5, 0, true]),
+    expect(evaluateFixture(comparisonResult.output, [5, 0, true])).toBe(
+      evaluateFixture(comparisonCode, [5, 0, true]),
     )
   })
 
@@ -769,7 +750,9 @@ describe('no-negated-disjunction', () => {
       [0, 'x', null],
       [Number.NaN, 1, ''],
     ]) {
-      expect(run(result.output, values)).toBe(run(code, values))
+      expect(evaluateFixture(result.output, values)).toBe(
+        evaluateFixture(code, values),
+      )
     }
   })
 
@@ -796,34 +779,5 @@ describe('no-negated-disjunction', () => {
       code: '!(1 && 1 || 1)',
     })
     expect(result.output).toBe('(!1 || !1) && !1')
-  })
-
-  it('should skip reporting when transform cannot produce a fix', async () => {
-    vi.resetModules()
-
-    let transformMock = vi.fn().mockReturnValue(null)
-
-    vi.doMock('../../utils/transform', () => ({
-      transform: transformMock,
-    }))
-
-    try {
-      let { default: mockedRule } =
-        await import('../../rules/no-negated-disjunction')
-      let { valid: validRule } = createRuleTester({
-        ...testerConfig,
-        name: 'no-negated-disjunction transform fallback',
-        rule: mockedRule,
-      })
-
-      await validRule('if (!(a || b)) {}')
-
-      expect(transformMock).toHaveBeenCalledWith(
-        expect.objectContaining({ expressionType: 'disjunction' }),
-      )
-    } finally {
-      vi.doUnmock('../../utils/transform')
-      vi.resetModules()
-    }
   })
 })

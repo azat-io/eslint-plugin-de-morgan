@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { isDisjunction } from '../../utils/is-disjunction'
 
 describe('isDisjunction', () => {
-  it('should return false for a LogicalExpression with a different operator', () => {
+  it('should return true for a LogicalExpression with operator "||"', () => {
     expect.assertions(1)
 
     let node: Node = {
@@ -18,7 +18,7 @@ describe('isDisjunction', () => {
     expect(isDisjunction(node)).toBeTruthy()
   })
 
-  it('should return true for a LogicalExpression with operator "&&"', () => {
+  it('should return false for a LogicalExpression with a different operator', () => {
     expect.assertions(1)
 
     let node: Node = {
