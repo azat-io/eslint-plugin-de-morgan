@@ -2,6 +2,7 @@ import { createRuleTester } from 'eslint-vitest-rule-tester'
 import { describe, expect, it, vi } from 'vitest'
 import dedent from 'dedent'
 
+import conjunctionRule from '../../rules/no-negated-conjunction'
 import rule from '../../rules/no-negated-disjunction'
 
 let testerConfig = {
@@ -85,6 +86,10 @@ describe('no-negated-disjunction', () => {
     await valid('if (!/* note */(a && b || c)) {}')
     await valid('if (!((a && b || c))) {}')
     await valid("if (!(a && b === ')' || c)) {}")
+    await valid({
+      options: [{ enforceForMixedOperators: false }],
+      code: 'if (!(a && b || c)) {}',
+    })
   })
 
   it('should transform simple negated disjunction in if statement', async () => {
@@ -322,6 +327,13 @@ describe('no-negated-disjunction', () => {
       errors: ['convertNegatedDisjunction'],
     })
     expect(lineCommentResult.output).toBe('const x = !a && !(// keep\n  b)')
+
+    let { result: mixedResult } = await invalid({
+      code: 'const x = !(a && b || (/* keep */ c))',
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(mixedResult.output).toBe('const x = !(a && b) && !(/* keep */ c)')
   })
 
   it('should not replace operators inside comments', async () => {
@@ -668,6 +680,122 @@ describe('no-negated-disjunction', () => {
     expect(run(comparisonResult.output, [5, 0, true])).toBe(
       run(comparisonCode, [5, 0, true]),
     )
+  })
+
+  it('should transform mixed operators when enforced', async () => {
+    let { result } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a && b || c)) {}',
+    })
+    expect(result.output).toBe('if (!(a && b) && !c) {}')
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      'Replace negated disjunction `!(a && b || c)` with `!(a && b) && !c`',
+    )
+
+    let { result: trailingResult } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(a || b && c)) {}',
+    })
+    expect(trailingResult.output).toBe('if (!a && !(b && c)) {}')
+
+    let { result: multipleResult } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      code: 'if (!(a && b || c && d || e)) {}',
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(multipleResult.output).toBe('if (!(a && b) && !(c && d) && !e) {}')
+  })
+
+  it('should keep value context checks for enforced mixed operators', async () => {
+    let { result } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'const x = !(a && b || c)',
+    })
+    expect(result.output).toBe('const x = !(a && b) && !c')
+
+    let { result: negatedResult } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (!(!a && b || c)) {}',
+    })
+    expect(negatedResult.output).toBe('if (!(!a && b) && !c) {}')
+
+    await valid({
+      options: [{ enforceForMixedOperators: true }],
+      code: 'const x = !(!a && b || c)',
+    })
+  })
+
+  it('should preserve formatting of enforced mixed operators', async () => {
+    let { result: commentResult } = await invalid({
+      code: 'if (!(a && b || // important condition\n    c)) {}',
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+    })
+    expect(commentResult.output).toBe(
+      'if (!(a && b) && // important condition\n    !c) {}',
+    )
+
+    let { result: spacingResult } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'if (! (a && b || c)) {}',
+    })
+    expect(spacingResult.output).toBe('if (!(a && b) && !c) {}')
+
+    let { result: nullishResult } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: 'r = d ?? !(a && b || c)',
+    })
+    expect(nullishResult.output).toBe('r = d ?? (!(a && b) && !c)')
+  })
+
+  it('should preserve runtime behavior of enforced mixed operators', async () => {
+    let code = 'r = !(a && b || c)'
+    let { result } = await invalid({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code,
+    })
+
+    for (let values of [
+      [1, 1, 0],
+      [1, 0, 0],
+      [0, 'x', null],
+      [Number.NaN, 1, ''],
+    ]) {
+      expect(run(result.output, values)).toBe(run(code, values))
+    }
+  })
+
+  it('should fully expand mixed operators with no-negated-conjunction', async () => {
+    let { invalid: invalidWithConjunction } = createRuleTester({
+      configs: [
+        testerConfig.configs,
+        {
+          plugins: {
+            'de-morgan': {
+              rules: { 'no-negated-conjunction': conjunctionRule },
+            },
+          },
+          rules: { 'de-morgan/no-negated-conjunction': 'error' },
+        },
+      ],
+      name: 'no-negated-disjunction',
+      rule,
+    })
+
+    let { result } = await invalidWithConjunction({
+      options: [{ enforceForMixedOperators: true }],
+      errors: ['convertNegatedDisjunction'],
+      code: '!(1 && 1 || 1)',
+    })
+    expect(result.output).toBe('(!1 || !1) && !1')
   })
 
   it('should skip reporting when transform cannot produce a fix', async () => {

@@ -16,52 +16,80 @@ import { transform } from '../utils/transform'
 import { not } from '../utils/not'
 import { or } from '../utils/or'
 
+interface Options {
+  /**
+   * Whether to transform negated disjunctions that mix `&&` and `||` without
+   * grouping parentheses.
+   */
+  enforceForMixedOperators?: boolean
+}
+
 export default {
-  create: context => ({
-    UnaryExpression: node => {
-      let test = createTestWithParameters(node, context)
-      if (
-        test(
-          isNegated,
-          applyToProperty('argument', isDisjunction),
-          isPureGroup,
-          or(hasBooleanContext, not(hasNegationInsideParens)),
-        )
-      ) {
-        let shouldWrapInParens = needsParentParens(node, '&&')
-        let canStripNegation = isInTruthinessContext(node)
+  create: context => {
+    let [{ enforceForMixedOperators = false } = {}] = context.options as [
+      Options?,
+    ]
 
-        let fixedExpression = transform({
-          expressionType: 'disjunction',
-          shouldWrapInParens,
-          canStripNegation,
-          context,
-          node,
-        })
+    return {
+      UnaryExpression: node => {
+        let test = createTestWithParameters(node, context)
+        if (
+          test(
+            isNegated,
+            applyToProperty('argument', isDisjunction),
+            or(hasBooleanContext, not(hasNegationInsideParens)),
+          ) &&
+          (enforceForMixedOperators || isPureGroup(node, context))
+        ) {
+          let shouldWrapInParens = needsParentParens(node, '&&')
+          let canStripNegation = isInTruthinessContext(node)
 
-        if (fixedExpression) {
-          let safeFix = getStatementSafeFix({
-            fix: fixedExpression,
+          let fixedExpression = transform({
+            expressionType: 'disjunction',
+            shouldWrapInParens,
+            canStripNegation,
             context,
             node,
           })
-          let originalExpression = context.sourceCode.getText(node)
 
-          context.report({
-            data: {
-              fixed: sanitizeCode(safeFix ?? fixedExpression),
-              original: sanitizeCode(originalExpression),
-            },
-            fix: fixer =>
-              safeFix === null ? null : fixer.replaceText(node, safeFix),
-            messageId: 'convertNegatedDisjunction',
-            node,
-          })
+          if (fixedExpression) {
+            let safeFix = getStatementSafeFix({
+              fix: fixedExpression,
+              context,
+              node,
+            })
+            let originalExpression = context.sourceCode.getText(node)
+
+            context.report({
+              data: {
+                fixed: sanitizeCode(safeFix ?? fixedExpression),
+                original: sanitizeCode(originalExpression),
+              },
+              fix: fixer =>
+                safeFix === null ? null : fixer.replaceText(node, safeFix),
+              messageId: 'convertNegatedDisjunction',
+              node,
+            })
+          }
         }
-      }
-    },
-  }),
+      },
+    }
+  },
   meta: {
+    schema: [
+      {
+        properties: {
+          enforceForMixedOperators: {
+            description:
+              'Transform negated disjunctions that mix `&&` and `||` ' +
+              'without grouping parentheses',
+            type: 'boolean',
+          },
+        },
+        additionalProperties: false,
+        type: 'object',
+      },
+    ],
     docs: {
       description:
         'Transforms the negation of a disjunction !(A || B) into the ' +
@@ -73,8 +101,8 @@ export default {
       convertNegatedDisjunction:
         'Replace negated disjunction `{{ original }}` with `{{ fixed }}`',
     },
+    defaultOptions: [{ enforceForMixedOperators: false }],
     type: 'suggestion',
     fixable: 'code',
-    schema: [],
   },
 } satisfies Rule.RuleModule

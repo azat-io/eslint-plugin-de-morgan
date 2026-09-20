@@ -34,10 +34,12 @@ Transforming them into a conjunction of negations makes the logic explicit:
 
 ## When Is the Rule Applied?
 
-- The rule applies only when the operand of the negation is a pure disjunction —
-  that is, when all operands are combined with || at the same nesting level.
-- If the expression inside the negation contains a mix of logical operators (for
-  example, `!(a || b && c))`, the rule will not apply the transformation.
+- By default, the rule applies only to pure disjunctions, where operands are
+  combined with || at the same nesting level.
+- Parenthesized operands form separate groups: `!(a || (b && c))` becomes
+  `!a && !(b && c)`.
+- Mixed expressions such as `!(a || b && c)` require
+  [`enforceForMixedOperators`](#enforceformixedoperators).
 
 ## Auto-fix
 
@@ -59,7 +61,16 @@ if (!a && b && !(c >= 10)) {
 
 ## Options
 
-This rule has no options.
+### enforceForMixedOperators
+
+<sub>default: `false`</sub>
+
+When `true`, also transforms expressions mixing `&&` and `||` without grouping
+parentheses: `!(a && b || c)` becomes `!(a && b) && !c`.
+
+With
+[no-negated-conjunction](https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md)
+also enabled, the final result is `(!a || !b) && !c`.
 
 ## Related Rules
 
