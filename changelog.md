@@ -1,5 +1,25 @@
 # Changelog
 
+## v2.2.0
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.3...v2.2.0)
+
+### 🚀 Features
+
+- Add option to transform mixed logical operators
+  ([44efc74](https://github.com/azat-io/eslint-plugin-de-morgan/commit/44efc74))
+
+### 🐞 Bug Fixes
+
+- Avoid invalid autofixes for grouped operands with comments
+  ([8e21623](https://github.com/azat-io/eslint-plugin-de-morgan/commit/8e21623))
+- Ignore logical operators outside of negated group
+  ([5135762](https://github.com/azat-io/eslint-plugin-de-morgan/commit/5135762))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.1.3
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.2...v2.1.3)
