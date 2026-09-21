@@ -4,6 +4,7 @@ import type { Rule } from 'eslint'
 import { describe, expect, it } from 'vitest'
 import { Linter } from 'eslint'
 
+import { createFakeContext } from '../helpers/create-fake-context'
 import { transform } from '../../utils/transform'
 
 let linter = new Linter()
@@ -72,7 +73,7 @@ function expectDeepNestingIsTruncated(shouldNegateOperands: boolean): void {
   let deepExpression = createDeepNestedConjunction(shouldNegateOperands)
   let unaryExpression = createUnaryExpression(deepExpression)
 
-  let context = createFakeContext(deepExpression.raw ?? '')
+  let context = createContextForSource(deepExpression.raw ?? '')
 
   let result = transform({
     expressionType: 'conjunction',
@@ -124,7 +125,7 @@ function transformSimpleConjunction(
   let conjunction = createConjunction(leftId, rightId)
   let unaryExpression = createUnaryExpression(conjunction)
 
-  let context = createFakeContext('a && b')
+  let context = createContextForSource('a && b')
 
   return transform({
     expressionType: 'conjunction',
@@ -150,24 +151,6 @@ function createDeepNestedConjunction(shouldNegateOperands: boolean): FakeNode {
   }
 
   return node
-}
-
-function createFakeContext(sourceText: string): Rule.RuleContext {
-  let sourceMap = new Map<string, string>()
-
-  let fakeSourceCode = {
-    getText: (node: FakeNode): string => {
-      if (node.id && sourceMap.has(node.id)) {
-        return sourceMap.get(node.id)!
-      }
-      return node.raw ?? ''
-    },
-    text: sourceText,
-  }
-
-  return {
-    sourceCode: fakeSourceCode,
-  } as unknown as Rule.RuleContext
 }
 
 function createUnaryExpression(
@@ -198,6 +181,13 @@ function createIdentifier(
     range,
     name,
   }
+}
+
+function createContextForSource(sourceText: string): Rule.RuleContext {
+  return createFakeContext({
+    getText: (node: FakeNode): string => node.raw ?? '',
+    text: sourceText,
+  })
 }
 
 describe('transform', () => {
@@ -232,7 +222,7 @@ describe('transform', () => {
 
     let unaryExpression = createUnaryExpression(outerConjunction)
 
-    let context = createFakeContext('a && b && c')
+    let context = createContextForSource('a && b && c')
 
     let result = transform({
       expressionType: 'conjunction',
@@ -266,7 +256,7 @@ describe('transform', () => {
 
     let unaryExpression = createUnaryExpression(conjunction)
 
-    let context = createFakeContext('a && !b')
+    let context = createContextForSource('a && !b')
 
     let result = transform({
       expressionType: 'conjunction',
@@ -298,7 +288,7 @@ describe('transform', () => {
 
     let unaryExpression = createUnaryExpression(disjunction)
 
-    let context = createFakeContext('a || b')
+    let context = createContextForSource('a || b')
 
     let result = transform({
       expressionType: 'conjunction',

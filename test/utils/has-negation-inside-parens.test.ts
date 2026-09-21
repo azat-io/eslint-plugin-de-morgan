@@ -1,9 +1,9 @@
 import type { LogicalExpression, UnaryExpression, Expression } from 'estree'
-import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
 
 import { hasNegationInsideParens } from '../../utils/has-negation-inside-parens'
+import { createFakeContext } from '../helpers/create-fake-context'
 
 interface FakeLogicalExpression extends LogicalExpression {
   right: Expression
@@ -22,11 +22,9 @@ type FakeNode = {
   code?: string
 } & Expression
 
-let fakeContext: Rule.RuleContext = {
-  sourceCode: {
-    getText: (node: { code?: string }) => node.code ?? '',
-  },
-} as unknown as Rule.RuleContext
+let fakeContext = createFakeContext({
+  getText: (node: { code?: string }) => node.code ?? '',
+})
 
 function createLogicalExpression({
   operator,

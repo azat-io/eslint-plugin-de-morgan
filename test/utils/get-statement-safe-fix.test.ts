@@ -4,14 +4,13 @@ import type { Rule } from 'eslint'
 import { describe, expect, it } from 'vitest'
 
 import { getStatementSafeFix } from '../../utils/get-statement-safe-fix'
+import { createFakeContext } from '../helpers/create-fake-context'
 
 type ParentedNode = Rule.NodeParentExtension & UnaryExpression
 
-let fakeContext = {
-  sourceCode: {
-    getTokenBefore: () => null,
-  },
-} as unknown as Rule.RuleContext
+let fakeContext = createFakeContext({
+  getTokenBefore: () => null,
+})
 
 describe('getStatementSafeFix', () => {
   it('should return the fix unchanged when the statement range is missing', () => {
@@ -21,7 +20,7 @@ describe('getStatementSafeFix', () => {
       parent: { type: 'ExpressionStatement' },
       type: 'UnaryExpression',
       range: [0, 10],
-    } as unknown as ParentedNode
+    } as ParentedNode
     expect(
       getStatementSafeFix({ context: fakeContext, fix: '!a || !b', node }),
     ).toBe('!a || !b')
@@ -33,7 +32,7 @@ describe('getStatementSafeFix', () => {
     let node = {
       parent: { type: 'ExpressionStatement', range: [0, 10] },
       type: 'UnaryExpression',
-    } as unknown as ParentedNode
+    } as ParentedNode
     expect(
       getStatementSafeFix({ context: fakeContext, fix: '!a || !b', node }),
     ).toBe('!a || !b')

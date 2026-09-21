@@ -12,19 +12,17 @@ import type {
   Identifier,
   Node,
 } from 'estree'
-import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
 
 import { hasBooleanContext } from '../../utils/has-boolean-context'
+import { createFakeContext } from '../helpers/create-fake-context'
 
 type FakeNode<T extends Node> = { parent?: Node } & T
 
-let fakeContext: Rule.RuleContext = {
-  sourceCode: {
-    getText: (node: { raw: string }) => node.raw,
-  },
-} as unknown as Rule.RuleContext
+let fakeContext = createFakeContext({
+  getText: (node: { raw: string }) => node.raw,
+})
 
 describe('hasBooleanContext', () => {
   it('should return true when inside an IfStatement condition', () => {

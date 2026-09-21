@@ -14,7 +14,7 @@ function createNode(parent: object): ParentedNode {
     operator: '!',
     prefix: true,
     parent,
-  } as unknown as ParentedNode
+  } as ParentedNode
 }
 
 describe('needsParentParens', () => {

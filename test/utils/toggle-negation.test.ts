@@ -6,10 +6,10 @@ import type {
   Expression,
   Node,
 } from 'estree'
-import type { Rule } from 'eslint'
 
 import { describe, expect, it } from 'vitest'
 
+import { createFakeContext } from '../helpers/create-fake-context'
 import { toggleNegation } from '../../utils/toggle-negation'
 
 interface FakeLogicalExpression extends LogicalExpression {
@@ -48,15 +48,18 @@ interface FakeUnaryExpression extends UnaryExpression {
   raw: string
 }
 
+interface FakeExpression {
+  type: Expression['type']
+  raw: string
+}
+
 type EqualityOperator = '===' | '!==' | '==' | '!='
 
-let fakeContext: Rule.RuleContext = {
-  sourceCode: {
-    getTokenAfter: (node: { tokenAfter?: FakeOperatorToken } & Node) =>
-      node.tokenAfter ?? null,
-    getText: (node: { raw: string } & Node) => node.raw,
-  },
-} as unknown as Rule.RuleContext
+let fakeContext = createFakeContext({
+  getTokenAfter: (node: { tokenAfter?: FakeOperatorToken } & Node) =>
+    node.tokenAfter ?? null,
+  getText: (node: { raw: string } & Node) => node.raw,
+})
 
 function createEqualityExpression(
   operator: EqualityOperator,
@@ -132,28 +135,27 @@ describe('toggleNegation', () => {
   it('should wrap low-precedence expressions in negation', () => {
     expect.assertions(5)
 
-    let cases: { type: string; raw: string }[] = [
+    let cases: FakeExpression[] = [
       { type: 'ConditionalExpression', raw: 'b ? c : d' },
       { type: 'ArrowFunctionExpression', raw: 'x => x' },
       { type: 'AssignmentExpression', raw: 'b = c' },
       { type: 'SequenceExpression', raw: 'b, c' },
       { type: 'YieldExpression', raw: 'yield' },
     ]
-    for (let { type, raw } of cases) {
-      let node = { type, raw } as unknown as Expression
-      let result = toggleNegation(node, fakeContext)
-      expect(result).toBe(`!(${raw})`)
+    for (let fakeExpression of cases) {
+      let result = toggleNegation(fakeExpression as Expression, fakeContext)
+      expect(result).toBe(`!(${fakeExpression.raw})`)
     }
   })
 
   it('should not strip negation from a low-precedence expression', () => {
     expect.assertions(1)
 
-    let node = {
+    let node: FakeExpression = {
       type: 'SequenceExpression',
       raw: '!b, c',
-    } as unknown as Expression
-    let result = toggleNegation(node, fakeContext)
+    }
+    let result = toggleNegation(node as Expression, fakeContext)
     expect(result).toBe('!(!b, c)')
   })
 

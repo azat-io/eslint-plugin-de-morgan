@@ -74,8 +74,8 @@ export function toggleNegation(
  * toggled, e.g. `a === b` becomes `a !== b`. The toggle replaces just the
  * operator token inside the node's original source text, so parentheses and
  * comments around the operands are preserved. Every other binary expression is
- * wrapped in `!(…)` instead — relational operators like `<` cannot be toggled
- * because both `a < b` and `a >= b` are false when an operand is NaN.
+ * wrapped in `!(…)` instead, because relational operators like `<` cannot be
+ * toggled: both `a < b` and `a >= b` are false when an operand is NaN.
  *
  * @param node - The binary expression ESLint node.
  * @param context - The ESLint rule context.
