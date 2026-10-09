@@ -303,6 +303,50 @@ describe('no-negated-conjunction', () => {
     expect(result.output).toBe('if (!a || /* a && b */ !b) {}')
   })
 
+  it.each([
+    {
+      position: 'after the opening parenthesis',
+      output: 'if (/* note */ !a || !b) {}',
+      code: 'if (!(/* note */ a && b)) {}',
+    },
+    {
+      code: dedent`
+        if (
+          !(
+            // why
+            a &&
+            b
+          )
+        ) {}
+      `,
+      output: dedent`
+        if (
+          // why
+            !a ||
+            !b
+        ) {}
+      `,
+      position: 'on its own line before the operands',
+    },
+    {
+      position: 'when the fixed expression is wrapped in parentheses',
+      output: 'r = c && (!a || !b // why\n)',
+      code: 'r = c && !(a && b // why\n)',
+    },
+    {
+      position: 'before an indented closing parenthesis of the wrapped result',
+      output: 'r = c && (!a || !b // why\n  )',
+      code: 'r = c && !(a && b // why\n  )',
+    },
+  ])('should keep a comment $position', async ({ output, code }) => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code,
+    })
+
+    expect(result.output).toBe(output)
+  })
+
   it('should handle function calls and method calls', async () => {
     let { result: functionResult } = await invalid({
       errors: ['convertNegatedConjunction'],

@@ -1,5 +1,5 @@
+import type { SourceCode, Rule } from 'eslint'
 import type { UnaryExpression } from 'estree'
-import type { Rule } from 'eslint'
 
 interface GetStatementSafeFixOptions {
   /**
@@ -20,6 +20,7 @@ interface GetStatementSafeFixOptions {
 
 let statementKeywordStartPattern = /^(?:function(?![\w$])|class(?![\w$])|\{)/u
 let automaticSemicolonHazardPattern = /^[(+\-/[`]/u
+let leadingCommentsPattern = /^(?:\s|\/\/.*|\/\*[\s\S]*?\*\/)*/u
 let safePreviousTokens = new Set([';', '{'])
 
 /**
@@ -29,8 +30,11 @@ let safePreviousTokens = new Set([';', '{'])
  * in parentheses. A replacement beginning with `(`, `[`, a template literal, or
  * an arithmetic sign can merge with an unterminated previous line through
  * automatic semicolon insertion and silently change the program, so in that
- * case the fix is withheld and the function returns null. Fixes for nodes that
- * do not start an expression statement are returned unchanged.
+ * case the fix is withheld and the function returns null. Comments that the fix
+ * carries over at its start are skipped, since the parser skips them too, and a
+ * line comment at its end is kept apart from the added closing parenthesis.
+ * Fixes for nodes that do not start an expression statement are returned
+ * unchanged.
  *
  * @param options - The statement safety options.
  * @returns The fix text, wrapped in parentheses when required, or null if the
@@ -54,9 +58,17 @@ export function getStatementSafeFix({
     return fix
   }
 
-  let safeFix = statementKeywordStartPattern.test(fix) ? `(${fix})` : fix
+  let codeAfterComments = fix.replace(leadingCommentsPattern, '')
+  let needsParens = statementKeywordStartPattern.test(codeAfterComments)
+  let safeFix = fix
 
-  if (automaticSemicolonHazardPattern.test(safeFix)) {
+  if (needsParens) {
+    let lineBreak =
+      endsWithLineComment(node, context.sourceCode, fix) ? '\n' : ''
+    safeFix = `(${fix}${lineBreak})`
+  }
+
+  if (needsParens || automaticSemicolonHazardPattern.test(codeAfterComments)) {
     let previousToken = context.sourceCode.getTokenBefore(statement)
     if (previousToken && !safePreviousTokens.has(previousToken.value)) {
       return null
@@ -82,4 +94,24 @@ function findEnclosingStatement(
     current = current.parent
   }
   return current
+}
+
+/**
+ * Checks whether the fix text ends with a line comment carried over from the
+ * end of the negated expression. A closing parenthesis added after such a
+ * comment on the same line would become part of the comment.
+ *
+ * @param node - The negated expression ESLint node being fixed.
+ * @param sourceCode - The source code object, used to access comments.
+ * @param fix - The replacement text produced by the transform.
+ * @returns True if the fix text ends with a line comment.
+ */
+function endsWithLineComment(
+  node: UnaryExpression,
+  sourceCode: SourceCode,
+  fix: string,
+): boolean {
+  let lastComment = sourceCode.getCommentsInside(node).at(-1)
+
+  return lastComment?.type === 'Line' && fix.endsWith(`//${lastComment.value}`)
 }

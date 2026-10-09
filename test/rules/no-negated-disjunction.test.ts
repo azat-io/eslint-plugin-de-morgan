@@ -323,6 +323,286 @@ describe('no-negated-disjunction', () => {
     expect(result.output).toBe('if (!a && /* a || b */ !b) {}')
   })
 
+  it.each([
+    {
+      position: 'after the opening parenthesis',
+      output: 'if (/* note */ !a && !b) {}',
+      code: 'if (!(/* note */ a || b)) {}',
+    },
+    {
+      position: 'before the closing parenthesis',
+      output: 'if (!a && !b /* note */) {}',
+      code: 'if (!(a || b /* note */)) {}',
+    },
+    {
+      position: 'between the negation and the parenthesis',
+      output: 'if (/* note */!a && !b) {}',
+      code: 'if (!/* note */(a || b)) {}',
+    },
+    {
+      position: 'between nested grouping parentheses',
+      code: 'if (!(/* note */ (a || b))) {}',
+      output: 'if (/* note */ !a && !b) {}',
+    },
+    {
+      code: dedent`
+        if (
+          !(
+            // why
+            a ||
+            b
+          )
+        ) {}
+      `,
+      output: dedent`
+        if (
+          // why
+            !a &&
+            !b
+        ) {}
+      `,
+      position: 'on its own line before the operands',
+    },
+    {
+      code: dedent`
+        if (
+          !(
+            a ||
+            b // why
+          )
+        ) {}
+      `,
+      output: dedent`
+        if (
+          !a &&
+            !b // why
+        ) {}
+      `,
+      position: 'at the end of the last operand line',
+    },
+    {
+      position: 'at the end of a line followed by more code',
+      output: 'if (!a && !b // why\n) {}',
+      code: 'if (!(a || b // why\n)) {}',
+    },
+    {
+      position: 'at the end of the file',
+      output: 'x = !a && !b // why\n',
+      code: 'x = !(a || b // why\n)',
+    },
+    {
+      position: 'at the end of a line followed by another comment',
+      output: 'if (!a && !b // why\n /* see\n */ && c) {}',
+      code: 'if (!(a || b // why\n) /* see\n */ && c) {}',
+    },
+    {
+      position: 'when the fixed expression is wrapped in parentheses',
+      output: 'r = (/* note */ !a && !b // why\n) === c',
+      code: 'r = !(/* note */ a || b // why\n) === c',
+    },
+    {
+      position: 'before a closing parenthesis on the next line',
+      code: 'if (!(a || b /* note */\n)) {}',
+      output: 'if (!a && !b /* note */) {}',
+    },
+    {
+      position: 'touching the first operand',
+      output: 'if (/* note */!a && !b) {}',
+      code: 'if (!(/* note */a || b)) {}',
+    },
+    {
+      position: 'touching the last operand',
+      output: 'if (!a && !b/* note */) {}',
+      code: 'if (!(a || b/* note */)) {}',
+    },
+    {
+      position: 'among several comments after the opening parenthesis',
+      output: 'if (/* first */ /* second */ !a && !b) {}',
+      code: 'if (!(/* first */ /* second */ a || b)) {}',
+    },
+    {
+      position: 'among several comments before the closing parenthesis',
+      output: 'if (!a && !b /* first */ /* second */) {}',
+      code: 'if (!(a || b /* first */ /* second */)) {}',
+    },
+    {
+      position: 'after a nested closing parenthesis',
+      code: 'if (!((a || b) /* note */)) {}',
+      output: 'if (!a && !b /* note */) {}',
+    },
+    {
+      position:
+        'at the end of a line when the wrapped result is followed by a line break',
+      output: 'r = (!a && !b // why\n)\n  === c',
+      code: 'r = !(a || b // why\n)\n  === c',
+    },
+  ])('should keep a comment $position', async ({ output, code }) => {
+    let { result } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code,
+    })
+
+    expect(result.output).toBe(output)
+  })
+
+  it.each([
+    {
+      code: dedent`
+        function f() {
+          return !(
+            // why
+            a || b
+          )
+        }
+      `,
+      output: dedent`
+        function f() {
+          return (// why
+            !a && !b)
+        }
+      `,
+      keyword: 'return',
+    },
+    {
+      output: 'throw (/* first line\n second line */ !a && !b)',
+      code: 'throw !(/* first line\n second line */ a || b)',
+      keyword: 'throw',
+    },
+    {
+      output: 'function* g() { yield (// why\n !a && !b) }',
+      code: 'function* g() { yield !(// why\n a || b) }',
+      keyword: 'yield',
+    },
+  ])(
+    'should parenthesize the argument of $keyword when a comment with a line break moves before it',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      code: 'r = (function () { return !(\n// why\na || b) && c })()',
+      position: 'only starts the returned expression',
+    },
+    {
+      code: 'r = (function () { return /* note */ !(\n// why\na || b) })()',
+      position: 'follows a comment after return',
+    },
+    {
+      code: 'r = (function () { return !(\n// why\na || b // because\n)\n})()',
+      position: 'also ends with a line comment',
+    },
+  ])(
+    'should keep the returned value when a comment with a line break moves before an argument that $position',
+    async ({ code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
+
+      expect(result.output).not.toBe(code)
+      expect(evaluateFixture(result.output, [false, false, true])).toBe(
+        evaluateFixture(code, [false, false, true]),
+      )
+    },
+  )
+
+  it('should not parenthesize the argument of return when the moved comment has no line break', async () => {
+    let { result } = await invalid({
+      code: 'function f() { return !(/* note */ a || b) }',
+      errors: ['convertNegatedDisjunction'],
+    })
+
+    expect(result.output).toBe('function f() { return /* note */ !a && !b }')
+  })
+
+  it.each([
+    {
+      output: '(/* note */ function () {} !== b && !c)',
+      code: '!(/* note */ function () {} === b || c)',
+      comment: 'a block comment',
+    },
+    {
+      output: '(// note\n function () {} !== b && !c)',
+      code: '!(// note\n function () {} === b || c)',
+      comment: 'a line comment',
+    },
+    {
+      output: '(/* first */ function () {} !== b && !c /* last */)',
+      code: '!(/* first */ function () {} === b || c /* last */)',
+      comment: 'the first of several block comments',
+    },
+  ])(
+    'should parenthesize a statement whose fix starts with a function after $comment',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      output: '(function () {} !== b && !c // why\n)\nfoo()',
+      code: '!(function () {} === b || c // why\n)\nfoo()',
+      comments: 'a trailing line comment',
+    },
+    {
+      output: '(/* note */ function () {} !== b && !c // why\n)\nfoo()',
+      code: '!(/* note */ function () {} === b || c // why\n)\nfoo()',
+      comments: 'a leading block comment and a trailing line comment',
+    },
+  ])(
+    'should keep the closing parenthesis of a statement out of the last comment when the expression has $comments',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it('should not withhold the fix of a statement because it starts with a comment', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedDisjunction'],
+      code: 'r = c\n!(/* note */ a || b)',
+    })
+
+    expect(result.output).toBe('r = c\n/* note */ !a && !b')
+  })
+
+  it.each([
+    {
+      code: 'r = c\n!(/* note */ (x).y === 1 || b)',
+      start: 'a parenthesis',
+    },
+    {
+      code: 'r = c\n!(/* note */ function () {} === b || c)',
+      start: 'a function',
+    },
+  ])(
+    'should withhold the fix of a statement when the fix starts with $start after a comment and could merge with the previous line',
+    async ({ code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(code)
+    },
+  )
+
   it('should handle function calls and method calls', async () => {
     let { result: functionResult } = await invalid({
       errors: ['convertNegatedDisjunction'],

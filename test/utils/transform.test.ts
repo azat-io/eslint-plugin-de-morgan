@@ -169,6 +169,14 @@ function createUnaryExpression(
   }
 }
 
+function createContextForSource(sourceText: string): Rule.RuleContext {
+  return createFakeContext({
+    getText: (node: FakeNode): string => node.raw ?? '',
+    getCommentsInside: (): never[] => [],
+    text: sourceText,
+  })
+}
+
 function createIdentifier(
   name: string,
   range: [number, number],
@@ -181,13 +189,6 @@ function createIdentifier(
     range,
     name,
   }
-}
-
-function createContextForSource(sourceText: string): Rule.RuleContext {
-  return createFakeContext({
-    getText: (node: FakeNode): string => node.raw ?? '',
-    text: sourceText,
-  })
 }
 
 describe('transform', () => {

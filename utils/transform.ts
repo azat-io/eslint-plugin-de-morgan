@@ -4,7 +4,7 @@ import type {
   LogicalOperator,
   Expression,
 } from 'estree'
-import type { Rule } from 'eslint'
+import type { SourceCode, Rule, AST } from 'eslint'
 
 import { getGroupingParens } from './get-grouping-parens'
 import { toggleNegation } from './toggle-negation'
@@ -90,6 +90,23 @@ interface FlattenOperandsOptions {
   expression: Expression
 }
 
+interface TrailingCommentsOptions {
+  /**
+   * The source code object, used to access comments and tokens.
+   */
+  sourceCode: SourceCode
+
+  /**
+   * The negated expression whose comments are collected.
+   */
+  node: UnaryExpression
+
+  /**
+   * Whether the transformed expression is wrapped in parentheses.
+   */
+  isWrapped: boolean
+}
+
 interface NegatedOperand {
   /**
    * The range of the original operand, including its grouping parentheses.
@@ -105,6 +122,10 @@ interface NegatedOperand {
 type ExpressionType = 'conjunction' | 'disjunction'
 
 const MAX_DEPTH = 10
+
+const LINE_BREAK_PATTERN = /[\n\r\u{2028}\u{2029}]/u
+
+const LINE_BREAK_RESTRICTED_KEYWORDS = new Set(['return', 'throw', 'yield'])
 
 const OPERATOR_MAPPING: Partial<Record<LogicalOperator, LogicalOperator>> = {
   '&&': '||',
@@ -153,8 +174,64 @@ export function transform({
     hasSpecialFormatting(originalText) ?
       transformWithFormatting(transformUtilityOptions)
     : transformSimple(transformUtilityOptions)
+  let { sourceCode } = context
+  let leading = getLeadingComments(node, sourceCode)
+  let isWrapped =
+    shouldWrapInParens ||
+    (LINE_BREAK_PATTERN.test(leading) &&
+      followsLineBreakRestrictedKeyword(node, sourceCode))
+  let trailing = getTrailingComments({ sourceCode, isWrapped, node })
 
-  return parenthesize(result, shouldWrapInParens)
+  return parenthesize(leading + result + trailing, isWrapped)
+}
+
+/**
+ * Collects the comments between the end of the argument and the end of the
+ * negated expression, before its closing grouping parentheses. They keep the
+ * whitespace that separates them from the argument, while the grouping
+ * parentheses and the whitespace after the last comment are dropped. A trailing
+ * line comment keeps its line break and the indentation after it whenever code
+ * follows it on the same line, including the closing parenthesis added when the
+ * result is wrapped.
+ *
+ * @param options - The negated expression, its source code, and whether the
+ *   transformed expression is wrapped.
+ * @returns The trailing comments with the whitespace before them, or an empty
+ *   string if there are none.
+ */
+function getTrailingComments({
+  sourceCode,
+  isWrapped,
+  node,
+}: TrailingCommentsOptions): string {
+  let { argument } = node
+  let [, argumentEnd] = argument.range!
+  let lastTrailingComment = sourceCode
+    .getCommentsInside(node)
+    .findLast(comment => comment.range![0] >= argumentEnd)
+
+  if (!lastTrailingComment) {
+    return ''
+  }
+
+  let trailing = sliceWithoutTokens(
+    sourceCode.text,
+    [argumentEnd, lastTrailingComment.range![1]],
+    sourceCode.getTokensBetween(argument, lastTrailingComment),
+  )
+  let needsLineBreak =
+    lastTrailingComment.type === 'Line' &&
+    (isWrapped || !isFollowedByLineBreak(node, sourceCode))
+
+  if (!needsLineBreak) {
+    return trailing
+  }
+
+  let closingParen = sourceCode.getTokenAfter(lastTrailingComment)!
+  return (
+    trailing +
+    sourceCode.text.slice(lastTrailingComment.range![1], closingParen.range[0])
+  )
 }
 
 /**
@@ -268,6 +345,93 @@ function transformWithFormatting({
 }
 
 /**
+ * Collects the comments between the negation and the start of its argument:
+ * after the `!`, around the opening grouping parentheses, and before the first
+ * operand. The fix replaces the whole negated expression, while the transformed
+ * text is built from the argument alone, so these comments are carried over in
+ * front of it. They keep the whitespace that separates them from the argument,
+ * while the grouping parentheses and the whitespace before the first comment
+ * are dropped.
+ *
+ * @param node - The negated expression whose comments are collected.
+ * @param sourceCode - The source code object, used to access comments and
+ *   tokens.
+ * @returns The leading comments with the whitespace after them, or an empty
+ *   string if there are none.
+ */
+function getLeadingComments(
+  node: UnaryExpression,
+  sourceCode: SourceCode,
+): string {
+  let { argument } = node
+  let [argumentStart] = argument.range!
+  let firstLeadingComment = sourceCode
+    .getCommentsInside(node)
+    .find(comment => comment.range![1] <= argumentStart)
+
+  if (!firstLeadingComment) {
+    return ''
+  }
+
+  return sliceWithoutTokens(
+    sourceCode.text,
+    [firstLeadingComment.range![0], argumentStart],
+    sourceCode.getTokensBetween(firstLeadingComment, argument),
+  )
+}
+
+/**
+ * Returns the source text of the given range without the given tokens. It
+ * carries comments over while leaving out the grouping parentheses between
+ * them.
+ *
+ * @param text - The full source text.
+ * @param range - The range of the text to take.
+ * @param tokens - The tokens inside the range to leave out, in source order.
+ * @returns The text of the range without the tokens.
+ */
+function sliceWithoutTokens(
+  text: string,
+  [start, end]: [number, number],
+  tokens: AST.Token[],
+): string {
+  let result = ''
+  let position = start
+
+  for (let token of tokens) {
+    let [tokenStart, tokenEnd] = token.range
+    result += text.slice(position, tokenStart)
+    position = tokenEnd
+  }
+
+  return result + text.slice(position, end)
+}
+
+/**
+ * Checks whether the code that follows the given node starts on a new line. At
+ * the end of the file nothing follows the node, so the function returns false
+ * there, and a line comment carried over to the end of the file keeps its line
+ * break.
+ *
+ * @param node - The node to check.
+ * @param sourceCode - The source code object, used to access tokens.
+ * @returns True if a line break separates the node from the code after it.
+ */
+function isFollowedByLineBreak(
+  node: UnaryExpression,
+  sourceCode: SourceCode,
+): boolean {
+  let nextToken = sourceCode.getTokenAfter(node, { includeComments: true })
+
+  return (
+    nextToken !== null &&
+    LINE_BREAK_PATTERN.test(
+      sourceCode.text.slice(node.range![1], nextToken.range![0]),
+    )
+  )
+}
+
+/**
  * Transforms a simple logical expression without special formatting.
  *
  * @param options - The transformation options.
@@ -288,6 +452,28 @@ function transformSimple({
   })
 
   return operands.join(` ${targetOperator} `)
+}
+
+/**
+ * Checks whether the given node directly follows `return`, `throw`, or `yield`.
+ * The grammar forbids a line break between these keywords and their argument,
+ * so a comment with a line break can be moved in front of the node there only
+ * inside parentheses.
+ *
+ * @param node - The node to check.
+ * @param sourceCode - The source code object, used to access tokens.
+ * @returns True if the node directly follows one of these keywords.
+ */
+function followsLineBreakRestrictedKeyword(
+  node: UnaryExpression,
+  sourceCode: SourceCode,
+): boolean {
+  let previousToken = sourceCode.getTokenBefore(node)
+
+  return (
+    previousToken !== null &&
+    LINE_BREAK_RESTRICTED_KEYWORDS.has(previousToken.value)
+  )
 }
 
 /**
