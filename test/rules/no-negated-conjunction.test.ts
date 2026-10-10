@@ -347,6 +347,324 @@ describe('no-negated-conjunction', () => {
     expect(result.output).toBe(output)
   })
 
+  it.each([
+    {
+      output: 'const f = () => ({}.x !== a || !b)',
+      code: 'const f = () => !({}.x === a && b)',
+      position: 'the body of an arrow function',
+      start: 'an object literal',
+    },
+    {
+      output: 'const f = () => ({}.x !== a || !b) || c',
+      position: 'the start of an arrow function body',
+      code: 'const f = () => !({}.x === a && b) || c',
+      start: 'an object literal',
+    },
+    {
+      output: 'const f = () => (/* note */ {}.x !== a || !b)',
+      code: 'const f = () => !(/* note */ {}.x === a && b)',
+      start: 'an object literal after a comment',
+      position: 'the body of an arrow function',
+    },
+    {
+      output: 'export default (function () {} !== b || !c)',
+      code: 'export default !(function () {} === b && c)',
+      position: 'a default export',
+      start: 'a function',
+    },
+    {
+      output: 'export default (class {} !== b || !c)',
+      code: 'export default !(class {} === b && c)',
+      position: 'a default export',
+      start: 'a class',
+    },
+    {
+      output: 'export default (async function () {} !== b || !c)',
+      code: 'export default !(async function () {} === b && c)',
+      position: 'a default export',
+      start: 'an async function',
+    },
+    {
+      output: 'export default (function () {} !== b || !c) || d',
+      code: 'export default !(function () {} === b && c) || d',
+      position: 'the start of a default export',
+      start: 'a function',
+    },
+    {
+      output: '(async function () {} !== b || !c)',
+      code: '!(async function () {} === b && c)',
+      position: 'the start of a statement',
+      start: 'an async function',
+    },
+    {
+      output: '(async /* note */ function () {} !== b || !c)',
+      code: '!(async /* note */ function () {} === b && c)',
+      start: 'an async function with a comment inside',
+      position: 'the start of a statement',
+    },
+    {
+      output: '(async /* first */ /** second */ function () {} !== b || !c)',
+      code: '!(async /* first */ /** second */ function () {} === b && c)',
+      start: 'an async function with several comments inside',
+      position: 'the start of a statement',
+    },
+    {
+      start: 'an async function with a comment full of stars inside',
+      output: '(async /* a **b * c **/ function () {} !== b || !c)',
+      code: '!(async /* a **b * c **/ function () {} === b && c)',
+      position: 'the start of a statement',
+    },
+    {
+      position: 'the start of a statement',
+      output: '({}.x !== a || !b)',
+      code: '!({}.x === a && b)',
+      start: 'an object literal',
+    },
+    {
+      position: 'the start of a statement',
+      output: '(class {} !== b || !c)',
+      code: '!(class {} === b && c)',
+      start: 'a class',
+    },
+    {
+      output: 'export default (/* note */ function () {} !== b || !c)',
+      code: 'export default !(/* note */ function () {} === b && c)',
+      start: 'a function after a comment',
+      position: 'a default export',
+    },
+  ])(
+    'should parenthesize a fix that starts with $start at $position',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      output: 'const f = () => ({}.x !== a || !b // why\n)\nconst g = 1',
+      code: 'const f = () => !({}.x === a && b // why\n)\nconst g = 1',
+      position: 'the body of an arrow function',
+    },
+    {
+      output:
+        'export default (function () {} !== b || !c // why\n)\nconst g = 1',
+      code: 'export default !(function () {} === b && c // why\n)\nconst g = 1',
+      position: 'a default export',
+    },
+  ])(
+    'should keep a trailing line comment away from the parenthesis added at $position',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it('should keep a single pair of parentheses at a parenthesized arrow function body', async () => {
+    let { result } = await invalid({
+      code: 'const f = () => (!({}.x === a && b))',
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe('const f = () => ({}.x !== a || !b)')
+  })
+
+  it.each([
+    {
+      output: 'const f = () => function () {} !== b || !c',
+      code: 'const f = () => !(function () {} === b && c)',
+      position: 'the body of an arrow function',
+      start: 'a function',
+    },
+    {
+      output: 'const f = () => class {} !== b || !c',
+      code: 'const f = () => !(class {} === b && c)',
+      position: 'the body of an arrow function',
+      start: 'a class',
+    },
+    {
+      start: 'an identifier that begins with async and function',
+      position: 'the start of a statement',
+      output: 'asyncfunction !== a || !b',
+      code: '!(asyncfunction === a && b)',
+    },
+    {
+      start: 'an identifier that begins with class',
+      position: 'the start of a statement',
+      output: 'classes !== a || !b',
+      code: '!(classes === a && b)',
+    },
+    {
+      start: 'an identifier that begins with function',
+      position: 'the start of a statement',
+      output: 'functionName !== a || !b',
+      code: '!(functionName === a && b)',
+    },
+    {
+      output: 'export default {} !== a || !b',
+      code: 'export default !({} === a && b)',
+      position: 'a default export',
+      start: 'an object literal',
+    },
+    {
+      position: 'the start of a statement',
+      start: 'an async identifier',
+      output: 'async !== a || !b',
+      code: '!(async === a && b)',
+    },
+    {
+      start: 'a negation and has an object literal later',
+      position: 'the start of a statement',
+      output: '!a || b !== {}',
+      code: '!(a && b === {})',
+    },
+    {
+      start: 'a negation and has a class later',
+      position: 'the start of a statement',
+      output: '!a || b !== class {}',
+      code: '!(a && b === class {})',
+    },
+    {
+      start: 'a negation and has a function later',
+      output: '!a || b !== function () {}',
+      code: '!(a && b === function () {})',
+      position: 'the start of a statement',
+    },
+  ])(
+    'should not parenthesize a fix that starts with $start at $position',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      output: '(let[0] !== a || !b)',
+      code: '!(let[0] === a && b)',
+      start: 'let and a bracket',
+    },
+    {
+      start: 'let, a block comment and a bracket',
+      output: '(let /* note */ [0] !== a || !b)',
+      code: '!(let /* note */ [0] === a && b)',
+    },
+    {
+      start: 'let, a documentation comment and a bracket',
+      output: '(let /** note */ [0] !== a || !b)',
+      code: '!(let /** note */ [0] === a && b)',
+    },
+    {
+      start: 'let, a comment full of stars and a bracket',
+      output: '(let /* a **b * c **/ [0] !== a || !b)',
+      code: '!(let /* a **b * c **/ [0] === a && b)',
+    },
+    {
+      start: 'let, a line break and a bracket',
+      output: '(let\n[0] !== a || !b)',
+      code: '!(let\n[0] === a && b)',
+    },
+    {
+      start: 'let, a line comment and a bracket',
+      output: '(let // note\n[0] !== a || !b)',
+      code: '!(let // note\n[0] === a && b)',
+    },
+  ])(
+    'should parenthesize a statement in a script whose fix starts with $start',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        languageOptions: { sourceType: 'script' },
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      output: 'let !== a || !b',
+      code: '!(let === a && b)',
+      start: 'a let identifier',
+    },
+    {
+      start: 'a negation and has let and a bracket later',
+      output: '!a || b !== let[0]',
+      code: '!(a && b === let[0])',
+    },
+  ])(
+    'should not parenthesize a statement in a script whose fix starts with $start',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        languageOptions: { sourceType: 'script' },
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    { code: 'r = a.default\n!(-b === 1 && c)', access: 'a.default' },
+    { code: 'r = a?.default\n!((b).z === 1 && c)', access: 'a?.default' },
+  ])(
+    'should withhold the fix of a statement after $access when the fix could merge with it',
+    async ({ code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(code)
+    },
+  )
+
+  it.each([
+    {
+      output: 'x = 1; (function () {} !== b || !c)',
+      code: 'x = 1; !(function () {} === b && c)',
+      token: 'a semicolon',
+    },
+    {
+      output: '{ (function () {} !== b || !c) }',
+      code: '{ !(function () {} === b && c) }',
+      token: 'an opening brace',
+    },
+  ])(
+    'should parenthesize a fix that starts a statement after $token',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it('should not withhold the fix of a statement that only has a parenthesis after its start', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'r = c\n!(a && f(b))',
+    })
+
+    expect(result.output).toBe('r = c\n!a || !f(b)')
+  })
+
   it('should handle function calls and method calls', async () => {
     let { result: functionResult } = await invalid({
       errors: ['convertNegatedConjunction'],
