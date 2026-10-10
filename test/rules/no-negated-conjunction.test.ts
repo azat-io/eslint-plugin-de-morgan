@@ -665,6 +665,18 @@ describe('no-negated-conjunction', () => {
     expect(result.output).toBe('r = c\n!a || !f(b)')
   })
 
+  it('should show the operands after a line comment with an apostrophe in the message', async () => {
+    let { result } = await invalid({
+      code: "if (!(a && // don't\n  b === 'x')) {}",
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.messages[0]).toHaveProperty(
+      'message',
+      "Replace negated conjunction `!(a && b === 'x')` with `!a || b !== 'x'`",
+    )
+  })
+
   it('should handle function calls and method calls', async () => {
     let { result: functionResult } = await invalid({
       errors: ['convertNegatedConjunction'],

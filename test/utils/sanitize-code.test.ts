@@ -115,4 +115,163 @@ describe('sanitizeCode', () => {
     let expected = '!(a && b)'
     expect(sanitizeCode(input)).toBe(expected)
   })
+
+  it.each([
+    { literal: 'a string with a replacement pattern', input: "b === '$&'" },
+    { literal: 'a string with an escaped dollar sign', input: "b === '$$'" },
+    { literal: 'a string with a suffix pattern', input: 'b === "$\'"' },
+    {
+      literal: 'a template with a dollar sign before an interpolation',
+      // eslint-disable-next-line no-template-curly-in-string
+      input: 'b === `$${c}`',
+    },
+    {
+      literal: 'a regular expression with two slashes',
+      input: String.raw`a && /^https?:\/\//.test(b)`,
+    },
+    {
+      literal: 'a string next to an identifier that looks like a placeholder',
+      input: "__STRING_LITERAL_0__ && b === 'x'",
+    },
+    {
+      literal: 'a regular expression after a division',
+      input: 'b / /a  b/.test(a)',
+    },
+    {
+      literal: 'a string with escapes and spaces inside',
+      input: String.raw`b === 'it\'s  a\  b'`,
+    },
+    {
+      literal: 'a template with escapes and spaces inside',
+      input: 'b === `it\\`s  a\\  b`',
+    },
+    {
+      literal: 'a string with spaces before an escaped quote',
+      input: String.raw`b === 'a  \'b'`,
+    },
+    {
+      literal: 'a template with spaces before an escaped backtick',
+      input: 'b === `a  \\`b`',
+    },
+    {
+      literal: 'a regular expression with spaces inside',
+      input: String.raw`a && /[ab  c]  d\/  e/g.test(b)`,
+    },
+  ])('should keep $literal verbatim', ({ input }) => {
+    expect.assertions(1)
+
+    expect(sanitizeCode(input)).toBe(input)
+  })
+
+  it.each([
+    { input: 'instanceof /a  b/', keyword: 'instanceof' },
+    { input: 'typeof /a  b/', keyword: 'typeof' },
+    { input: 'delete /a  b/', keyword: 'delete' },
+    { input: 'return /a  b/', keyword: 'return' },
+    { input: 'await /a  b/', keyword: 'await' },
+    { input: 'throw /a  b/', keyword: 'throw' },
+    { input: 'yield /a  b/', keyword: 'yield' },
+    { input: 'case /a  b/', keyword: 'case' },
+    { input: 'else /a  b/', keyword: 'else' },
+    { input: 'void /a  b/', keyword: 'void' },
+    { input: 'do /a  b/', keyword: 'do' },
+    { input: 'in /a  b/', keyword: 'in' },
+  ])(
+    'should keep a regular expression after $keyword verbatim',
+    ({ input }) => {
+      expect.assertions(1)
+
+      expect(sanitizeCode(input)).toBe(input)
+    },
+  )
+
+  it('should not take a comment start inside a regular expression for a comment', () => {
+    expect.assertions(1)
+
+    let input = String.raw`/\/*x/.test(a) && b /* c */`
+    let expected = String.raw`/\/*x/.test(a) && b`
+    expect(sanitizeCode(input)).toBe(expected)
+  })
+
+  it.each([
+    {
+      comment: 'block comments with apostrophes',
+      input: "a /* it's */ && /* that's */ b",
+      expected: 'a && b',
+    },
+    {
+      comment: 'a line comment with an apostrophe',
+      input: "a && // don't\n  b === 'x'",
+      expected: "a && b === 'x'",
+    },
+    {
+      comment: 'a comment between two words',
+      input: 'typeof/* note */a',
+      expected: 'typeof a',
+    },
+    {
+      comment: 'a comment full of stars',
+      input: 'a /* a **b * c **/ && b',
+      expected: 'a && b',
+    },
+  ])('should replace $comment with a single space', ({ expected, input }) => {
+    expect.assertions(1)
+
+    expect(sanitizeCode(input)).toBe(expected)
+  })
+
+  it('should keep a regular expression after a line comment verbatim', () => {
+    expect.assertions(1)
+
+    let input = 'a && // must be a link\n/^https?:\\/\\//.test(b)'
+    let expected = String.raw`a && /^https?:\/\//.test(b)`
+    expect(sanitizeCode(input)).toBe(expected)
+  })
+
+  it.each([
+    { input: 'a  /  b  /  c', expected: 'a / b / c', operand: 'a word' },
+    {
+      operand: 'a closing parenthesis',
+      input: '(a)  /  b  /  c',
+      expected: '(a) / b / c',
+    },
+    {
+      operand: 'a closing bracket',
+      input: 'a[0]  /  b  /  c',
+      expected: 'a[0] / b / c',
+    },
+    {
+      operand: 'a closing brace',
+      input: '{}  /  b  /  c',
+      expected: '{} / b / c',
+    },
+    { input: "'x'  /  b  /  c", expected: "'x' / b / c", operand: 'a string' },
+  ])(
+    'should not take a slash after $operand for a regular expression',
+    ({ expected, input }) => {
+      expect.assertions(1)
+
+      expect(sanitizeCode(input)).toBe(expected)
+    },
+  )
+
+  it.each([
+    {
+      parenthesis: 'an opening parenthesis',
+      input: '!( /* c */ a)',
+      expected: '!(a)',
+    },
+    {
+      parenthesis: 'a closing parenthesis',
+      input: '!(a /* c */ )',
+      expected: '!(a)',
+    },
+  ])(
+    'should drop whitespace and comments next to $parenthesis',
+    ({ expected, input }) => {
+      expect.assertions(1)
+
+      expect(sanitizeCode(input)).toBe(expected)
+    },
+  )
 })
