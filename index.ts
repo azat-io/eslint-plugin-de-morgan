@@ -26,6 +26,20 @@ export let rules: Record<string, Rule.RuleModule> = {
   'no-negated-disjunction': noNegatedDisjunction,
 }
 
+/**
+ * The flat config registers this very object, not a copy of its rules: ESLint
+ * builds the cache key from the plugin's `meta`, and refuses two different
+ * objects under one plugin name in a single configuration.
+ */
+let plugin = {
+  meta: {
+    version: packageVersion,
+    name: packageName,
+  },
+  configs: {} as PluginConfig['configs'],
+  rules,
+}
+
 function getRules(): Linter.RulesRecord {
   return Object.fromEntries(
     Object.keys(rules).map(ruleName => [`${pluginName}/${ruleName}`, 'error']),
@@ -35,9 +49,7 @@ function getRules(): Linter.RulesRecord {
 function createConfig(): Linter.Config {
   return {
     plugins: {
-      [pluginName]: {
-        rules,
-      },
+      [pluginName]: plugin,
     },
     rules: getRules(),
   }
@@ -50,16 +62,9 @@ function createLegacyConfig(): Linter.LegacyConfig {
   }
 }
 
-export let configs: PluginConfig['configs'] = {
+export let configs: PluginConfig['configs'] = Object.assign(plugin.configs, {
   'recommended-legacy': createLegacyConfig(),
   recommended: createConfig(),
-}
+})
 
-export default {
-  meta: {
-    version: packageVersion,
-    name: packageName,
-  },
-  configs,
-  rules,
-} as PluginConfig
+export default plugin as PluginConfig
