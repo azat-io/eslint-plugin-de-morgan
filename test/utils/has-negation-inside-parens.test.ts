@@ -1,217 +1,57 @@
-import type { LogicalExpression, UnaryExpression, Expression } from 'estree'
-
 import { describe, expect, it } from 'vitest'
 
 import { hasNegationInsideParens } from '../../utils/has-negation-inside-parens'
-import { createFakeContext } from '../helpers/create-fake-context'
-
-interface FakeLogicalExpression extends LogicalExpression {
-  right: Expression
-  left: Expression
-  code: string
-}
-
-interface FakeUnaryExpression extends UnaryExpression {
-  argument: Expression
-  code: string
-}
-
-type FakeNode = {
-  range: [number, number]
-  parent?: FakeNode
-  code?: string
-} & Expression
-
-let fakeContext = createFakeContext({
-  getText: (node: { code?: string }) => node.code ?? '',
-})
-
-function createLogicalExpression({
-  operator,
-  right,
-  left,
-  code,
-}: {
-  operator: '&&' | '||'
-  right: Expression
-  left: Expression
-  code: string
-}): FakeLogicalExpression {
-  return {
-    type: 'LogicalExpression',
-    range: [0, code.length],
-    operator,
-    right,
-    left,
-    code,
-  }
-}
-
-function createNegation(
-  argument: Expression,
-  code: string,
-): FakeUnaryExpression {
-  return {
-    type: 'UnaryExpression',
-    range: [0, code.length],
-    operator: '!',
-    prefix: true,
-    argument,
-    code,
-  }
-}
-
-function createIdentifier(name: string): FakeNode {
-  return {
-    range: [0, name.length],
-    type: 'Identifier',
-    code: name,
-    name,
-  }
-}
+import { inspectNode } from '../helpers/inspect-node'
 
 describe('hasNegationInsideParens', () => {
-  it('should return true when a negation exists inside parentheses', () => {
+  it.each([
+    { group: 'a group of a single negated operand', code: 'x = !(!a)' },
+    { group: 'a conjunction with a negated operand', code: 'x = !(!a && b)' },
+    {
+      group: 'negated operands on both sides',
+      code: 'x = !(!a || !b)',
+    },
+    {
+      group: 'a nested group with a negated operand',
+      code: 'x = !((!a && b) || c)',
+    },
+    {
+      group: 'a double negation and a negation',
+      code: 'x = !(a && !!b && !c)',
+    },
+  ])('should find a negation inside $group', ({ code }) => {
     expect.assertions(1)
 
-    let node = createNegation(createIdentifier('a'), '!a')
-    let wrappedNode = createNegation(node, '(!(a))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
+    let result = inspectNode(code, 'UnaryExpression', hasNegationInsideParens)
+
+    expect(result).toBeTruthy()
   })
 
-  it('should return true when a negation is inside a logical expression in parentheses', () => {
+  it.each([
+    { group: 'a group without negations', code: 'x = !(a && b)' },
+    {
+      group: 'a nested group without negations',
+      code: 'x = !((a && b) || c)',
+    },
+    {
+      group: 'a group with only a double negation',
+      code: 'x = !(a && !!b)',
+    },
+  ])('should not find a negation inside $group', ({ code }) => {
     expect.assertions(1)
 
-    let negatedNode = createNegation(createIdentifier('a'), '!a')
-    let logicalNode = createLogicalExpression({
-      right: createIdentifier('b'),
-      left: negatedNode,
-      code: '(!a && b)',
-      operator: '&&',
-    })
-    let wrappedNode = createNegation(logicalNode, '(!( !a && b ))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
+    let result = inspectNode(code, 'UnaryExpression', hasNegationInsideParens)
+
+    expect(result).toBeFalsy()
   })
 
-  it('should return true when negations exist on both sides of a logical expression', () => {
+  it('should not find a negation inside an identifier', () => {
     expect.assertions(1)
 
-    let leftNegation = createNegation(createIdentifier('a'), '!a')
-    let rightNegation = createNegation(createIdentifier('b'), '!b')
-    let logicalNode = createLogicalExpression({
-      right: rightNegation,
-      left: leftNegation,
-      code: '(!a || !b)',
-      operator: '||',
-    })
-    let wrappedNode = createNegation(logicalNode, '(!( !a || !b ))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return false when there are no negations inside the expression', () => {
-    expect.assertions(1)
-
-    let logicalNode = createLogicalExpression({
-      right: createIdentifier('b'),
-      left: createIdentifier('a'),
-      code: '(a && b)',
-      operator: '&&',
-    })
-    let wrappedNode = createNegation(logicalNode, '(!(a && b))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
-  })
-
-  it('should return false when the expression is a simple identifier without negation', () => {
-    expect.assertions(1)
-
-    let node = createIdentifier('a')
-    expect(hasNegationInsideParens(node, fakeContext)).toBeFalsy()
-  })
-
-  it('should return false when there are nested logical expressions but no negations', () => {
-    expect.assertions(1)
-
-    let innerNode = createLogicalExpression({
-      right: createIdentifier('b'),
-      left: createIdentifier('a'),
-      code: '(a && b)',
-      operator: '&&',
-    })
-    let outerNode = createLogicalExpression({
-      right: createIdentifier('c'),
-      code: '((a && b) || c)',
-      left: innerNode,
-      operator: '||',
-    })
-    let wrappedNode = createNegation(outerNode, '(!( (a && b) || c ))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
-  })
-
-  it('should return true when there is a negation deep inside a nested logical expression', () => {
-    expect.assertions(1)
-
-    let innerNode = createLogicalExpression({
-      left: createNegation(createIdentifier('a'), '!a'),
-      right: createIdentifier('b'),
-      code: '(!a && b)',
-      operator: '&&',
-    })
-    let outerNode = createLogicalExpression({
-      right: createIdentifier('c'),
-      code: '((!a && b) || c)',
-      left: innerNode,
-      operator: '||',
-    })
-    let wrappedNode = createNegation(outerNode, '(!( (!a && b) || c ))')
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return false when there is only double negation for type coercion', () => {
-    expect.assertions(1)
-
-    let doubleNegation = createNegation(
-      createNegation(createIdentifier('b'), '!b'),
-      '!!b',
+    let result = inspectNode('x = a', 'Identifier[name="a"]', (node, context) =>
+      hasNegationInsideParens(node, context),
     )
 
-    let logicalNode = createLogicalExpression({
-      left: createIdentifier('a'),
-      right: doubleNegation,
-      code: '(a && !!b)',
-      operator: '&&',
-    })
-
-    let wrappedNode = createNegation(logicalNode, '!(a && !!b)')
-
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeFalsy()
-  })
-
-  it('should return true when there is double negation and a real negation', () => {
-    expect.assertions(1)
-
-    let doubleNegation = createNegation(
-      createNegation(createIdentifier('b'), '!b'),
-      '!!b',
-    )
-
-    let realNegation = createNegation(createIdentifier('c'), '!c')
-
-    let innerLogical = createLogicalExpression({
-      left: doubleNegation,
-      right: realNegation,
-      code: '(!!b && !c)',
-      operator: '&&',
-    })
-
-    let logicalNode = createLogicalExpression({
-      left: createIdentifier('a'),
-      code: '(a && !!b && !c)',
-      right: innerLogical,
-      operator: '&&',
-    })
-
-    let wrappedNode = createNegation(logicalNode, '!(a && !!b && !c)')
-
-    expect(hasNegationInsideParens(wrappedNode, fakeContext)).toBeTruthy()
+    expect(result).toBeFalsy()
   })
 })

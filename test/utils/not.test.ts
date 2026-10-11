@@ -6,15 +6,15 @@ describe('not', () => {
   it('should return true when the predicate returns false', () => {
     expect.assertions(1)
 
-    let isFalse = not(() => false)
-    expect(isFalse()).toBeTruthy()
+    let alwaysTrue = not(() => false)
+    expect(alwaysTrue()).toBeTruthy()
   })
 
   it('should return false when the predicate returns true', () => {
     expect.assertions(1)
 
-    let isTrue = not(() => true)
-    expect(isTrue()).toBeFalsy()
+    let alwaysFalse = not(() => true)
+    expect(alwaysFalse()).toBeFalsy()
   })
 
   it('should work with single-argument predicates', () => {

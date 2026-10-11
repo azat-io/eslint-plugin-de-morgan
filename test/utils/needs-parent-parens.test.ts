@@ -4,118 +4,67 @@ import type { Rule } from 'eslint'
 import { describe, expect, it } from 'vitest'
 
 import { needsParentParens } from '../../utils/needs-parent-parens'
-
-type ParentedNode = Rule.NodeParentExtension & UnaryExpression
-
-function createNode(parent: object): ParentedNode {
-  return {
-    argument: { type: 'Identifier', name: 'a' },
-    type: 'UnaryExpression',
-    operator: '!',
-    prefix: true,
-    parent,
-  } as ParentedNode
-}
+import { inspectNegatedGroup } from '../helpers/inspect-node'
 
 describe('needsParentParens', () => {
-  it('should wrap when the node is a member expression object', () => {
+  it.each([
+    { position: 'a member object', code: 'x = (!(a && b)).y' },
+    { code: 'x = (!(a && b))()', position: 'a callee' },
+    { position: 'a constructor callee', code: 'x = new (!(a && b))()' },
+    { position: 'a tagged template tag', code: 'x = (!(a && b))``' },
+    {
+      code: 'async function f() { await !(a && b) }',
+      position: 'an await argument',
+    },
+    { position: 'an operand of a comparison', code: 'x = !(a && b) === c' },
+    { code: 'for (x = !(a && b); ; ) {}', position: 'a for initializer' },
+  ])('should wrap a disjunction placed at $position', ({ code }) => {
     expect.assertions(1)
 
-    let parent = { parent: { type: 'ExpressionStatement' }, object: null }
-    let node = createNode(Object.assign(parent, { type: 'MemberExpression' }))
-    parent.object = node as never
-    expect(needsParentParens(node, '||')).toBeTruthy()
+    let result = inspectNegatedGroup(code, node =>
+      needsParentParens(node, '||'),
+    )
+
+    expect(result).toBeTruthy()
   })
 
-  it('should not wrap when the node is a computed member property', () => {
+  it.each([
+    { position: 'a computed member key', code: 'x = o[!(a && b)]' },
+    { position: 'a call argument', code: 'x = foo(!(a && b))' },
+    { position: 'an operand of a disjunction', code: 'x = !(a && b) || c' },
+  ])('should not wrap a disjunction placed at $position', ({ code }) => {
     expect.assertions(1)
 
-    let parent = {
-      object: { type: 'Identifier', name: 'o' },
-      parent: { type: 'ExpressionStatement' },
-      type: 'MemberExpression',
-    }
-    let node = createNode(parent)
-    expect(needsParentParens(node, '||')).toBeFalsy()
+    let result = inspectNegatedGroup(code, node =>
+      needsParentParens(node, '||'),
+    )
+
+    expect(result).toBeFalsy()
   })
 
-  it('should wrap when the node is a callee', () => {
-    expect.assertions(2)
-
-    for (let type of ['CallExpression', 'NewExpression']) {
-      let parent = { parent: { type: 'ExpressionStatement' }, callee: null }
-      let node = createNode(Object.assign(parent, { type }))
-      parent.callee = node as never
-      expect(needsParentParens(node, '||')).toBeTruthy()
-    }
-  })
-
-  it('should not wrap when the node is a call argument', () => {
+  it('should not wrap a conjunction placed as an operand of a conjunction', () => {
     expect.assertions(1)
 
-    let parent = {
-      callee: { type: 'Identifier', name: 'foo' },
-      parent: { type: 'ExpressionStatement' },
-      type: 'CallExpression',
-    }
-    let node = createNode(parent)
-    expect(needsParentParens(node, '||')).toBeFalsy()
+    let result = inspectNegatedGroup('x = !(a || b) && c', node =>
+      needsParentParens(node, '&&'),
+    )
+
+    expect(result).toBeFalsy()
   })
 
-  it('should wrap when the node is a tagged template tag', () => {
+  it('should wrap a comparison operand whose parent chain has no statement', () => {
     expect.assertions(1)
 
-    let parent = {
-      parent: { type: 'ExpressionStatement' },
-      type: 'TaggedTemplateExpression',
-    }
-    let node = createNode(parent)
-    expect(needsParentParens(node, '||')).toBeTruthy()
-  })
+    let node = {
+      parent: { type: 'BinaryExpression', operator: '===' },
+      argument: { type: 'Identifier', name: 'a' },
+      type: 'UnaryExpression',
+      operator: '!',
+      prefix: true,
+    } as Rule.NodeParentExtension & UnaryExpression
 
-  it('should wrap when the parent is an await expression', () => {
-    expect.assertions(1)
+    let result = needsParentParens(node, '||')
 
-    let parent = {
-      parent: { type: 'ExpressionStatement' },
-      type: 'AwaitExpression',
-    }
-    let node = createNode(parent)
-    expect(needsParentParens(node, '||')).toBeTruthy()
-  })
-
-  it('should not wrap when the parent operator binds looser', () => {
-    expect.assertions(2)
-
-    let disjunctionParent = {
-      parent: { type: 'ExpressionStatement' },
-      type: 'LogicalExpression',
-      operator: '||',
-    }
-    expect(needsParentParens(createNode(disjunctionParent), '||')).toBeFalsy()
-
-    let conjunctionParent = {
-      parent: { type: 'ExpressionStatement' },
-      type: 'LogicalExpression',
-      operator: '&&',
-    }
-    expect(needsParentParens(createNode(conjunctionParent), '&&')).toBeFalsy()
-  })
-
-  it('should wrap when the node is a for statement initializer', () => {
-    expect.assertions(1)
-
-    let parent = { type: 'ForStatement', init: null }
-    let node = createNode(parent)
-    parent.init = node as never
-    expect(needsParentParens(node, '||')).toBeTruthy()
-  })
-
-  it('should not wrap when the parent chain ends without a statement', () => {
-    expect.assertions(1)
-
-    let parent = { type: 'BinaryExpression', operator: '===' }
-    let node = createNode(parent)
-    expect(needsParentParens(node, '||')).toBeTruthy()
+    expect(result).toBeTruthy()
   })
 })

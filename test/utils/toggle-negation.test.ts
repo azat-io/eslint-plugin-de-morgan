@@ -1,122 +1,193 @@
-import type {
-  LogicalExpression,
-  BinaryExpression,
-  UnaryExpression,
-  SimpleLiteral,
-  Expression,
-  Node,
-} from 'estree'
+import type { BinaryExpression, Expression, Node } from 'estree'
 
 import { describe, expect, it } from 'vitest'
 
 import { createFakeContext } from '../helpers/create-fake-context'
 import { toggleNegation } from '../../utils/toggle-negation'
-
-interface FakeLogicalExpression extends LogicalExpression {
-  type: 'LogicalExpression'
-  operator: '&&' | '||'
-  right: FakeIdentifier
-  left: FakeIdentifier
-  raw: string
-}
-
-interface FakeBinaryExpression extends BinaryExpression {
-  right: FakeIdentifier
-  left: FakeIdentifier
-  raw: string
-}
-
-interface FakeIdentifier {
-  tokenAfter?: FakeOperatorToken
-  type: 'Identifier'
-  name: string
-  raw: string
-}
-
-interface FakeLiteral extends SimpleLiteral {
-  type: 'Literal'
-  value: boolean
-  raw: string
-}
+import { inspectNode } from '../helpers/inspect-node'
 
 interface FakeOperatorToken {
   range: [number, number]
   value: string
 }
 
-interface FakeUnaryExpression extends UnaryExpression {
+type FakeNode = {
+  tokenAfter?: FakeOperatorToken
   raw: string
-}
-
-interface FakeExpression {
-  type: Expression['type']
-  raw: string
-}
-
-type EqualityOperator = '===' | '!==' | '==' | '!='
+} & Node
 
 let fakeContext = createFakeContext({
-  getTokenAfter: (node: { tokenAfter?: FakeOperatorToken } & Node) =>
-    node.tokenAfter ?? null,
-  getText: (node: { raw: string } & Node) => node.raw,
+  getTokenAfter: (node: FakeNode) => node.tokenAfter ?? null,
+  getText: (node: FakeNode) => node.raw,
 })
 
-function createEqualityExpression(
-  operator: EqualityOperator,
-): FakeBinaryExpression {
-  let raw = `a ${operator} b`
-
-  return {
-    left: {
-      tokenAfter: { range: [2, 2 + operator.length], value: operator },
-      type: 'Identifier',
-      name: 'a',
-      raw: 'a',
-    },
-    right: { type: 'Identifier', name: 'b', raw: 'b' },
-    type: 'BinaryExpression',
-    range: [0, raw.length],
-    operator,
-    raw,
-  }
+function toggleOperand(code: string, selector: string): string {
+  return inspectNode(code, selector, (node, context) =>
+    toggleNegation(node as Expression, context),
+  )
 }
 
 describe('toggleNegation', () => {
-  it.each<[EqualityOperator, EqualityOperator]>([
-    ['===', '!=='],
-    ['!==', '==='],
-    ['==', '!='],
-    ['!=', '=='],
+  it.each([
+    { operand: 'a strict equality', code: 'f(a === b)', output: 'a !== b' },
+    { operand: 'a strict inequality', code: 'f(a !== b)', output: 'a === b' },
+    { operand: 'a loose equality', code: 'f(a == b)', output: 'a != b' },
+    { operand: 'a loose inequality', code: 'f(a != b)', output: 'a == b' },
+  ])('should toggle the operator of $operand', ({ output, code }) => {
+    expect.assertions(1)
+
+    let result = toggleOperand(code, 'BinaryExpression')
+
+    expect(result).toBe(output)
+  })
+
+  it.each([
+    { operand: 'a less-than comparison', output: '!(a < b)', code: 'f(a < b)' },
+    {
+      operand: 'a greater-than comparison',
+      output: '!(a > b)',
+      code: 'f(a > b)',
+    },
+    {
+      operand: 'a less-or-equal comparison',
+      output: '!(a <= b)',
+      code: 'f(a <= b)',
+    },
+    {
+      operand: 'a greater-or-equal comparison',
+      output: '!(a >= b)',
+      code: 'f(a >= b)',
+    },
+    { operand: 'an in check', output: '!(a in b)', code: 'f(a in b)' },
   ])(
-    'should toggle binary expression operator from %s to %s',
-    (operator, toggledOperator) => {
+    'should wrap $operand in a negation instead of toggling it',
+    ({ output, code }) => {
       expect.assertions(1)
 
-      let node = createEqualityExpression(operator)
-      let result = toggleNegation(node, fakeContext)
-      expect(result).toBe(`a ${toggledOperator} b`)
+      let result = toggleOperand(code, 'BinaryExpression')
+
+      expect(result).toBe(output)
     },
   )
 
-  it('should wrap equality expression when operator token cannot be located', () => {
+  it.each([
+    {
+      selector: 'ConditionalExpression',
+      operand: 'a conditional',
+      output: '!(b ? c : d)',
+      code: 'f(b ? c : d)',
+    },
+    {
+      selector: 'ArrowFunctionExpression',
+      operand: 'an arrow function',
+      output: '!(x => x)',
+      code: 'f(x => x)',
+    },
+    {
+      selector: 'AssignmentExpression',
+      operand: 'an assignment',
+      output: '!(b = c)',
+      code: 'f(b = c)',
+    },
+    {
+      selector: 'SequenceExpression',
+      operand: 'a sequence',
+      output: '!(b, c)',
+      code: 'f((b, c))',
+    },
+    {
+      operand: 'a sequence that starts with a negation',
+      selector: 'SequenceExpression',
+      output: '!(!b, c)',
+      code: 'f((!b, c))',
+    },
+    {
+      code: 'function* g() { f(yield) }',
+      selector: 'YieldExpression',
+      operand: 'a yield',
+      output: '!(yield)',
+    },
+    {
+      selector: 'LogicalExpression',
+      operand: 'a conjunction',
+      output: '!(a && b)',
+      code: 'f(a && b)',
+    },
+    {
+      selector: 'LogicalExpression',
+      operand: 'a disjunction',
+      output: '!(a || b)',
+      code: 'f(a || b)',
+    },
+  ])('should wrap $operand in a negation', ({ selector, output, code }) => {
     expect.assertions(1)
 
-    let node: FakeBinaryExpression = {
+    let result = toggleOperand(code, selector)
+
+    expect(result).toBe(output)
+  })
+
+  it('should remove the negation of a negated operand', () => {
+    expect.assertions(1)
+
+    let result = toggleOperand('f(!a)', 'UnaryExpression')
+
+    expect(result).toBe('a')
+  })
+
+  it.each([
+    {
+      selector: 'UnaryExpression',
+      operand: 'a bitwise NOT',
+      output: '!~a',
+      code: 'f(~a)',
+    },
+    {
+      selector: 'Identifier[name="a"]',
+      operand: 'an identifier',
+      output: '!a',
+      code: 'f(a)',
+    },
+  ])('should add a negation to $operand', ({ selector, output, code }) => {
+    expect.assertions(1)
+
+    let result = toggleOperand(code, selector)
+
+    expect(result).toBe(output)
+  })
+
+  it.each([
+    { output: 'false', code: 'f(true)', literal: 'true' },
+    { code: 'f(false)', literal: 'false', output: 'true' },
+  ])('should replace $literal with its opposite', ({ output, code }) => {
+    expect.assertions(1)
+
+    let result = toggleOperand(code, 'Literal')
+
+    expect(result).toBe(output)
+  })
+
+  it('should wrap an equality in a negation when its operator token cannot be located', () => {
+    expect.assertions(1)
+
+    let node = {
       right: { type: 'Identifier', name: 'b', raw: 'b' },
       left: { type: 'Identifier', name: 'a', raw: 'a' },
       type: 'BinaryExpression',
       operator: '===',
       raw: 'a === b',
       range: [0, 7],
-    }
+    } as BinaryExpression & FakeNode
+
     let result = toggleNegation(node, fakeContext)
+
     expect(result).toBe('!(a === b)')
   })
 
-  it('should wrap equality expression when node range is missing', () => {
+  it('should wrap an equality in a negation when its range is missing', () => {
     expect.assertions(1)
 
-    let node: FakeBinaryExpression = {
+    let node = {
       left: {
         tokenAfter: { range: [2, 5], value: '===' },
         type: 'Identifier',
@@ -127,154 +198,10 @@ describe('toggleNegation', () => {
       type: 'BinaryExpression',
       operator: '===',
       raw: 'a === b',
-    }
+    } as BinaryExpression & FakeNode
+
     let result = toggleNegation(node, fakeContext)
+
     expect(result).toBe('!(a === b)')
-  })
-
-  it('should wrap low-precedence expressions in negation', () => {
-    expect.assertions(5)
-
-    let cases: FakeExpression[] = [
-      { type: 'ConditionalExpression', raw: 'b ? c : d' },
-      { type: 'ArrowFunctionExpression', raw: 'x => x' },
-      { type: 'AssignmentExpression', raw: 'b = c' },
-      { type: 'SequenceExpression', raw: 'b, c' },
-      { type: 'YieldExpression', raw: 'yield' },
-    ]
-    for (let fakeExpression of cases) {
-      let result = toggleNegation(fakeExpression as Expression, fakeContext)
-      expect(result).toBe(`!(${fakeExpression.raw})`)
-    }
-  })
-
-  it('should not strip negation from a low-precedence expression', () => {
-    expect.assertions(1)
-
-    let node: FakeExpression = {
-      type: 'SequenceExpression',
-      raw: '!b, c',
-    }
-    let result = toggleNegation(node as Expression, fakeContext)
-    expect(result).toBe('!(!b, c)')
-  })
-
-  it('should wrap relational expressions in negation instead of toggling', () => {
-    expect.assertions(4)
-
-    let operators = ['<', '>', '<=', '>='] as const
-    for (let operator of operators) {
-      let node: FakeBinaryExpression = {
-        right: { type: 'Identifier', name: 'b', raw: 'b' },
-        left: { type: 'Identifier', name: 'a', raw: 'a' },
-        type: 'BinaryExpression',
-        raw: `a ${operator} b`,
-        operator,
-      }
-      let result = toggleNegation(node, fakeContext)
-      expect(result).toBe(`!(a ${operator} b)`)
-    }
-  })
-
-  it('should toggle binary expression operator from in to !in', () => {
-    expect.assertions(1)
-
-    let node: FakeBinaryExpression = {
-      right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
-      type: 'BinaryExpression',
-      operator: 'in',
-      raw: 'a in b',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('!(a in b)')
-  })
-
-  it('should remove negation in unary expression if expression is already negated', () => {
-    expect.assertions(1)
-
-    let node: FakeUnaryExpression = {
-      argument: { type: 'Identifier', name: 'a' },
-      type: 'UnaryExpression',
-      operator: '!',
-      prefix: true,
-      raw: '!a',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('a')
-  })
-
-  it('should add negation in unary expression if expression is not negated', () => {
-    expect.assertions(1)
-
-    let node: FakeUnaryExpression = {
-      argument: { type: 'Identifier', name: 'a' },
-      type: 'UnaryExpression',
-      operator: '~',
-      prefix: true,
-      raw: '~a',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('!~a')
-  })
-
-  it('should add negation if expression is not negated', () => {
-    expect.assertions(1)
-
-    let node = { type: 'Identifier', name: 'a', raw: 'a' } as Expression
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('!a')
-  })
-
-  it('should toggle boolean literal true to false', () => {
-    expect.assertions(1)
-
-    let node: FakeLiteral = {
-      type: 'Literal',
-      value: true,
-      raw: 'true',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('false')
-  })
-
-  it('should toggle boolean literal false to true', () => {
-    expect.assertions(1)
-
-    let node: FakeLiteral = {
-      type: 'Literal',
-      value: false,
-      raw: 'false',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('true')
-  })
-
-  it('should toggle logical expression with && by adding a leading "!"', () => {
-    expect.assertions(1)
-
-    let node: FakeLogicalExpression = {
-      right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
-      type: 'LogicalExpression',
-      operator: '&&',
-      raw: 'a && b',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('!(a && b)')
-  })
-
-  it('should toggle logical expression with || by adding a leading "!"', () => {
-    expect.assertions(1)
-
-    let node: FakeLogicalExpression = {
-      right: { type: 'Identifier', name: 'b', raw: 'b' },
-      left: { type: 'Identifier', name: 'a', raw: 'a' },
-      type: 'LogicalExpression',
-      operator: '||',
-      raw: 'a || b',
-    }
-    let result = toggleNegation(node, fakeContext)
-    expect(result).toBe('!(a || b)')
   })
 })

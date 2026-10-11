@@ -1,202 +1,50 @@
-import type {
-  ConditionalExpression,
-  LogicalExpression,
-  BinaryExpression,
-  DoWhileStatement,
-  MemberExpression,
-  UnaryExpression,
-  CallExpression,
-  WhileStatement,
-  ForStatement,
-  IfStatement,
-  Identifier,
-  Node,
-} from 'estree'
+import type { Node } from 'estree'
 
 import { describe, expect, it } from 'vitest'
 
+import { inspectNegatedGroup, inspectNode } from '../helpers/inspect-node'
 import { hasBooleanContext } from '../../utils/has-boolean-context'
-import { createFakeContext } from '../helpers/create-fake-context'
-
-type FakeNode<T extends Node> = { parent?: Node } & T
-
-let fakeContext = createFakeContext({
-  getText: (node: { raw: string }) => node.raw,
-})
 
 describe('hasBooleanContext', () => {
-  it('should return true when inside an IfStatement condition', () => {
+  it.each([
+    { position: 'an if condition', code: 'if (!(a && b)) {}' },
+    { position: 'a while condition', code: 'while (!(a && b)) {}' },
+    { code: 'for (; !(a && b); ) {}', position: 'a for condition' },
+    { position: 'a do-while condition', code: 'do {} while (!(a && b))' },
+    { position: 'a conditional test', code: 'x = !(a && b) ? 1 : 0' },
+    { position: 'an operand of a conjunction', code: 'x = !(a && b) && c' },
+    { position: 'an operand of a disjunction', code: 'x = !(a && b) || c' },
+    { position: 'the argument of a negation', code: 'x = !!(a && b)' },
+  ])('should find a boolean context in $position', ({ code }) => {
     expect.assertions(1)
 
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'a' }
-    let node: FakeNode<IfStatement> = {
-      consequent: { type: 'BlockStatement', body: [] },
-      type: 'IfStatement',
-      test: testNode,
-    }
-    testNode.parent = node
+    let result = inspectNegatedGroup(code, hasBooleanContext)
 
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
+    expect(result).toBeTruthy()
   })
 
-  it('should return true when inside a WhileStatement condition', () => {
+  it.each([
+    { position: 'an operand of an addition', code: 'x = !(a && b) + c' },
+    {
+      position: 'a non-Boolean function argument',
+      code: 'x = someFunction(!(a && b))',
+    },
+    { position: 'a computed member key', code: 'x = obj[!(a && b)]' },
+  ])('should not find a boolean context in $position', ({ code }) => {
     expect.assertions(1)
 
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'b' }
-    let node: FakeNode<WhileStatement> = {
-      body: { type: 'BlockStatement', body: [] },
-      type: 'WhileStatement',
-      test: testNode,
-    }
-    testNode.parent = node
+    let result = inspectNegatedGroup(code, hasBooleanContext)
 
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
+    expect(result).toBeFalsy()
   })
 
-  it('should return true when inside a ForStatement test condition', () => {
+  it('should not find a boolean context for a node without a parent', () => {
     expect.assertions(1)
 
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'i' }
-    let node: FakeNode<ForStatement> = {
-      body: { type: 'BlockStatement', body: [] },
-      type: 'ForStatement',
-      test: testNode,
-      update: null,
-      init: null,
-    }
-    testNode.parent = node
+    let result = inspectNode('a', 'Program', (node, context) =>
+      hasBooleanContext(node as Node, context),
+    )
 
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return true when inside a DoWhileStatement condition', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'c' }
-    let node: FakeNode<DoWhileStatement> = {
-      body: { type: 'BlockStatement', body: [] },
-      type: 'DoWhileStatement',
-      test: testNode,
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return true when inside a ConditionalExpression test', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'x' }
-    let node: FakeNode<ConditionalExpression> = {
-      consequent: { type: 'Literal', value: 1 },
-      alternate: { type: 'Literal', value: 0 },
-      type: 'ConditionalExpression',
-      test: testNode,
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return true when part of a LogicalExpression (&& operator)', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'a' }
-    let node: FakeNode<LogicalExpression> = {
-      right: { type: 'Identifier', name: 'b' },
-      type: 'LogicalExpression',
-      operator: '&&',
-      left: testNode,
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return true when part of a LogicalExpression (|| operator)', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'a' }
-    let node: FakeNode<LogicalExpression> = {
-      right: { type: 'Identifier', name: 'b' },
-      type: 'LogicalExpression',
-      operator: '||',
-      left: testNode,
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return true when part of a UnaryExpression with "!" operator', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'x' }
-    let node: FakeNode<UnaryExpression> = {
-      type: 'UnaryExpression',
-      argument: testNode,
-      operator: '!',
-      prefix: true,
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeTruthy()
-  })
-
-  it('should return false for a BinaryExpression with a non-boolean operator', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'a' }
-    let node: FakeNode<BinaryExpression> = {
-      right: { type: 'Identifier', name: 'b' },
-      type: 'BinaryExpression',
-      left: testNode,
-      operator: '+',
-    }
-    testNode.parent = node
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
-  })
-
-  it('should return false for a literal number', () => {
-    expect.assertions(1)
-
-    let node: FakeNode<Node> = {
-      type: 'Literal',
-      value: 123,
-    }
-
-    expect(hasBooleanContext(node, fakeContext)).toBeFalsy()
-  })
-
-  it('should return false when inside a non-Boolean function call', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'x' }
-    let nonBooleanCall: FakeNode<CallExpression> = {
-      callee: { name: 'someFunction', type: 'Identifier' },
-      type: 'CallExpression',
-      arguments: [testNode],
-      optional: false,
-    }
-    testNode.parent = nonBooleanCall
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
-  })
-
-  it('should return false when inside an object property access', () => {
-    expect.assertions(1)
-
-    let testNode: FakeNode<Identifier> = { type: 'Identifier', name: 'prop' }
-    let memberExpression: FakeNode<MemberExpression> = {
-      object: { type: 'Identifier', name: 'obj' },
-      type: 'MemberExpression',
-      property: testNode,
-      computed: false,
-      optional: false,
-    }
-    testNode.parent = memberExpression
-
-    expect(hasBooleanContext(testNode, fakeContext)).toBeFalsy()
+    expect(result).toBeFalsy()
   })
 })

@@ -92,14 +92,6 @@ describe('sanitizeCode', () => {
     expect(sanitizeCode(input)).toBe(expected)
   })
 
-  it('should handle nested comments correctly', () => {
-    expect.assertions(1)
-
-    let input = 'const x = /* outer /* inner */ comment */ 5;'
-    let expected = 'const x = comment */ 5;'
-    expect(sanitizeCode(input)).toBe(expected)
-  })
-
   it('should handle comments inside string literals', () => {
     expect.assertions(1)
 
@@ -212,6 +204,11 @@ describe('sanitizeCode', () => {
     {
       comment: 'a comment full of stars',
       input: 'a /* a **b * c **/ && b',
+      expected: 'a && b',
+    },
+    {
+      comment: 'a comment that holds a comment opener',
+      input: 'a /* outer /* inner */ && b',
       expected: 'a && b',
     },
   ])('should replace $comment with a single space', ({ expected, input }) => {

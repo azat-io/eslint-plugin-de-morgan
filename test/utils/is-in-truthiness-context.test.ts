@@ -1,56 +1,36 @@
-import type { UnaryExpression } from 'estree'
-import type { Rule } from 'eslint'
-
 import { describe, expect, it } from 'vitest'
 
 import { isInTruthinessContext } from '../../utils/is-in-truthiness-context'
-
-type ParentedNode = Rule.NodeParentExtension & UnaryExpression
-
-function createNode(parent: undefined | object): ParentedNode {
-  return {
-    argument: { type: 'Identifier', name: 'a' },
-    type: 'UnaryExpression',
-    operator: '!',
-    prefix: true,
-    parent,
-  } as ParentedNode
-}
+import { inspectNegatedGroup, inspectNode } from '../helpers/inspect-node'
 
 describe('isInTruthinessContext', () => {
-  it('should treat a logical negation parent as a truthiness context', () => {
+  it.each([
+    { position: 'the argument of a negation', code: 'x = !!(a && b)' },
+    { position: 'a discarded sequence value', code: 'x = (!(a && b), c)' },
+  ])('should treat $position as a truthiness context', ({ code }) => {
     expect.assertions(1)
 
-    let node = createNode({ type: 'UnaryExpression', operator: '!' })
-    expect(isInTruthinessContext(node)).toBeTruthy()
+    let result = inspectNegatedGroup(code, isInTruthinessContext)
+
+    expect(result).toBeTruthy()
   })
 
-  it('should treat a discarded sequence position as a truthiness context', () => {
+  it('should not treat the assigned last value of a sequence as a truthiness context', () => {
     expect.assertions(1)
 
-    let parent = { expressions: [] as object[], type: 'SequenceExpression' }
-    let node = createNode(parent)
-    parent.expressions.push(node, { type: 'Identifier', name: 'b' })
-    expect(isInTruthinessContext(node)).toBeTruthy()
-  })
+    let result = inspectNegatedGroup(
+      'x = (c, !(a && b))',
+      isInTruthinessContext,
+    )
 
-  it('should climb through the trailing sequence position', () => {
-    expect.assertions(1)
-
-    let parent = {
-      parent: { type: 'AssignmentExpression' },
-      expressions: [] as object[],
-      type: 'SequenceExpression',
-    }
-    let node = createNode(parent)
-    parent.expressions.push({ type: 'Identifier', name: 'b' }, node)
-    expect(isInTruthinessContext(node)).toBeFalsy()
+    expect(result).toBeFalsy()
   })
 
   it('should not treat a node without a parent as a truthiness context', () => {
     expect.assertions(1)
 
-    let node = createNode(undefined)
-    expect(isInTruthinessContext(node)).toBeFalsy()
+    let result = inspectNode('a', 'Program', isInTruthinessContext)
+
+    expect(result).toBeFalsy()
   })
 })
