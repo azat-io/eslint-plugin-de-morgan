@@ -14,316 +14,425 @@ describe('no-negated-disjunction', () => {
     rule,
   })
 
-  it('should allow simple negation', async () => {
-    await valid('if (!a) {}')
+  it.each([
+    { situation: 'a negated identifier', code: 'if (!a) {}' },
+    { situation: 'a bitwise NOT of a disjunction', code: 'if (~(a || b)) {}' },
+    { situation: 'a negated conjunction', code: 'if (!(a && b)) {}' },
+    {
+      situation: 'a conjunction of a grouped disjunction',
+      code: 'if (!((a || b) && c)) {}',
+    },
+    // Pinned current behavior that the docs do not describe yet: a double
+    // Negation is left alone, and so is a group that already holds a
+    // Negation outside a boolean context.
+    {
+      situation: 'a double negation of a disjunction',
+      code: 'if (!!(a || b)) {}',
+    },
+    { situation: 'a value group holding a negation', code: 'foo(!(a || !b))' },
+  ])('should not report $situation', async ({ code }) => {
+    await valid(code)
   })
 
-  it('should allow disjunction without negation', async () => {
-    await valid('if (a || b) {}')
-  })
+  it.each([
+    {
+      layout: 'that ends with a conjunction',
+      code: 'if (!(a || b && c)) {}',
+    },
+    {
+      layout: 'that starts with a conjunction',
+      code: 'if (!(a && b || c)) {}',
+    },
+    {
+      layout: 'with a space after the negation',
+      code: 'if (! (a && b || c)) {}',
+    },
+    {
+      layout: 'with a comment after the negation',
+      code: 'if (!/* note */(a && b || c)) {}',
+    },
+    {
+      code: 'if (!((a && b || c))) {}',
+      layout: 'in double parentheses',
+    },
+    {
+      layout: 'with a parenthesis inside a string',
+      code: "if (!(a && b === ')' || c)) {}",
+    },
+  ])(
+    'should not report a negated disjunction that mixes in a conjunction $layout',
+    async ({ code }) => {
+      await valid(code)
+    },
+  )
 
-  it('should allow conjunction', async () => {
-    await valid('if (a && b) {}')
-  })
-
-  it('should allow bitwise NOT', async () => {
-    await valid('if (~(a || b)) {}')
-  })
-
-  it('should allow negated conjunction', async () => {
-    await valid('if (!(a && b)) {}')
-  })
-
-  it('should allow multiple disjunctions', async () => {
-    await valid('if (a || b || c) {}')
-  })
-
-  it('should allow various declaration forms', async () => {
-    await valid('const x = a || b')
-    await valid('let x = a && b')
-    await valid('var x = !(a && b)')
-  })
-
-  it('should allow function calls', async () => {
-    await valid('foo(!a && !b)')
-  })
-
-  it('should allow arrow functions', async () => {
-    await valid('const f = () => a && b')
-  })
-
-  it('should allow complex expressions with mixed operators', async () => {
-    await valid('if (!(a || b && c)) {}')
-    await valid('if (!(a && b || c)) {}')
-    await valid('if (!((a || b) && c)) {}')
-    await valid('if (!!(a || b)) {}')
-    await valid('foo(!(a || !b))')
-  })
-
-  it('should allow mixed operators regardless of formatting', async () => {
-    await valid('if (! (a && b || c)) {}')
-    await valid('if (!/* note */(a && b || c)) {}')
-    await valid('if (!((a && b || c))) {}')
-    await valid("if (!(a && b === ')' || c)) {}")
+  it('should not report mixed operators when enforcing them is turned off explicitly', async () => {
     await valid({
       options: [{ enforceForMixedOperators: false }],
       code: 'if (!(a && b || c)) {}',
     })
   })
 
-  it('should transform simple negated disjunction in if statement', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+  it.each([
+    {
+      output: 'if (!a && !b) {}',
+      context: 'an if condition',
       code: 'if (!(a || b)) {}',
-    })
-
-    expect(result.output).toBe('if (!a && !b) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a || b)` with `!a && !b`',
-    )
-  })
-
-  it('should transform negated disjunction with negated operand', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || !b)) {}',
-    })
-
-    expect(result.output).toBe('if (!a && b) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a || !b)` with `!a && b`',
-    )
-  })
-
-  it('should transform double negated disjunction', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(!a || b)) {}',
-    })
-
-    expect(result.output).toBe('if (a && !b) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(!a || b)` with `a && !b`',
-    )
-  })
-
-  it('should transform in variable declarations', async () => {
-    let { result: constResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+    },
+    {
+      context: 'a const declaration',
+      output: 'const x = !a && !b',
       code: 'const x = !(a || b)',
-    })
-    expect(constResult.output).toBe('const x = !a && !b')
-
-    let { result: letResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+    },
+    {
+      context: 'a let declaration',
+      output: 'let x = !a && !b',
       code: 'let x = !(a || b)',
-    })
-    expect(letResult.output).toBe('let x = !a && !b')
-
-    let { result: varResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+    },
+    {
+      context: 'a var declaration',
+      output: 'var x = !a && !b',
       code: 'var x = !(a || b)',
-    })
-    expect(varResult.output).toBe('var x = !a && !b')
-  })
-
-  it('should transform in arrow functions', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+    },
+    {
+      output: 'const f = () => !a && !b',
       code: 'const f = () => !(a || b)',
-    })
-
-    expect(result.output).toBe('const f = () => !a && !b')
-  })
-
-  it('should handle comparison operators correctly', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || b !== c)) {}',
-    })
-
-    expect(result.output).toBe('if (!a && b === c) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a || b !== c)` with `!a && b === c`',
-    )
-  })
-
-  it('should preserve parentheses when needed', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      context: 'an arrow function body',
+    },
+    {
+      context: 'a parenthesized initializer',
+      output: 'const y = (!a && !b)',
       code: 'const y = (!(a || b))',
-    })
-
-    expect(result.output).toBe('const y = (!a && !b)')
-  })
-
-  it('should transform in various control structures', async () => {
-    let { result: whileResult } = await invalid({
+    },
+    {
+      output: 'while (!a && !b) { doSomething(); }',
       code: 'while (!(a || b)) { doSomething(); }',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(whileResult.output).toBe('while (!a && !b) { doSomething(); }')
-
-    let { result: forResult } = await invalid({
+      context: 'a while condition',
+    },
+    {
+      output: 'for (; !a && !b; ) { doSomething(); }',
       code: 'for (; !(a || b); ) { doSomething(); }',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(forResult.output).toBe('for (; !a && !b; ) { doSomething(); }')
-
-    let { result: doWhileResult } = await invalid({
+      context: 'a for condition',
+    },
+    {
+      output: 'do { doSomething(); } while (!a && !b);',
       code: 'do { doSomething(); } while (!(a || b));',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(doWhileResult.output).toBe('do { doSomething(); } while (!a && !b);')
-
-    let { result: ternaryResult } = await invalid({
+      context: 'a do-while condition',
+    },
+    {
+      output: 'const result = !a && !b ? 1 : 0;',
       code: 'const result = !(a || b) ? 1 : 0;',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(ternaryResult.output).toBe('const result = !a && !b ? 1 : 0;')
-  })
+      context: 'a conditional test',
+    },
+    {
+      output: 'const arr = [...(!a && !b ? [1] : [2])]',
+      code: 'const arr = [...(!(a || b) ? [1] : [2])]',
+      context: 'a conditional test inside a spread',
+    },
+    {
+      // eslint-disable-next-line no-template-curly-in-string
+      output: 'const str = `${!a && !b}`',
+      // eslint-disable-next-line no-template-curly-in-string
+      code: 'const str = `${!(a || b)}`',
+      context: 'a template literal',
+    },
+    {
+      output: 'const { prop = !a && !b } = obj',
+      code: 'const { prop = !(a || b) } = obj',
+      context: 'a destructuring default',
+    },
+  ])(
+    'should rewrite a negated disjunction in $context',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
 
-  it('should handle nested disjunctions', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (b || c))) {}',
-    })
+      expect(result.output).toBe(output)
+    },
+  )
 
-    expect(result.output).toBe('if (!a && !b && !c) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a || (b || c))` with `!a && !b && !c`',
-    )
-  })
-
-  it('should handle multiple operands', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+  it.each([
+    {
+      operands: 'a negated last operand',
+      code: 'if (!(a || !b)) {}',
+      output: 'if (!a && b) {}',
+    },
+    {
+      operands: 'a negated first operand',
+      code: 'if (!(!a || b)) {}',
+      output: 'if (a && !b) {}',
+    },
+    {
+      output: 'if (!a && b === c) {}',
+      code: 'if (!(a || b !== c)) {}',
+      operands: 'an inequality',
+    },
+    {
+      output: 'if (!a && !b && !c) {}',
       code: 'if (!(a || b || c)) {}',
-    })
-
-    expect(result.output).toBe('if (!a && !b && !c) {}')
-  })
-
-  it('should handle complex nested expressions with mixed operators', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      operands: 'three operands',
+    },
+    {
+      operands: 'a grouped disjunction',
+      output: 'if (!a && !b && !c) {}',
+      code: 'if (!(a || (b || c))) {}',
+    },
+    {
+      operands: 'a grouped disjunction in the middle',
+      output: 'if (!a && !b && !c && !d) {}',
+      code: 'if (!(a || (b || c) || d)) {}',
+    },
+    {
+      operands: 'a grouped conjunction',
+      output: 'if (!a && !(b && c)) {}',
       code: 'if (!(a || (b && c))) {}',
-    })
+    },
+    {
+      operands: 'a trailing grouped conjunction',
+      output: 'if (!a && !b && !(c && d)) {}',
+      code: 'if (!(a || b || (c && d))) {}',
+    },
+    {
+      output: 'if (!a && !(b && c) && !(d && e)) {}',
+      code: 'if (!(a || (b && c) || (d && e))) {}',
+      operands: 'two grouped conjunctions',
+    },
+    {
+      output: 'if (!foo() && !bar()) {}',
+      code: 'if (!(foo() || bar())) {}',
+      operands: 'function calls',
+    },
+    {
+      output: 'if (!obj.prop && !obj.method()) {}',
+      code: 'if (!(obj.prop || obj.method())) {}',
+      operands: 'a property and a method call',
+    },
+    {
+      output: 'if (!a?.b && !c?.d) {}',
+      code: 'if (!(a?.b || c?.d)) {}',
+      operands: 'optional chains',
+    },
+    {
+      output: 'if (!(a ?? b) && !(c ?? d)) {}',
+      code: 'if (!((a ?? b) || (c ?? d))) {}',
+      operands: 'grouped nullish coalescing',
+    },
+    {
+      output: 'if (!(a instanceof A) && !(b instanceof B)) {}',
+      code: 'if (!(a instanceof A || b instanceof B)) {}',
+      operands: 'instanceof checks',
+    },
+    {
+      output: "if (!('a' in x) && !('b' in x)) {}",
+      code: "if (!('a' in x || 'b' in x)) {}",
+      operands: 'in checks',
+    },
+    {
+      output: 'if (!(a > b) && !(c < d)) {}',
+      operands: 'relational comparisons',
+      code: 'if (!(a > b || c < d)) {}',
+    },
+    {
+      operands: 'a comparison with a grouped assignment',
+      output: 'if (!(a < (x = y)) && !d) {}',
+      code: 'if (!(a < (x = y) || d)) {}',
+    },
+    {
+      operands: 'a comparison with a comment inside',
+      output: 'if (!(a /* keep */ < b) && !c) {}',
+      code: 'if (!(a /* keep */ < b || c)) {}',
+    },
+    {
+      operands: 'an equality with a grouped disjunction',
+      output: 'if ((a || b) !== c && !d) {}',
+      code: 'if (!((a || b) === c || d)) {}',
+    },
+    {
+      operands: 'an equality with a grouped bitmask',
+      output: 'if ((flags & 4) !== 0 && !x) {}',
+      code: 'if (!((flags & 4) === 0 || x)) {}',
+    },
+    {
+      operands: 'an equality with a grouped assignment',
+      output: 'if ((a = b) !== c && !d) {}',
+      code: 'if (!((a = b) === c || d)) {}',
+    },
+    {
+      operands: 'an equality with grouped nullish',
+      code: '!((a ?? b) === c || d)',
+      output: '(a ?? b) !== c && !d',
+    },
+    {
+      operands: 'an equality with a comment inside',
+      output: 'if (a /* keep */ !== b && !c) {}',
+      code: 'if (!(a /* keep */ === b || c)) {}',
+    },
+    {
+      output: 'if (!a && !(b ? c : d)) {}',
+      code: 'if (!(a || (b ? c : d))) {}',
+      operands: 'a grouped conditional',
+    },
+    {
+      output: 'if (!a && !(b, c)) {}',
+      operands: 'a grouped sequence',
+      code: 'if (!(a || (b, c))) {}',
+    },
+    {
+      operands: 'a grouped assignment',
+      output: 'if (!a && !(b = c)) {}',
+      code: 'if (!(a || (b = c))) {}',
+    },
+    {
+      operands: 'a grouped logical assignment',
+      output: 'if (!a && !(b &&= c)) {}',
+      code: 'if (!(a || (b &&= c))) {}',
+    },
+    {
+      operands: 'a grouped arrow function',
+      output: 'if (!a && !(x => x)) {}',
+      code: 'if (!(a || (x => x))) {}',
+    },
+  ])(
+    'should rewrite a negated disjunction with $operands',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
 
-    expect(result.output).toBe('if (!a && !(b && c)) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a || (b && c))` with `!a && !(b && c)`',
-    )
-  })
+      expect(result.output).toBe(output)
+    },
+  )
 
-  it('should ignore logical operators outside of the negated group', async () => {
-    let { result: stringResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+  it.each([
+    {
+      output: "if (!a && b !== '&&') {}",
       code: "if (!(a || b === '&&')) {}",
-    })
-    expect(stringResult.output).toBe("if (!a && b !== '&&') {}")
-
-    let { result: commentResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      place: 'a string',
+    },
+    {
+      output: 'if (!a && /* && */ !b) {}',
       code: 'if (!(a || /* && */ b)) {}',
-    })
-    expect(commentResult.output).toBe('if (!a && /* && */ !b) {}')
-
-    let { result: memberResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      place: 'a comment',
+    },
+    {
+      place: 'a comment that repeats the group',
+      output: 'if (!a && /* a || b */ !b) {}',
+      code: 'if (!(a || /* a || b */ b)) {}',
+    },
+    {
+      output: 'if (!a && !b[c && d]) {}',
       code: 'if (!(a || b[c && d])) {}',
-    })
-    expect(memberResult.output).toBe('if (!a && !b[c && d]) {}')
-
-    let { result: templateResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      place: 'a computed member key',
+    },
+    {
+      // eslint-disable-next-line no-template-curly-in-string
+      output: 'if (!a && !`${c && d}`) {}',
       // eslint-disable-next-line no-template-curly-in-string
       code: 'if (!(a || `${c && d}`)) {}',
-    })
-    // eslint-disable-next-line no-template-curly-in-string
-    expect(templateResult.output).toBe('if (!a && !`${c && d}`) {}')
-
-    let { result: regexResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      place: 'a template literal',
+    },
+    {
+      output: 'if (!a && !/&&/u.test(b)) {}',
       code: 'if (!(a || /&&/u.test(b))) {}',
-    })
-    expect(regexResult.output).toBe('if (!a && !/&&/u.test(b)) {}')
-  })
+      place: 'a regular expression',
+    },
+  ])(
+    'should leave logical operators inside $place unchanged',
+    async ({ output, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
 
-  it('should handle spacing and formatting', async () => {
-    let { result: spacingResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+      expect(result.output).toBe(output)
+    },
+  )
+
+  it.each([
+    {
+      layout: 'extra spaces around the operator',
+      output: 'if (!a  &&  !b) {}',
       code: 'if (!(a  ||  b)) {}',
-    })
-    expect(spacingResult.output).toBe('if (!a  &&  !b) {}')
-
-    let { result: multilineResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
+    },
+    {
+      layout: 'a line break after the operator',
+      output: 'if (!a &&\n    !b) {}',
       code: 'if (!(a ||\n    b)) {}',
-    })
-    expect(multilineResult.output).toBe('if (!a &&\n    !b) {}')
-  })
-
-  it('should handle comments', async () => {
-    let { result: lineCommentResult } = await invalid({
-      code: 'if (!(a || // important condition\n    b)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(lineCommentResult.output).toBe(
-      'if (!a && // important condition\n    !b) {}',
-    )
-
-    let { result: blockCommentResult } = await invalid({
-      code: 'if (!(a || /* this is why we need b */ b)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(blockCommentResult.output).toBe(
-      'if (!a && /* this is why we need b */ !b) {}',
-    )
-  })
-
-  it('should preserve comments inside grouped operands', async () => {
-    let { result: rightResult } = await invalid({
-      code: 'const x = !(a || (/* keep */ b))',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(rightResult.output).toBe('const x = !a && !(/* keep */ b)')
-
-    let { result: leftResult } = await invalid({
-      code: 'const x = !((a /* keep */) || b)',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(leftResult.output).toBe('const x = !(a /* keep */) && !b')
-
-    let { result: lineCommentResult } = await invalid({
-      code: 'const x = !(a || (// keep\n  b))',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(lineCommentResult.output).toBe('const x = !a && !(// keep\n  b)')
-
-    let { result: mixedResult } = await invalid({
-      code: 'const x = !(a && b || (/* keep */ c))',
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(mixedResult.output).toBe('const x = !(a && b) && !(/* keep */ c)')
-  })
-
-  it('should not replace operators inside comments', async () => {
+    },
+    {
+      code: dedent`
+        function func() {
+          return !(
+            a === b ||
+            (c &&
+              d(e, f))
+          )
+        }
+      `,
+      output: dedent`
+        function func() {
+          return a !== b &&
+            !(c &&
+              d(e, f))
+        }
+      `,
+      layout: 'a nested multiline operand',
+    },
+    {
+      code: dedent`
+        function f(a, b, c, d) {
+          return !(
+            (a && b) ||
+            (c && d)
+          )
+        }
+      `,
+      output: dedent`
+        function f(a, b, c, d) {
+          return !(a && b) &&
+            !(c && d)
+        }
+      `,
+      layout: 'multiline grouped conjunctions',
+    },
+  ])('should keep $layout', async ({ output, code }) => {
     let { result } = await invalid({
-      code: 'if (!(a || /* a || b */ b)) {}',
       errors: ['convertNegatedDisjunction'],
+      code,
     })
-    expect(result.output).toBe('if (!a && /* a || b */ !b) {}')
+
+    expect(result.output).toBe(output)
   })
 
   it.each([
+    {
+      output: 'if (!a && // important condition\n    !b) {}',
+      code: 'if (!(a || // important condition\n    b)) {}',
+      position: 'after the operator',
+    },
+    {
+      output: 'if (!a && /* this is why we need b */ !b) {}',
+      code: 'if (!(a || /* this is why we need b */ b)) {}',
+      position: 'before the second operand',
+    },
+    {
+      position: 'inside a grouped right operand',
+      output: 'const x = !a && !(/* keep */ b)',
+      code: 'const x = !(a || (/* keep */ b))',
+    },
+    {
+      output: 'const x = !(a /* keep */) && !b',
+      position: 'inside a grouped left operand',
+      code: 'const x = !((a /* keep */) || b)',
+    },
+    {
+      position: 'on its own line inside a grouped operand',
+      output: 'const x = !a && !(// keep\n  b)',
+      code: 'const x = !(a || (// keep\n  b))',
+    },
     {
       position: 'after the opening parenthesis',
       output: 'if (/* note */ !a && !b) {}',
@@ -381,7 +490,7 @@ describe('no-negated-disjunction', () => {
       position: 'at the end of the last operand line',
     },
     {
-      position: 'at the end of a line followed by more code',
+      position: 'at a line end before more code',
       output: 'if (!a && !b // why\n) {}',
       code: 'if (!(a || b // why\n)) {}',
     },
@@ -391,17 +500,17 @@ describe('no-negated-disjunction', () => {
       code: 'x = !(a || b // why\n)',
     },
     {
-      position: 'at the end of a line followed by another comment',
       output: 'if (!a && !b // why\n /* see\n */ && c) {}',
       code: 'if (!(a || b // why\n) /* see\n */ && c) {}',
+      position: 'at a line end before another comment',
     },
     {
-      position: 'when the fixed expression is wrapped in parentheses',
+      position: 'when the fix is wrapped in parentheses',
       output: 'r = (/* note */ !a && !b // why\n) === c',
       code: 'r = !(/* note */ a || b // why\n) === c',
     },
     {
-      position: 'before a closing parenthesis on the next line',
+      position: 'before a closing parenthesis below',
       code: 'if (!(a || b /* note */\n)) {}',
       output: 'if (!a && !b /* note */) {}',
     },
@@ -416,12 +525,12 @@ describe('no-negated-disjunction', () => {
       code: 'if (!(a || b/* note */)) {}',
     },
     {
-      position: 'among several comments after the opening parenthesis',
+      position: 'in a pair after the opening parenthesis',
       output: 'if (/* first */ /* second */ !a && !b) {}',
       code: 'if (!(/* first */ /* second */ a || b)) {}',
     },
     {
-      position: 'among several comments before the closing parenthesis',
+      position: 'in a pair before the closing parenthesis',
       output: 'if (!a && !b /* first */ /* second */) {}',
       code: 'if (!(a || b /* first */ /* second */)) {}',
     },
@@ -431,8 +540,7 @@ describe('no-negated-disjunction', () => {
       output: 'if (!a && !b /* note */) {}',
     },
     {
-      position:
-        'at the end of a line when the wrapped result is followed by a line break',
+      position: 'at a line end of a wrapped result',
       output: 'r = (!a && !b // why\n)\n  === c',
       code: 'r = !(a || b // why\n)\n  === c',
     },
@@ -487,28 +595,33 @@ describe('no-negated-disjunction', () => {
 
   it.each([
     {
+      output: 'r = (function () { return (// why\n!a && !b) && c })()',
       code: 'r = (function () { return !(\n// why\na || b) && c })()',
       position: 'only starts the returned expression',
     },
     {
+      output: 'r = (function () { return /* note */ (// why\n!a && !b) })()',
       code: 'r = (function () { return /* note */ !(\n// why\na || b) })()',
       position: 'follows a comment after return',
     },
     {
+      output: 'r = (function () { return (// why\n!a && !b // because\n)\n})()',
       code: 'r = (function () { return !(\n// why\na || b // because\n)\n})()',
       position: 'also ends with a line comment',
     },
   ])(
-    'should keep the returned value when a comment with a line break moves before an argument that $position',
-    async ({ code }) => {
+    'should rewrite an argument that $position and keep the returned value when a comment with a line break moves before it',
+    async ({ output, code }) => {
+      let values = [true, false, true]
+
       let { result } = await invalid({
         errors: ['convertNegatedDisjunction'],
         code,
       })
 
-      expect(result.output).not.toBe(code)
-      expect(evaluateFixture(result.output, [false, false, true])).toBe(
-        evaluateFixture(code, [false, false, true]),
+      expect(result.output).toBe(output)
+      expect(evaluateFixture(result.output, values)).toBe(
+        evaluateFixture(code, values),
       )
     },
   )
@@ -559,7 +672,7 @@ describe('no-negated-disjunction', () => {
     {
       output: '(/* note */ function () {} !== b && !c // why\n)\nfoo()',
       code: '!(/* note */ function () {} === b || c // why\n)\nfoo()',
-      comments: 'a leading block comment and a trailing line comment',
+      comments: 'a leading and a trailing comment',
     },
   ])(
     'should keep the closing parenthesis of a statement out of the last comment when the expression has $comments',
@@ -603,461 +716,274 @@ describe('no-negated-disjunction', () => {
     },
   )
 
-  it('should handle function calls and method calls', async () => {
-    let { result: functionResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(foo() || bar())) {}',
-    })
-    expect(functionResult.output).toBe('if (!foo() && !bar()) {}')
-
-    let { result: methodResult } = await invalid({
-      code: 'if (!(obj.prop || obj.method())) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(methodResult.output).toBe('if (!obj.prop && !obj.method()) {}')
-  })
-
-  it('should handle optional chaining', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a?.b || c?.d)) {}',
-    })
-
-    expect(result.output).toBe('if (!a?.b && !c?.d) {}')
-  })
-
-  it('should handle nullish coalescing', async () => {
-    let { result } = await invalid({
-      code: 'if (!((a ?? b) || (c ?? d))) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe('if (!(a ?? b) && !(c ?? d)) {}')
-  })
-
-  it('should handle instanceof operator', async () => {
-    let { result } = await invalid({
-      code: 'if (!(a instanceof A || b instanceof B)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe('if (!(a instanceof A) && !(b instanceof B)) {}')
-  })
-
-  it('should handle in operator', async () => {
-    let { result } = await invalid({
-      code: "if (!('a' in x || 'b' in x)) {}",
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe("if (!('a' in x) && !('b' in x)) {}")
-  })
-
-  it('should handle comparison operators with negation', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a > b || c < d)) {}',
-    })
-
-    expect(result.output).toBe('if (!(a > b) && !(c < d)) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a > b || c < d)` with `!(a > b) && !(c < d)`',
-    )
-  })
-
-  it('should preserve parentheses of sub-operands in wrapped comparisons', async () => {
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a < (x = y) || d)) {}',
-    })
-
-    expect(result.output).toBe('if (!(a < (x = y)) && !d) {}')
-  })
-
-  it('should preserve comments inside wrapped comparisons', async () => {
-    let { result } = await invalid({
-      code: 'if (!(a /* keep */ < b || c)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe('if (!(a /* keep */ < b) && !c) {}')
-  })
-
-  it('should preserve parentheses of sub-operands when toggling equality operators', async () => {
-    let { result: logicalResult } = await invalid({
-      code: 'if (!((a || b) === c || d)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(logicalResult.output).toBe('if ((a || b) !== c && !d) {}')
-
-    let { result: bitmaskResult } = await invalid({
-      code: 'if (!((flags & 4) === 0 || x)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(bitmaskResult.output).toBe('if ((flags & 4) !== 0 && !x) {}')
-
-    let { result: assignmentResult } = await invalid({
-      code: 'if (!((a = b) === c || d)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(assignmentResult.output).toBe('if ((a = b) !== c && !d) {}')
-
-    let { result: nullishResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: '!((a ?? b) === c || d)',
-    })
-    expect(nullishResult.output).toBe('(a ?? b) !== c && !d')
-  })
-
-  it('should preserve comments inside toggled comparisons', async () => {
-    let { result } = await invalid({
-      code: 'if (!(a /* keep */ === b || c)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe('if (a /* keep */ !== b && !c) {}')
-  })
-
-  it('should wrap parenthesized low-precedence operands in negation', async () => {
-    let { result: ternaryResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (b ? c : d))) {}',
-    })
-    expect(ternaryResult.output).toBe('if (!a && !(b ? c : d)) {}')
-
-    let { result: sequenceResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (b, c))) {}',
-    })
-    expect(sequenceResult.output).toBe('if (!a && !(b, c)) {}')
-
-    let { result: assignmentResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (b = c))) {}',
-    })
-    expect(assignmentResult.output).toBe('if (!a && !(b = c)) {}')
-
-    let { result: logicalAssignmentResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (b &&= c))) {}',
-    })
-    expect(logicalAssignmentResult.output).toBe('if (!a && !(b &&= c)) {}')
-
-    let { result: arrowResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || (x => x))) {}',
-    })
-    expect(arrowResult.output).toBe('if (!a && !(x => x)) {}')
-  })
-
-  it('should handle complex formatting with multiline expressions', async () => {
-    let { result } = await invalid({
-      code: dedent`
-        function func() {
-          return !(
-            a === b ||
-            (c &&
-              d(e, f))
-          )
-        }
-      `,
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe(dedent`
-      function func() {
-        return a !== b &&
-          !(c &&
-            d(e, f))
-      }
-    `)
-  })
-
-  it('should preserve balanced parentheses for multiline grouped conjunctions', async () => {
-    let { result } = await invalid({
-      code: dedent`
-        function f(a, b, c, d) {
-          return !(
-            (a && b) ||
-            (c && d)
-          )
-        }
-      `,
-      errors: ['convertNegatedDisjunction'],
-    })
-
-    expect(result.output).toBe(dedent`
-      function f(a, b, c, d) {
-        return !(a && b) &&
-          !(c && d)
-      }
-    `)
-  })
-
-  it('should work in various expression contexts', async () => {
-    let { result: spreadResult } = await invalid({
-      code: 'const arr = [...(!(a || b) ? [1] : [2])]',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(spreadResult.output).toBe('const arr = [...(!a && !b ? [1] : [2])]')
-
-    let { result: templateResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      // eslint-disable-next-line no-template-curly-in-string
-      code: 'const str = `${!(a || b)}`',
-    })
-    // eslint-disable-next-line no-template-curly-in-string
-    expect(templateResult.output).toBe('const str = `${!a && !b}`')
-
-    let { result: destructuringResult } = await invalid({
-      code: 'const { prop = !(a || b) } = obj',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(destructuringResult.output).toBe('const { prop = !a && !b } = obj')
-  })
-
-  it('should handle complex nested structures', async () => {
-    let { result: nestedResult1 } = await invalid({
-      code: 'if (!(a || b || (c && d))) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(nestedResult1.output).toBe('if (!a && !b && !(c && d)) {}')
-
-    let { result: nestedResult2 } = await invalid({
-      code: 'if (!(a || (b && c) || (d && e))) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(nestedResult2.output).toBe('if (!a && !(b && c) && !(d && e)) {}')
-
-    let { result: nestedResult3 } = await invalid({
-      code: 'if (!(a || (b || c) || d)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(nestedResult3.output).toBe('if (!a && !b && !c && !d) {}')
-  })
-
-  it('should preserve runtime behavior when relational operands are NaN', async () => {
-    let code = 'if (!(a < b || c)) { r = 1 } else { r = 2 }'
-    let { result } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code,
-    })
-
-    expect(evaluateFixture(result.output, [Number.NaN, 1, false])).toBe(
-      evaluateFixture(code, [Number.NaN, 1, false]),
-    )
-    expect(evaluateFixture(result.output, [undefined, 1, false])).toBe(
-      evaluateFixture(code, [undefined, 1, false]),
-    )
-  })
-
-  it('should preserve runtime behavior for parenthesized low-precedence operands', async () => {
-    let ternaryCode = 'if (!(a || (b ? c : d))) { r = 1 } else { r = 2 }'
-    let { result: ternaryResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: ternaryCode,
-    })
-    expect(evaluateFixture(ternaryResult.output, [true, false, 0, 1])).toBe(
-      evaluateFixture(ternaryCode, [true, false, 0, 1]),
-    )
-
-    let sequenceCode = 'if (!(a || (b, c))) { r = 1 } else { r = 2 }'
-    let { result: sequenceResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: sequenceCode,
-    })
-    expect(evaluateFixture(sequenceResult.output, [false, true, false])).toBe(
-      evaluateFixture(sequenceCode, [false, true, false]),
-    )
-
-    let assignmentCode = 'if (!(a || (b = c))) { r = 1 } else { r = 2 }'
-    let { result: assignmentResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: assignmentCode,
-    })
-    expect(evaluateFixture(assignmentResult.output, [false, true, false])).toBe(
-      evaluateFixture(assignmentCode, [false, true, false]),
-    )
-  })
-
-  it('should preserve runtime behavior when the fixed expression has a parent operator', async () => {
-    let nullishCode = 'r = c ?? !(a || b)'
-    let { result: nullishResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: nullishCode,
-    })
-    expect(evaluateFixture(nullishResult.output, [false, false, null])).toBe(
-      evaluateFixture(nullishCode, [false, false, null]),
-    )
-
-    let comparisonCode = 'r = !(a || b) === c'
-    let { result: comparisonResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: comparisonCode,
-    })
-    expect(evaluateFixture(comparisonResult.output, [true, false, false])).toBe(
-      evaluateFixture(comparisonCode, [true, false, false]),
-    )
-
-    let additionCode = 'r = 1 + !(a || b)'
-    let { result: additionResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: additionCode,
-    })
-    expect(evaluateFixture(additionResult.output, [false, true])).toBe(
-      evaluateFixture(additionCode, [false, true]),
-    )
-  })
-
-  it('should report without a fix when the fix could merge with the previous line', async () => {
+  it('should withhold the fix of a statement whose parenthesized fix could merge with the previous line', async () => {
     let code = 'r = c\n!(a || b) === d'
+
     let { result } = await invalid({
       errors: ['convertNegatedDisjunction'],
       code,
     })
 
     expect(result.output).toBe(code)
-    expect(evaluateFixture(result.output, [false, false, 5, true])).toBe(
-      evaluateFixture(code, [false, false, 5, true]),
-    )
   })
 
-  it('should preserve runtime behavior when stripping negation in value contexts', async () => {
-    let chainCode = 'r = c && !(b || !a)'
-    let { result: chainResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: chainCode,
-    })
-    expect(evaluateFixture(chainResult.output, [5, 0, 1])).toBe(
-      evaluateFixture(chainCode, [5, 0, 1]),
-    )
+  it.each([
+    {
+      message: 'Replace negated disjunction `!(a || b)` with `!a && !b`',
+      operands: 'two plain operands',
+      code: 'if (!(a || b)) {}',
+    },
+    {
+      message: 'Replace negated disjunction `!(a || !b)` with `!a && b`',
+      operands: 'a negated last operand',
+      code: 'if (!(a || !b)) {}',
+    },
+    {
+      message: 'Replace negated disjunction `!(!a || b)` with `a && !b`',
+      operands: 'a negated first operand',
+      code: 'if (!(!a || b)) {}',
+    },
+    {
+      message:
+        'Replace negated disjunction `!(a || b !== c)` with `!a && b === c`',
+      code: 'if (!(a || b !== c)) {}',
+      operands: 'an inequality',
+    },
+    {
+      message:
+        'Replace negated disjunction `!(a || (b || c))` with `!a && !b && !c`',
+      operands: 'a grouped disjunction',
+      code: 'if (!(a || (b || c))) {}',
+    },
+    {
+      message:
+        'Replace negated disjunction `!(a || (b && c))` with `!a && !(b && c)`',
+      operands: 'a grouped conjunction',
+      code: 'if (!(a || (b && c))) {}',
+    },
+    {
+      message:
+        'Replace negated disjunction `!(a > b || c < d)` with `!(a > b) && !(c < d)`',
+      operands: 'relational comparisons',
+      code: 'if (!(a > b || c < d)) {}',
+    },
+  ])(
+    'should show the original and the fixed disjunction with $operands in the message',
+    async ({ message, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
 
-    let comparisonCode = 'r = c === !(b || !a)'
-    let { result: comparisonResult } = await invalid({
-      errors: ['convertNegatedDisjunction'],
-      code: comparisonCode,
-    })
-    expect(evaluateFixture(comparisonResult.output, [5, 0, true])).toBe(
-      evaluateFixture(comparisonCode, [5, 0, true]),
-    )
-  })
+      expect(result.messages[0]).toHaveProperty('message', message)
+    },
+  )
 
-  it('should transform mixed operators when enforced', async () => {
-    let { result } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a && b || c)) {}',
-    })
-    expect(result.output).toBe('if (!(a && b) && !c) {}')
-    expect(result.messages[0]).toHaveProperty(
-      'message',
-      'Replace negated disjunction `!(a && b || c)` with `!(a && b) && !c`',
-    )
+  it.each([
+    {
+      output: 'if (!(a < b) && !c) { r = 1 } else { r = 2 }',
+      code: 'if (!(a < b || c)) { r = 1 } else { r = 2 }',
+      situation: 'a relational comparison with NaN',
+      values: [Number.NaN, 1, false],
+    },
+    {
+      output: 'if (!(a < b) && !c) { r = 1 } else { r = 2 }',
+      code: 'if (!(a < b || c)) { r = 1 } else { r = 2 }',
+      situation: 'a relational comparison with undefined',
+      values: [undefined, 1, false],
+    },
+    {
+      output: 'if (!a && !(b ? c : d)) { r = 1 } else { r = 2 }',
+      code: 'if (!(a || (b ? c : d))) { r = 1 } else { r = 2 }',
+      situation: 'a grouped conditional operand',
+      values: [true, false, 0, 1],
+    },
+    {
+      output: 'if (!a && !(b, c)) { r = 1 } else { r = 2 }',
+      code: 'if (!(a || (b, c))) { r = 1 } else { r = 2 }',
+      situation: 'a grouped sequence operand',
+      values: [false, true, false],
+    },
+    {
+      output: 'if (!a && !(b = c)) { r = 1 } else { r = 2 }',
+      code: 'if (!(a || (b = c))) { r = 1 } else { r = 2 }',
+      situation: 'a grouped assignment operand',
+      values: [false, true, false],
+    },
+    {
+      situation: 'a group after nullish coalescing',
+      output: 'r = c ?? (!a && !b)',
+      values: [false, false, null],
+      code: 'r = c ?? !(a || b)',
+    },
+    {
+      situation: 'a group compared with strict equality',
+      output: 'r = (!a && !b) === c',
+      values: [true, false, false],
+      code: 'r = !(a || b) === c',
+    },
+    {
+      situation: 'a group added to a number',
+      output: 'r = 1 + (!a && !b)',
+      code: 'r = 1 + !(a || b)',
+      values: [false, true],
+    },
+    {
+      situation: 'a group with a negation after &&',
+      output: 'r = c && !b && !!a',
+      code: 'r = c && !(b || !a)',
+      values: [5, 0, 1],
+    },
+    {
+      situation: 'a group with a negation in a comparison',
+      output: 'r = c === (!b && !!a)',
+      code: 'r = c === !(b || !a)',
+      values: [5, 0, true],
+    },
+  ])(
+    'should rewrite $situation and keep its result',
+    async ({ output, values, code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code,
+      })
 
-    let { result: trailingResult } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(a || b && c)) {}',
-    })
-    expect(trailingResult.output).toBe('if (!a && !(b && c)) {}')
-
-    let { result: multipleResult } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      code: 'if (!(a && b || c && d || e)) {}',
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(multipleResult.output).toBe('if (!(a && b) && !(c && d) && !e) {}')
-  })
-
-  it('should keep value context checks for enforced mixed operators', async () => {
-    let { result } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'const x = !(a && b || c)',
-    })
-    expect(result.output).toBe('const x = !(a && b) && !c')
-
-    let { result: negatedResult } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (!(!a && b || c)) {}',
-    })
-    expect(negatedResult.output).toBe('if (!(!a && b) && !c) {}')
-
-    await valid({
-      options: [{ enforceForMixedOperators: true }],
-      code: 'const x = !(!a && b || c)',
-    })
-  })
-
-  it('should preserve formatting of enforced mixed operators', async () => {
-    let { result: commentResult } = await invalid({
-      code: 'if (!(a && b || // important condition\n    c)) {}',
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-    })
-    expect(commentResult.output).toBe(
-      'if (!(a && b) && // important condition\n    !c) {}',
-    )
-
-    let { result: spacingResult } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'if (! (a && b || c)) {}',
-    })
-    expect(spacingResult.output).toBe('if (!(a && b) && !c) {}')
-
-    let { result: nullishResult } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: 'r = d ?? !(a && b || c)',
-    })
-    expect(nullishResult.output).toBe('r = d ?? (!(a && b) && !c)')
-  })
-
-  it('should preserve runtime behavior of enforced mixed operators', async () => {
-    let code = 'r = !(a && b || c)'
-    let { result } = await invalid({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code,
-    })
-
-    for (let values of [
-      [1, 1, 0],
-      [1, 0, 0],
-      [0, 'x', null],
-      [Number.NaN, 1, ''],
-    ]) {
+      expect(result.output).toBe(output)
       expect(evaluateFixture(result.output, values)).toBe(
         evaluateFixture(code, values),
       )
-    }
-  })
+    },
+  )
 
-  it('should fully expand mixed operators with no-negated-conjunction', async () => {
-    let { invalid: invalidWithConjunction } = createRuleTester({
-      configs: [
-        testerConfig.configs,
-        {
-          plugins: {
-            'de-morgan': {
-              rules: { 'no-negated-conjunction': conjunctionRule },
+  describe('with enforceForMixedOperators', () => {
+    let options = [{ enforceForMixedOperators: true }]
+
+    it.each([
+      {
+        output: 'if (!(a && b) && !c) {}',
+        code: 'if (!(a && b || c)) {}',
+        group: 'a leading conjunction',
+      },
+      {
+        output: 'if (!a && !(b && c)) {}',
+        group: 'a trailing conjunction',
+        code: 'if (!(a || b && c)) {}',
+      },
+      {
+        output: 'if (!(a && b) && !(c && d) && !e) {}',
+        code: 'if (!(a && b || c && d || e)) {}',
+        group: 'several conjunctions',
+      },
+      {
+        group: 'a conjunction in a value context',
+        output: 'const x = !(a && b) && !c',
+        code: 'const x = !(a && b || c)',
+      },
+      {
+        group: 'a conjunction that holds a negation',
+        output: 'if (!(!a && b) && !c) {}',
+        code: 'if (!(!a && b || c)) {}',
+      },
+      {
+        output: 'const x = !(a && b) && !(/* keep */ c)',
+        group: 'a grouped operand with a comment inside',
+        code: 'const x = !(a && b || (/* keep */ c))',
+      },
+      {
+        output: 'if (!(a && b) && // important condition\n    !c) {}',
+        code: 'if (!(a && b || // important condition\n    c)) {}',
+        group: 'a line comment after the operator',
+      },
+      {
+        group: 'a space after the negation',
+        output: 'if (!(a && b) && !c) {}',
+        code: 'if (! (a && b || c)) {}',
+      },
+      {
+        output: 'r = d ?? (!(a && b) && !c)',
+        group: 'a parent nullish coalescing',
+        code: 'r = d ?? !(a && b || c)',
+      },
+    ])(
+      'should rewrite a negated disjunction with $group',
+      async ({ output, code }) => {
+        let { result } = await invalid({
+          errors: ['convertNegatedDisjunction'],
+          options,
+          code,
+        })
+
+        expect(result.output).toBe(output)
+      },
+    )
+
+    // Pinned current behavior that the docs do not describe yet.
+    it('should not report a value whose mixed group already holds a negation', async () => {
+      await valid({ code: 'const x = !(!a && b || c)', options })
+    })
+
+    it('should show the original and the fixed mixed group in the message', async () => {
+      let { result } = await invalid({
+        errors: ['convertNegatedDisjunction'],
+        code: 'if (!(a && b || c)) {}',
+        options,
+      })
+
+      expect(result.messages[0]).toHaveProperty(
+        'message',
+        'Replace negated disjunction `!(a && b || c)` with `!(a && b) && !c`',
+      )
+    })
+
+    it.each([
+      { situation: 'both conjunction operands are truthy', values: [1, 1, 0] },
+      { situation: 'one conjunction operand is falsy', values: [1, 0, 0] },
+      { situation: 'the last operand is null', values: [0, 'x', null] },
+      { situation: 'an operand is NaN', values: [Number.NaN, 1, ''] },
+    ])(
+      'should rewrite a mixed group and keep its result when $situation',
+      async ({ values }) => {
+        let code = 'r = !(a && b || c)'
+
+        let { result } = await invalid({
+          errors: ['convertNegatedDisjunction'],
+          options,
+          code,
+        })
+
+        expect(result.output).toBe('r = !(a && b) && !c')
+        expect(evaluateFixture(result.output, values)).toBe(
+          evaluateFixture(code, values),
+        )
+      },
+    )
+
+    it('should fully expand mixed operators with no-negated-conjunction', async () => {
+      let { invalid: invalidWithConjunction } = createRuleTester({
+        configs: [
+          testerConfig.configs,
+          {
+            plugins: {
+              'de-morgan': {
+                rules: { 'no-negated-conjunction': conjunctionRule },
+              },
             },
+            rules: { 'de-morgan/no-negated-conjunction': 'error' },
           },
-          rules: { 'de-morgan/no-negated-conjunction': 'error' },
-        },
-      ],
-      name: 'no-negated-disjunction',
-      rule,
-    })
+        ],
+        name: 'no-negated-disjunction',
+        // The second rule only applies to the result of the first fix.
+        recursive: 10,
+        rule,
+      })
 
-    let { result } = await invalidWithConjunction({
-      options: [{ enforceForMixedOperators: true }],
-      errors: ['convertNegatedDisjunction'],
-      code: '!(1 && 1 || 1)',
+      let { result } = await invalidWithConjunction({
+        errors: ['convertNegatedDisjunction'],
+        code: '!(1 && 1 || 1)',
+        options,
+      })
+
+      expect(result.output).toBe('(!1 || !1) && !1')
     })
-    expect(result.output).toBe('(!1 || !1) && !1')
   })
 })
