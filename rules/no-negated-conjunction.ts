@@ -1,7 +1,7 @@
 import type { Rule } from 'eslint'
 
 import { createNegatedExpressionListener } from '../utils/create-negated-expression-listener'
-import { repository as repo } from '../package.json'
+import { repository } from '../package.json'
 
 export default {
   meta: {
@@ -9,7 +9,7 @@ export default {
       description:
         'Transforms the negation of a conjunction !(A && B) into the ' +
         'equivalent !A || !B according to De Morgan’s law',
-      url: `https://github.com/${repo}/blob/main/docs/no-negated-conjunction.md`,
+      url: `https://github.com/${repository}/blob/main/docs/no-negated-conjunction.md`,
       recommended: true,
     },
     messages: {

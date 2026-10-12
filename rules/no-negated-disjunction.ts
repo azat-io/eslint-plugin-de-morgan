@@ -1,8 +1,8 @@
 import type { Rule } from 'eslint'
 
 import { createNegatedExpressionListener } from '../utils/create-negated-expression-listener'
-import { repository as repo } from '../package.json'
 import { isPureGroup } from '../utils/is-pure-group'
+import { repository } from '../package.json'
 
 interface Options {
   /**
@@ -32,7 +32,7 @@ export default {
       description:
         'Transforms the negation of a disjunction !(A || B) into the ' +
         'equivalent !A && !B according to De Morgan’s law',
-      url: `https://github.com/${repo}/blob/main/docs/no-negated-disjunction.md`,
+      url: `https://github.com/${repository}/blob/main/docs/no-negated-disjunction.md`,
       recommended: true,
     },
     messages: {
