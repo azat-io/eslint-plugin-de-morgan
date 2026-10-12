@@ -1,5 +1,24 @@
 # Changelog
 
+## v2.2.1
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.2.0...v2.2.1)
+
+### 🐞 Bug Fixes
+
+- Preserve comments around negated groups in autofix
+  ([ef19d81](https://github.com/azat-io/eslint-plugin-de-morgan/commit/ef19d81))
+- Avoid invalid autofixes at restricted expression starts
+  ([2336efd](https://github.com/azat-io/eslint-plugin-de-morgan/commit/2336efd))
+- Register the plugin itself in the recommended config
+  ([d4e3f0a](https://github.com/azat-io/eslint-plugin-de-morgan/commit/d4e3f0a))
+- Show literals and comments correctly in report messages
+  ([dd8aa7a](https://github.com/azat-io/eslint-plugin-de-morgan/commit/dd8aa7a))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.2.0
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.1.3...v2.2.0)
