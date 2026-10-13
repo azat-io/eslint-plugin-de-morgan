@@ -986,4 +986,27 @@ describe('no-negated-disjunction', () => {
       expect(result.output).toBe('(!1 || !1) && !1')
     })
   })
+
+  it.each([
+    {
+      options: { enforceForMixedOperators: 'yes' },
+      option: 'a value that is not boolean',
+      problem: 'should be boolean',
+    },
+    {
+      problem: 'should NOT have additional properties',
+      options: { unknownOption: true },
+      option: 'an unknown option',
+    },
+  ])('should reject $option', async ({ problem, options }) => {
+    await expect(valid({ options: [options], code: 'x' })).rejects.toThrow(
+      problem,
+    )
+  })
+
+  it('should link to its documentation', () => {
+    expect(rule.meta.docs.url).toBe(
+      'https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-disjunction.md',
+    )
+  })
 })

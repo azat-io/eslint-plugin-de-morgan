@@ -534,6 +534,12 @@ describe('no-negated-conjunction', () => {
       start: 'a function after a comment',
       position: 'a default export',
     },
+    {
+      output: 'export /* c */ default (function () {} !== b || !c)',
+      code: 'export /* c */ default !(function () {} === b && c)',
+      position: 'a commented default export',
+      start: 'a function',
+    },
   ])(
     'should parenthesize a fix that starts with $start at $position',
     async ({ output, code }) => {
@@ -611,6 +617,18 @@ describe('no-negated-conjunction', () => {
       code: '!(functionName === a && b)',
     },
     {
+      position: 'the start of a statement',
+      start: 'the identifier class$',
+      output: 'class$ !== a || !b',
+      code: '!(class$ === a && b)',
+    },
+    {
+      position: 'the start of a statement',
+      start: 'the identifier function$',
+      output: 'function$ !== a || !b',
+      code: '!(function$ === a && b)',
+    },
+    {
       output: 'export default {} !== a || !b',
       code: 'export default !({} === a && b)',
       position: 'a default export',
@@ -683,6 +701,16 @@ describe('no-negated-conjunction', () => {
       output: '(let // note\n[0] !== a || !b)',
       code: '!(let // note\n[0] === a && b)',
     },
+    {
+      start: 'let, an empty comment and a bracket',
+      output: '(let //\n[0] !== a || !b)',
+      code: '!(let //\n[0] === a && b)',
+    },
+    {
+      start: 'let, a Windows line break and a bracket',
+      output: '(let // note\r\n[0] !== a || !b)',
+      code: '!(let // note\r\n[0] === a && b)',
+    },
   ])(
     'should parenthesize a statement in a script whose fix starts with $start',
     async ({ output, code }) => {
@@ -707,6 +735,11 @@ describe('no-negated-conjunction', () => {
       output: '!a || b !== let[0]',
       code: '!(a && b === let[0])',
     },
+    {
+      start: 'let and a comment with a bracket',
+      output: 'let // see [0]\n!== a || !b',
+      code: '!(let // see [0]\n=== a && b)',
+    },
   ])(
     'should not parenthesize a statement in a script whose fix starts with $start',
     async ({ output, code }) => {
@@ -719,6 +752,16 @@ describe('no-negated-conjunction', () => {
       expect(result.output).toBe(output)
     },
   )
+
+  it('should not parenthesize an arrow function body in a script whose fix starts with let and a bracket', async () => {
+    let { result } = await invalid({
+      code: 'const f = () => !(let[0] === a && b)',
+      languageOptions: { sourceType: 'script' },
+      errors: ['convertNegatedConjunction'],
+    })
+
+    expect(result.output).toBe('const f = () => let[0] !== a || !b')
+  })
 
   it.each([
     { code: 'r = a.default\n!(-b === 1 && c)', access: 'a.default' },
@@ -744,6 +787,31 @@ describe('no-negated-conjunction', () => {
     })
 
     expect(result.output).toBe(code)
+  })
+
+  it.each([
+    { code: 'r = c\n!(+x === 1 && b)', start: 'a unary plus' },
+    { code: 'r = c\n!([x][0] === 1 && b)', start: 'an array literal' },
+    { code: 'r = c\n!(`t` === x && b)', start: 'a template literal' },
+  ])(
+    'should withhold the fix of a statement that would start with $start after a line without a semicolon',
+    async ({ code }) => {
+      let { result } = await invalid({
+        errors: ['convertNegatedConjunction'],
+        code,
+      })
+
+      expect(result.output).toBe(code)
+    },
+  )
+
+  it('should fix a statement that starts with an array literal after a semicolon', async () => {
+    let { result } = await invalid({
+      errors: ['convertNegatedConjunction'],
+      code: 'r = c;\n!([x][0] === 1 && b)',
+    })
+
+    expect(result.output).toBe('r = c;\n[x][0] !== 1 || !b')
   })
 
   it.each([
@@ -828,6 +896,12 @@ describe('no-negated-conjunction', () => {
         "Replace negated conjunction `!(a && b === 'x')` with `!a || b !== 'x'`",
       code: "if (!(a && // don't\n  b === 'x')) {}",
       operands: 'an apostrophe in a line comment',
+    },
+    {
+      message:
+        'Replace negated conjunction `!({}.x === a && b)` with `({}.x !== a || !b)`',
+      operands: 'an object literal at a statement start',
+      code: '!({}.x === a && b)',
     },
   ])(
     'should show the original and the fixed conjunction with $operands in the message',
@@ -962,6 +1036,12 @@ describe('no-negated-conjunction', () => {
       code: 'r = !(!a && b) in c',
       values: [5, 0, { 5: 1 }],
     },
+    {
+      output: 'if ((!!a || !!b) ?? c) { r = 1 } else { r = 2 }',
+      code: 'if (!(!a && !b) ?? c) { r = 1 } else { r = 2 }',
+      situation: 'a group with negations before ??',
+      values: [0, null, true],
+    },
   ])(
     'should rewrite $situation and keep its result',
     async ({ output, values, code }) => {
@@ -990,5 +1070,11 @@ describe('no-negated-conjunction', () => {
       'function* g(a) { if (!a || !(yield)) { r = 1 } else { r = 2 } }',
     )
     expect(runGenerator(result.output)).toBe(runGenerator(code))
+  })
+
+  it('should link to its documentation', () => {
+    expect(rule.meta.docs.url).toBe(
+      'https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md',
+    )
   })
 })

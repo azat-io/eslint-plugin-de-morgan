@@ -149,6 +149,10 @@ describe('sanitizeCode', () => {
       literal: 'a regular expression with spaces inside',
       input: String.raw`a && /[ab  c]  d\/  e/g.test(b)`,
     },
+    {
+      literal: 'regular expressions with slashes in classes',
+      input: 'a && /[/*]/.test(b) && /[*/]/.test(c)',
+    },
   ])('should keep $literal verbatim', ({ input }) => {
     expect.assertions(1)
 

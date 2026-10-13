@@ -15,6 +15,20 @@ describe('hasBooleanContext', () => {
     { position: 'an operand of a conjunction', code: 'x = !(a && b) && c' },
     { position: 'an operand of a disjunction', code: 'x = !(a && b) || c' },
     { position: 'the argument of a negation', code: 'x = !!(a && b)' },
+    { position: 'a strict equality operand', code: 'x = !(a && b) === c' },
+    { position: 'a strict inequality operand', code: 'x = !(a && b) !== c' },
+    { position: 'a loose equality operand', code: 'x = !(a && b) == c' },
+    { position: 'a loose inequality operand', code: 'x = !(a && b) != c' },
+    { position: 'a less-than operand', code: 'x = !(a && b) < c' },
+    { position: 'a greater-than operand', code: 'x = !(a && b) > c' },
+    { position: 'a less-or-equal operand', code: 'x = !(a && b) <= c' },
+    { position: 'a greater-or-equal operand', code: 'x = !(a && b) >= c' },
+    { position: 'the key of an in check', code: 'x = !(a && b) in c' },
+    {
+      position: 'the subject of an instanceof check',
+      code: 'x = !(a && b) instanceof C',
+    },
+    { position: 'a Boolean call argument', code: 'x = Boolean(!(a && b))' },
   ])('should find a boolean context in $position', ({ code }) => {
     expect.assertions(1)
 
@@ -30,6 +44,10 @@ describe('hasBooleanContext', () => {
       code: 'x = someFunction(!(a && b))',
     },
     { position: 'a computed member key', code: 'x = obj[!(a && b)]' },
+    {
+      position: 'an argument of a method named Boolean',
+      code: 'x = obj.Boolean(!(a && b))',
+    },
   ])('should not find a boolean context in $position', ({ code }) => {
     expect.assertions(1)
 

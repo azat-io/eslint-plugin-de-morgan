@@ -37,6 +37,28 @@ describe('plugin', () => {
     ])
   })
 
+  it('should fix both rules when only suggestion fixes are applied', async () => {
+    let eslint = new ESLint({
+      overrideConfig: [plugin.configs.recommended],
+      fixTypes: ['suggestion'],
+      overrideConfigFile: true,
+      fix: true,
+    })
+
+    let [result] = await eslint.lintText('!(a && b)\n!(a || b)\n', {
+      filePath: 'file.js',
+    })
+
+    expect(result!.output).toBe('!a || !b\n!a && !b\n')
+  })
+
+  it.each(['no-negated-conjunction', 'no-negated-disjunction'] as const)(
+    'should mark %s as recommended, as the recommended config enables it',
+    ruleName => {
+      expect(plugin.rules[ruleName].meta?.docs?.recommended).toBeTruthy()
+    },
+  )
+
   it('should enable both rules as errors in the legacy recommended config', () => {
     expect(plugin.configs['recommended-legacy']).toStrictEqual({
       rules: {

@@ -19,6 +19,7 @@ describe('hasNegationInsideParens', () => {
       group: 'a double negation and a negation',
       code: 'x = !(a && !!b && !c)',
     },
+    { group: 'a negated unary minus', code: 'x = !(a && !-b)' },
   ])('should find a negation inside $group', ({ code }) => {
     expect.assertions(1)
 
@@ -36,6 +37,10 @@ describe('hasNegationInsideParens', () => {
     {
       group: 'a group with only a double negation',
       code: 'x = !(a && !!b)',
+    },
+    {
+      group: 'a double negation under a unary minus',
+      code: 'x = !(a && -!!b)',
     },
   ])('should not find a negation inside $group', ({ code }) => {
     expect.assertions(1)
