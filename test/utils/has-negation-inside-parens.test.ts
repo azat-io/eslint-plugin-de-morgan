@@ -25,7 +25,7 @@ describe('hasNegationInsideParens', () => {
 
     let result = inspectNode(code, 'UnaryExpression', hasNegationInsideParens)
 
-    expect(result).toBeTruthy()
+    expect(result).toBe(true)
   })
 
   it.each([
@@ -47,7 +47,7 @@ describe('hasNegationInsideParens', () => {
 
     let result = inspectNode(code, 'UnaryExpression', hasNegationInsideParens)
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 
   it('should not find a negation inside an identifier', () => {
@@ -57,6 +57,6 @@ describe('hasNegationInsideParens', () => {
       hasNegationInsideParens(node, context),
     )
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 })

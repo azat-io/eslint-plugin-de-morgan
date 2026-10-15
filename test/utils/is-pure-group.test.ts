@@ -31,7 +31,7 @@ describe('isPureGroup', () => {
   ])('should treat $group as a pure group', ({ code }) => {
     expect.assertions(1)
 
-    expect(checkPureGroup(code)).toBeTruthy()
+    expect(checkPureGroup(code)).toBe(true)
   })
 
   it.each([
@@ -48,7 +48,7 @@ describe('isPureGroup', () => {
   ])('should not treat $group as a pure group', ({ code }) => {
     expect.assertions(1)
 
-    expect(checkPureGroup(code)).toBeFalsy()
+    expect(checkPureGroup(code)).toBe(false)
   })
 
   it.each([
@@ -62,7 +62,7 @@ describe('isPureGroup', () => {
   ])('should ignore logical operators inside $place', ({ code }) => {
     expect.assertions(1)
 
-    expect(checkPureGroup(code)).toBeTruthy()
+    expect(checkPureGroup(code)).toBe(true)
   })
 
   it.each([
@@ -79,6 +79,6 @@ describe('isPureGroup', () => {
   ])('should not treat a mixed group behind $layout as pure', ({ code }) => {
     expect.assertions(1)
 
-    expect(checkPureGroup(code)).toBeFalsy()
+    expect(checkPureGroup(code)).toBe(false)
   })
 })

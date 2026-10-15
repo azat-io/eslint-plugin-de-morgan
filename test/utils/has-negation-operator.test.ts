@@ -14,7 +14,7 @@ describe('hasNegationOperator', () => {
       operator: '!',
       prefix: true,
     }
-    expect(hasNegationOperator(node)).toBeTruthy()
+    expect(hasNegationOperator(node)).toBe(true)
   })
 
   it('should return false for a UnaryExpression with a different operator', () => {
@@ -26,7 +26,7 @@ describe('hasNegationOperator', () => {
       operator: '-',
       prefix: true,
     }
-    expect(hasNegationOperator(node)).toBeFalsy()
+    expect(hasNegationOperator(node)).toBe(false)
   })
 
   it('should return false for a non-UnaryExpression node', () => {
@@ -36,6 +36,6 @@ describe('hasNegationOperator', () => {
       type: 'Identifier',
       name: 'a',
     }
-    expect(hasNegationOperator(node)).toBeFalsy()
+    expect(hasNegationOperator(node)).toBe(false)
   })
 })

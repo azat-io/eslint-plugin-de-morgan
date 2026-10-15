@@ -14,7 +14,7 @@ describe('applyToProperty', () => {
 
     let testValue = applyToProperty('value', isPositive)
 
-    expect(testValue(object)).toBeTruthy()
+    expect(testValue(object)).toBe(true)
   })
 
   it('should return false if the predicate returns false', () => {
@@ -28,7 +28,7 @@ describe('applyToProperty', () => {
 
     let testName = applyToProperty('name', isNonEmpty)
 
-    expect(testName(object)).toBeFalsy()
+    expect(testName(object)).toBe(false)
   })
 
   it('should work with different property types', () => {
@@ -39,6 +39,6 @@ describe('applyToProperty', () => {
 
     let testFlag = applyToProperty('flag', isTruthy)
 
-    expect(testFlag(object)).toBeFalsy()
+    expect(testFlag(object)).toBe(false)
   })
 })

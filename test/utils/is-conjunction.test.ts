@@ -15,7 +15,7 @@ describe('isConjunction', () => {
       operator: '&&',
     }
 
-    expect(isConjunction(node)).toBeTruthy()
+    expect(isConjunction(node)).toBe(true)
   })
 
   it('should return false for a LogicalExpression with a different operator', () => {
@@ -28,7 +28,7 @@ describe('isConjunction', () => {
       operator: '||',
     }
 
-    expect(isConjunction(node)).toBeFalsy()
+    expect(isConjunction(node)).toBe(false)
   })
 
   it('should return false for a node that is not a LogicalExpression', () => {
@@ -39,6 +39,6 @@ describe('isConjunction', () => {
       value: 42,
     }
 
-    expect(isConjunction(node)).toBeFalsy()
+    expect(isConjunction(node)).toBe(false)
   })
 })

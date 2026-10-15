@@ -14,7 +14,7 @@ describe('isBinaryExpression', () => {
       type: 'BinaryExpression',
       operator: '+',
     }
-    expect(isBinaryExpression(binaryNode as Expression)).toBeTruthy()
+    expect(isBinaryExpression(binaryNode as Expression)).toBe(true)
   })
 
   it('should return false for a node that is not a BinaryExpression', () => {
@@ -24,6 +24,6 @@ describe('isBinaryExpression', () => {
       type: 'Identifier',
       name: 'a',
     }
-    expect(isBinaryExpression(nonBinaryNode as Expression)).toBeFalsy()
+    expect(isBinaryExpression(nonBinaryNode as Expression)).toBe(false)
   })
 })

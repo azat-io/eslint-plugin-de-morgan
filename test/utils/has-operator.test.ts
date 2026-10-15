@@ -17,7 +17,7 @@ describe('hasOperator', () => {
         operator: '&&',
       }
 
-      expect(isAnd(node)).toBeTruthy()
+      expect(isAnd(node)).toBe(true)
     })
 
     it('should correctly identify OR operator', () => {
@@ -31,7 +31,7 @@ describe('hasOperator', () => {
         operator: '||',
       }
 
-      expect(isOr(node)).toBeTruthy()
+      expect(isOr(node)).toBe(true)
     })
 
     it('should correctly identify nullish coalescing operator', () => {
@@ -45,7 +45,7 @@ describe('hasOperator', () => {
         operator: '??',
       }
 
-      expect(isNullish(node)).toBeTruthy()
+      expect(isNullish(node)).toBe(true)
     })
 
     it('should return false for non-matching logical operator', () => {
@@ -59,7 +59,7 @@ describe('hasOperator', () => {
         operator: '||',
       }
 
-      expect(isAnd(node)).toBeFalsy()
+      expect(isAnd(node)).toBe(false)
     })
   })
 
@@ -75,7 +75,7 @@ describe('hasOperator', () => {
         prefix: true,
       }
 
-      expect(isNot(node)).toBeTruthy()
+      expect(isNot(node)).toBe(true)
     })
 
     it('should correctly identify typeof operator', () => {
@@ -89,7 +89,7 @@ describe('hasOperator', () => {
         prefix: true,
       }
 
-      expect(isTypeof(node)).toBeTruthy()
+      expect(isTypeof(node)).toBe(true)
     })
 
     it('should correctly identify void operator', () => {
@@ -103,7 +103,7 @@ describe('hasOperator', () => {
         prefix: true,
       }
 
-      expect(isVoid(node)).toBeTruthy()
+      expect(isVoid(node)).toBe(true)
     })
 
     it('should return false for non-matching unary operator', () => {
@@ -117,7 +117,7 @@ describe('hasOperator', () => {
         prefix: true,
       }
 
-      expect(isNot(node)).toBeFalsy()
+      expect(isNot(node)).toBe(false)
     })
   })
 
@@ -133,7 +133,7 @@ describe('hasOperator', () => {
         prefix: true,
       }
 
-      expect(isAnd(node)).toBeFalsy()
+      expect(isAnd(node)).toBe(false)
     })
   })
 })

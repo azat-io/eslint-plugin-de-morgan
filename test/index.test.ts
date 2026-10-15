@@ -55,7 +55,7 @@ describe('plugin', () => {
   it.each(['no-negated-conjunction', 'no-negated-disjunction'] as const)(
     'should mark %s as recommended, as the recommended config enables it',
     ruleName => {
-      expect(plugin.rules[ruleName].meta?.docs?.recommended).toBeTruthy()
+      expect(plugin.rules[ruleName].meta?.docs?.recommended).toBe(true)
     },
   )
 

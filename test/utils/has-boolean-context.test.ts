@@ -34,7 +34,7 @@ describe('hasBooleanContext', () => {
 
     let result = inspectNegatedGroup(code, hasBooleanContext)
 
-    expect(result).toBeTruthy()
+    expect(result).toBe(true)
   })
 
   it.each([
@@ -53,7 +53,7 @@ describe('hasBooleanContext', () => {
 
     let result = inspectNegatedGroup(code, hasBooleanContext)
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 
   it('should not find a boolean context for a node without a parent', () => {
@@ -63,6 +63,6 @@ describe('hasBooleanContext', () => {
       hasBooleanContext(node as Node, context),
     )
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 })

@@ -13,7 +13,7 @@ describe('createTestWithParams', () => {
       (x: number) => x !== 5,
     ]
 
-    expect(test(...predicates)).toBeTruthy()
+    expect(test(...predicates)).toBe(true)
   })
 
   it('should return false when at least one predicate returns false', () => {
@@ -26,14 +26,14 @@ describe('createTestWithParams', () => {
       (x: number) => x === 5,
     ]
 
-    expect(test(...predicates)).toBeFalsy()
+    expect(test(...predicates)).toBe(false)
   })
 
   it('should return true for an empty array of predicates', () => {
     expect.assertions(1)
 
     let test = createTestWithParameters(42)
-    expect(test()).toBeTruthy()
+    expect(test()).toBe(true)
   })
 
   it('should stop execution on the first false result', () => {
@@ -60,7 +60,7 @@ describe('createTestWithParams', () => {
       },
     ]
 
-    expect(test(...predicates)).toBeFalsy()
+    expect(test(...predicates)).toBe(false)
     expect(callCount).toBe(3)
   })
 
@@ -73,7 +73,7 @@ describe('createTestWithParams', () => {
       (x: number, y: number) => x * y < 100,
     ]
 
-    expect(test(...predicates)).toBeTruthy()
-    expect(createTestWithParameters(-3, -4)(...predicates)).toBeFalsy()
+    expect(test(...predicates)).toBe(true)
+    expect(createTestWithParameters(-3, -4)(...predicates)).toBe(false)
   })
 })

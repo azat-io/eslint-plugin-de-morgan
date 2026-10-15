@@ -25,7 +25,7 @@ describe('needsParentParens', () => {
       needsParentParens(node, '||'),
     )
 
-    expect(result).toBeTruthy()
+    expect(result).toBe(true)
   })
 
   it.each([
@@ -39,7 +39,7 @@ describe('needsParentParens', () => {
       needsParentParens(node, '||'),
     )
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 
   it('should not wrap a conjunction placed as an operand of a conjunction', () => {
@@ -49,7 +49,7 @@ describe('needsParentParens', () => {
       needsParentParens(node, '&&'),
     )
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 
   it('should wrap a comparison operand whose parent chain has no statement', () => {
@@ -65,6 +65,6 @@ describe('needsParentParens', () => {
 
     let result = needsParentParens(node, '||')
 
-    expect(result).toBeTruthy()
+    expect(result).toBe(true)
   })
 })

@@ -14,7 +14,7 @@ describe('isUnaryExpression', () => {
       operator: '!',
       prefix: true,
     }
-    expect(isUnaryExpression(unaryNode as Expression)).toBeTruthy()
+    expect(isUnaryExpression(unaryNode as Expression)).toBe(true)
   })
 
   it('should return false for a node that is not a UnaryExpression', () => {
@@ -24,6 +24,6 @@ describe('isUnaryExpression', () => {
       type: 'Identifier',
       name: 'a',
     }
-    expect(isUnaryExpression(nonUnaryNode as Expression)).toBeFalsy()
+    expect(isUnaryExpression(nonUnaryNode as Expression)).toBe(false)
   })
 })

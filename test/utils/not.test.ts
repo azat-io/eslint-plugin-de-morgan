@@ -7,14 +7,14 @@ describe('not', () => {
     expect.assertions(1)
 
     let alwaysTrue = not(() => false)
-    expect(alwaysTrue()).toBeTruthy()
+    expect(alwaysTrue()).toBe(true)
   })
 
   it('should return false when the predicate returns true', () => {
     expect.assertions(1)
 
     let alwaysFalse = not(() => true)
-    expect(alwaysFalse()).toBeFalsy()
+    expect(alwaysFalse()).toBe(false)
   })
 
   it('should work with single-argument predicates', () => {
@@ -26,8 +26,8 @@ describe('not', () => {
 
     let isNotEven = not(isEven)
 
-    expect(isNotEven(2)).toBeFalsy()
-    expect(isNotEven(3)).toBeTruthy()
+    expect(isNotEven(2)).toBe(false)
+    expect(isNotEven(3)).toBe(true)
   })
 
   it('should work with multi-argument predicates', () => {
@@ -39,7 +39,7 @@ describe('not', () => {
 
     let isNotGreater = not(isGreater)
 
-    expect(isNotGreater(5, 3)).toBeFalsy()
-    expect(isNotGreater(2, 3)).toBeTruthy()
+    expect(isNotGreater(5, 3)).toBe(false)
+    expect(isNotGreater(2, 3)).toBe(true)
   })
 })

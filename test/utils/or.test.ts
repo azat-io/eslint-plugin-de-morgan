@@ -10,7 +10,7 @@ describe('or', () => {
       () => false,
       () => false,
     )
-    expect(isFalse()).toBeFalsy()
+    expect(isFalse()).toBe(false)
   })
 
   it('should return true when at least one predicate returns true', () => {
@@ -20,7 +20,7 @@ describe('or', () => {
       () => false,
       () => true,
     )
-    expect(hasTrue()).toBeTruthy()
+    expect(hasTrue()).toBe(true)
   })
 
   it('should return true when the first predicate is true', () => {
@@ -30,7 +30,7 @@ describe('or', () => {
       () => true,
       () => false,
     )
-    expect(firstTrue()).toBeTruthy()
+    expect(firstTrue()).toBe(true)
   })
 
   it('should return true when the last predicate is true', () => {
@@ -41,7 +41,7 @@ describe('or', () => {
       () => false,
       () => true,
     )
-    expect(lastTrue()).toBeTruthy()
+    expect(lastTrue()).toBe(true)
   })
 
   it('should work with single-argument predicates', () => {
@@ -57,9 +57,9 @@ describe('or', () => {
 
     let isEvenOrNegative = or(isEven, isNegative)
 
-    expect(isEvenOrNegative(2)).toBeTruthy()
-    expect(isEvenOrNegative(-3)).toBeTruthy()
-    expect(isEvenOrNegative(3)).toBeFalsy()
+    expect(isEvenOrNegative(2)).toBe(true)
+    expect(isEvenOrNegative(-3)).toBe(true)
+    expect(isEvenOrNegative(3)).toBe(false)
   })
 
   it('should work with multi-argument predicates', () => {
@@ -75,9 +75,9 @@ describe('or', () => {
 
     let isGreaterOrEqual = or(isGreater, isEqual)
 
-    expect(isGreaterOrEqual(5, 3)).toBeTruthy()
-    expect(isGreaterOrEqual(3, 3)).toBeTruthy()
-    expect(isGreaterOrEqual(2, 3)).toBeFalsy()
-    expect(isGreaterOrEqual(5, 5)).toBeTruthy()
+    expect(isGreaterOrEqual(5, 3)).toBe(true)
+    expect(isGreaterOrEqual(3, 3)).toBe(true)
+    expect(isGreaterOrEqual(2, 3)).toBe(false)
+    expect(isGreaterOrEqual(5, 5)).toBe(true)
   })
 })

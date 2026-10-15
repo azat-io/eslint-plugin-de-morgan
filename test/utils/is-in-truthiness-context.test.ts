@@ -32,7 +32,7 @@ describe('isInTruthinessContext', () => {
 
     let result = inspectNegatedGroup(code, isInTruthinessContext)
 
-    expect(result).toBeTruthy()
+    expect(result).toBe(true)
   })
 
   it.each([
@@ -59,7 +59,7 @@ describe('isInTruthinessContext', () => {
 
     let result = inspectNegatedGroup(code, isInTruthinessContext)
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 
   it('should not treat a node without a parent as a truthiness context', () => {
@@ -67,6 +67,6 @@ describe('isInTruthinessContext', () => {
 
     let result = inspectNode('a', 'Program', isInTruthinessContext)
 
-    expect(result).toBeFalsy()
+    expect(result).toBe(false)
   })
 })

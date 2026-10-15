@@ -15,7 +15,7 @@ describe('isNegated', () => {
       prefix: true,
     }
 
-    expect(isNegated(node)).toBeTruthy()
+    expect(isNegated(node)).toBe(true)
   })
 
   it('should return false for a UnaryExpression with a different operator', () => {
@@ -28,7 +28,7 @@ describe('isNegated', () => {
       prefix: true,
     }
 
-    expect(isNegated(node)).toBeFalsy()
+    expect(isNegated(node)).toBe(false)
   })
 
   it('should return false for a node that is not a UnaryExpression', () => {
@@ -41,7 +41,7 @@ describe('isNegated', () => {
       operator: '+',
     }
 
-    expect(isNegated(node)).toBeFalsy()
+    expect(isNegated(node)).toBe(false)
   })
 
   it('should return false for a double negation (e.g., !!a)', () => {
@@ -58,6 +58,6 @@ describe('isNegated', () => {
       operator: '!',
       prefix: true,
     }
-    expect(isNegated(node)).toBeFalsy()
+    expect(isNegated(node)).toBe(false)
   })
 })

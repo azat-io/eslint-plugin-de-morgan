@@ -14,7 +14,7 @@ describe('isLogicalExpression', () => {
       type: 'LogicalExpression',
       operator: '&&',
     }
-    expect(isLogicalExpression(node as Expression)).toBeTruthy()
+    expect(isLogicalExpression(node as Expression)).toBe(true)
   })
 
   it('should return false for a node that is not a LogicalExpression', () => {
@@ -24,6 +24,6 @@ describe('isLogicalExpression', () => {
       type: 'Identifier',
       name: 'a',
     }
-    expect(isLogicalExpression(node as Expression)).toBeFalsy()
+    expect(isLogicalExpression(node as Expression)).toBe(false)
   })
 })
