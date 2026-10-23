@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.3.0
+
+[compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.2.1...v2.3.0)
+
+### 🚀 Features
+
+- Support oxlint without an eslint installation
+  ([57e8893](https://github.com/azat-io/eslint-plugin-de-morgan/commit/57e8893))
+
+### ❤️ Contributors
+
+- Azat S. ([@azat-io](https://github.com/azat-io))
+
 ## v2.2.1
 
 [compare changes](https://github.com/azat-io/eslint-plugin-de-morgan/compare/v2.2.0...v2.2.1)
