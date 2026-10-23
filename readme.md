@@ -102,10 +102,13 @@ if (!a && b && !(c >= 10) && d === e) {
 
 ## Installation
 
-You'll first need to install [ESLint](https://eslint.org):
+You'll first need to install [ESLint](https://eslint.org) or
+[Oxlint](https://oxc.rs/docs/guide/usage/linter):
 
 ```sh
 npm install --save-dev eslint
+# or
+npm install --save-dev oxlint
 ```
 
 Next, install `eslint-plugin-de-morgan`:
@@ -137,6 +140,21 @@ module.exports = {
   extends: [
     'plugin:de-morgan/recommended-legacy',
   ],
+}
+```
+
+### Oxlint ([`.oxlintrc.json`](https://oxc.rs/docs/guide/usage/linter/js-plugins.html))
+
+Oxlint loads the plugin as a JS plugin and does not use its ready-made configs,
+so enable the rules directly:
+
+```json
+{
+  "jsPlugins": ["eslint-plugin-de-morgan"],
+  "rules": {
+    "de-morgan/no-negated-conjunction": "error",
+    "de-morgan/no-negated-disjunction": "error"
+  }
 }
 ```
 

@@ -2,6 +2,7 @@ import { createRuleTester } from 'eslint-vitest-rule-tester'
 import { describe, expect, it } from 'vitest'
 import dedent from 'dedent'
 
+import { buildOxlintRuleTester } from '../helpers/build-oxlint-rule-tester'
 import conjunctionRule from '../../rules/no-negated-conjunction'
 import { evaluateFixture } from '../helpers/evaluate-fixture'
 import { testerConfig } from '../helpers/tester-config'
@@ -1008,5 +1009,36 @@ describe('no-negated-disjunction', () => {
     expect(rule.meta.docs.url).toBe(
       'https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-disjunction.md',
     )
+  })
+
+  describe('oxlint', () => {
+    buildOxlintRuleTester(rule).run('no-negated-disjunction', {
+      invalid: [
+        {
+          errors: [
+            {
+              message:
+                'Replace negated disjunction `!(a || b)` with `!a && !b`',
+            },
+          ],
+          name: 'should fix a negated disjunction and show both expressions in the message',
+          output: 'if (!a && !b) {}',
+          code: 'if (!(a || b)) {}',
+        },
+        {
+          name: 'should fix mixed operators when enforcing them is turned on',
+          errors: [{ messageId: 'convertNegatedDisjunction' }],
+          options: [{ enforceForMixedOperators: true }],
+          output: 'if (!(a && b) && !c) {}',
+          code: 'if (!(a && b || c)) {}',
+        },
+      ],
+      valid: [
+        {
+          name: 'should not report mixed operators by default',
+          code: 'if (!(a && b || c)) {}',
+        },
+      ],
+    })
   })
 })

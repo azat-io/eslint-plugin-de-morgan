@@ -2,6 +2,7 @@ import { createRuleTester } from 'eslint-vitest-rule-tester'
 import { describe, expect, it } from 'vitest'
 import dedent from 'dedent'
 
+import { buildOxlintRuleTester } from '../helpers/build-oxlint-rule-tester'
 import { evaluateFixture } from '../helpers/evaluate-fixture'
 import { testerConfig } from '../helpers/tester-config'
 import rule from '../../rules/no-negated-conjunction'
@@ -1076,5 +1077,60 @@ describe('no-negated-conjunction', () => {
     expect(rule.meta.docs.url).toBe(
       'https://github.com/azat-io/eslint-plugin-de-morgan/blob/main/docs/no-negated-conjunction.md',
     )
+  })
+
+  describe('oxlint', () => {
+    buildOxlintRuleTester(rule).run('no-negated-conjunction', {
+      invalid: [
+        {
+          errors: [
+            {
+              message:
+                'Replace negated conjunction `!(a && b)` with `!a || !b`',
+            },
+          ],
+          name: 'should fix a negated conjunction and show both expressions in the message',
+          output: 'if (!a || !b) {}',
+          code: 'if (!(a && b)) {}',
+        },
+        {
+          name: 'should keep a comment after the opening parenthesis',
+          errors: [{ messageId: 'convertNegatedConjunction' }],
+          output: 'if (/* note */ !a || !b) {}',
+          code: 'if (!(/* note */ a && b)) {}',
+        },
+        {
+          name: 'should keep a line comment before an indented closing parenthesis',
+          errors: [{ messageId: 'convertNegatedConjunction' }],
+          output: 'r = c && (!a || !b // why\n  )',
+          code: 'r = c && !(a && b // why\n  )',
+        },
+        {
+          name: 'should keep a comment inside a grouped right operand',
+          errors: [{ messageId: 'convertNegatedConjunction' }],
+          output: 'const x = !a || !(/* keep */ b)',
+          code: 'const x = !(a && (/* keep */ b))',
+        },
+        {
+          name: 'should withhold the fix of a statement whose parenthesized fix could merge with the previous line',
+          errors: [{ messageId: 'convertNegatedConjunction' }],
+          code: 'r = c\n!(a && b) && d',
+          output: null,
+        },
+        {
+          name: 'should parenthesize a statement in a script whose fix starts with let, a line comment and a bracket',
+          errors: [{ messageId: 'convertNegatedConjunction' }],
+          languageOptions: { sourceType: 'script' },
+          output: '(let // note\n[0] !== a || !b)',
+          code: '!(let // note\n[0] === a && b)',
+        },
+      ],
+      valid: [
+        {
+          name: 'should not report a value group holding a negation',
+          code: 'foo(!(a && !b))',
+        },
+      ],
+    })
   })
 })
